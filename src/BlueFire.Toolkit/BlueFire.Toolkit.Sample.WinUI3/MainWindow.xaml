@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<windowBase:WindowEx
+    x:Class="BlueFire.Toolkit.Sample.WinUI3.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:BlueFire.Toolkit.Sample.WinUI3"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:windowBase="using:BlueFire.Toolkit.WinUI3.WindowBase"
+    mc:Ignorable="d"
+    
+    Title="Haha"
+    Width="500" MinWidth="400" MaxWidth="800"
+    Height="350" MinHeight="350" MaxHeight="500">
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Button x:Name="myButton" Click="myButton_Click" Opacity="0">Click Me</Button>
+    </StackPanel>
+</windowBase:WindowEx>
