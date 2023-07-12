@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "BlueFire.Toolkit.Sample.WinUI3 (Package)": {
+      "commandName": "MsixPackage",
+      "nativeDebugging": true
+    },
+    "BlueFire.Toolkit.Sample.WinUI3 (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

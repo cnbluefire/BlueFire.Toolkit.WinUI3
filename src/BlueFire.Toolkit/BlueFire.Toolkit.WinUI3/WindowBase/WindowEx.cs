@@ -25,6 +25,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         private uint dpi;
         private bool destroying;
         private DesktopWindowTarget? desktopWindowTarget;
+        private bool hasShowed;
 
         public WindowEx()
         {
@@ -33,27 +34,21 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             hWnd = new HWND((nint)xamlWindow.AppWindow.Id.Value);
 
             windowManager = WindowManager.Get(xamlWindow.AppWindow)!;
+            windowManager.WindowExInternal = this;
 
             Title = xamlWindow.Title;
 
             dpi = PInvoke.GetDpiForWindow(hWnd);
 
-            var size = xamlWindow.AppWindow.Size;
-
-            var width = size.Width * 96d / dpi;
-            var height = size.Height * 96d / dpi;
-
-            if (Width == 0) Width = width;
-            if (Height == 0) Height = height;
+            Width = 800;
+            Height = 600;
 
             xamlWindow.Content = Content;
             xamlWindow.SystemBackdrop = SystemBackdrop;
 
-            xamlWindow.AppWindow.Changed += AppWindow_Changed;
-            xamlWindow.AppWindow.Destroying += AppWindow_Destroying;
-            windowManager.GetMonitorInternal().WindowMessageBeforeReceived += WindowManager_WindowMessageBeforeReceived;
-
             windowInitialized = true;
+
+            windowManager.GetMonitorInternal().WindowMessageBeforeReceived += WindowManager_WindowMessageBeforeReceived;
 
             SetWindowSize(Width, Height);
         }
@@ -61,6 +56,8 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         public XamlWindow XamlWindow => xamlWindow;
 
         public AppWindow AppWindow => XamlWindow.AppWindow;
+
+        public uint WindowDpi => dpi;
 
         public Windows.UI.Composition.Visual RootVisual
         {
@@ -217,8 +214,9 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         {
             if (e.MessageId == PInvoke.WM_DPICHANGED)
             {
+                var oldDpi = dpi;
                 dpi = PInvoke.GetDpiForWindow(hWnd);
-                windowInitialized = true;
+                windowInitialized = false;
                 try
                 {
                     var size = xamlWindow.AppWindow.Size;
@@ -229,17 +227,17 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 {
                     windowInitialized = true;
                 }
+                OnDpiChanged(dpi, oldDpi);
             }
-        }
-
-        private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
-        {
-            if (args.DidSizeChange)
+            else if (e.MessageId == PInvoke.WM_SIZE)
             {
+                var oldWidth = Width;
+                var oldHeight = Height;
+                var size = AppWindow.Size;
+
                 windowInitialized = false;
                 try
                 {
-                    var size = sender.Size;
                     Width = size.Width * 96d / dpi;
                     Height = size.Height * 96d / dpi;
                 }
@@ -247,18 +245,37 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 {
                     windowInitialized = true;
                 }
+
+                if (hasShowed)
+                {
+                    if ((int)(oldWidth * dpi / 96) != size.Width || (int)(oldHeight * dpi / 96) != size.Height)
+                    {
+                        OnSizeChanged(new Windows.Foundation.Size(Width, Height), new Windows.Foundation.Size(oldWidth, oldHeight));
+                    }
+                }
             }
+            else if (e.MessageId == PInvoke.WM_SHOWWINDOW)
+            {
+                if (!hasShowed)
+                {
+                    hasShowed = e.WParam != 0;
+
+                    if (hasShowed)
+                    {
+                        OnSizeChanged(new Windows.Foundation.Size(Width, Height), new Windows.Foundation.Size(0, 0));
+                    }
+                }
+            }
+            else if (e.MessageId == PInvoke.WM_DESTROY)
+            {
+                destroying = true;
+
+                desktopWindowTarget?.Dispose();
+                desktopWindowTarget = null;
+            }
+
+            OnWindowMessageReceived(e);
         }
-
-
-        private void AppWindow_Destroying(AppWindow sender, object args)
-        {
-            destroying = true;
-
-            desktopWindowTarget?.Dispose();
-            desktopWindowTarget = null;
-        }
-
 
         private void SetWindowSize(double width, double height)
         {
@@ -277,5 +294,67 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             return desktopWindowTarget;
         }
 
+        public event WindowExSizeChangedEventHandler? SizeChanged;
+        public event WindowExDpiChangedEventHandler? DpiChanged;
+        public event WindowExMessageReceivedEventHandler? WindowMessageReceived;
+
+        private void OnSizeChanged(Windows.Foundation.Size newSize, Windows.Foundation.Size previousSize)
+        {
+            var args = new WindowExSizeChangedEventArgs(newSize, previousSize);
+            OnSizeChanged(args);
+            SizeChanged?.Invoke(this, args);
+        }
+
+        protected virtual void OnSizeChanged(WindowExSizeChangedEventArgs args)
+        {
+        }
+
+        private void OnDpiChanged(uint newDpi, uint previousDpi)
+        {
+            var args = new WindowExDpiChangedEventArgs(newDpi, previousDpi);
+            OnDpiChanged(args);
+            DpiChanged?.Invoke(this, args);
+        }
+
+        protected virtual void OnDpiChanged(WindowExDpiChangedEventArgs args)
+        {
+        }
+
+        protected virtual void OnWindowMessageReceived(WindowMessageReceivedEventArgs e)
+        {
+            WindowMessageReceived?.Invoke(this, e);
+        }
+    }
+
+    public delegate void WindowExSizeChangedEventHandler(WindowEx sender, WindowExSizeChangedEventArgs args);
+
+    public delegate void WindowExDpiChangedEventHandler(WindowEx sender, WindowExDpiChangedEventArgs args);
+
+    public delegate void WindowExMessageReceivedEventHandler(WindowEx sender, WindowMessageReceivedEventArgs e);
+
+    public class WindowExSizeChangedEventArgs
+    {
+        internal WindowExSizeChangedEventArgs(Windows.Foundation.Size newSize, Windows.Foundation.Size previousSize)
+        {
+            NewSize = newSize;
+            PreviousSize = previousSize;
+        }
+
+        public Windows.Foundation.Size NewSize { get; }
+
+        public Windows.Foundation.Size PreviousSize { get; }
+    }
+
+    public class WindowExDpiChangedEventArgs
+    {
+        internal WindowExDpiChangedEventArgs(uint newDpi, uint previousDpi)
+        {
+            NewDpi = newDpi;
+            PreviousDpi = previousDpi;
+        }
+
+        public uint NewDpi { get; }
+
+        public uint PreviousDpi { get; }
     }
 }

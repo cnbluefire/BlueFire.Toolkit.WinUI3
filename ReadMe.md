@@ -90,3 +90,11 @@ public class MyBackdrop : WindowBackdropBase
 
 }
 ```
+
+## XamlExtensions
+
+```cs
+WindowId windowId = ((UIElement)sender).GetWindowId();
+WindowManager test2 = ((UIElement)sender).TryGetWindowManager();
+WindowEx test3 = ((UIElement)sender).TryGetWindowEx();
+```

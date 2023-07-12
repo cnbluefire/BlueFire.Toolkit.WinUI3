@@ -76,5 +76,24 @@ namespace BlueFire.Toolkit.Sample.WinUI3
             //if (this.SystemBackdrop == null) this.SystemBackdrop = backdrop;
             //else this.SystemBackdrop = null;
         }
+
+        protected override void OnSizeChanged(WindowExSizeChangedEventArgs args)
+        {
+            base.OnSizeChanged(args);
+
+            Debug.WriteLine($"NewSize: {args.NewSize}, PreviousSize: {args.PreviousSize}");
+        }
+
+        protected override void OnDpiChanged(WindowExDpiChangedEventArgs args)
+        {
+            base.OnDpiChanged(args);
+
+            Debug.WriteLine($"NewDpi: {args.NewDpi}, PreviousDpi: {args.PreviousDpi}");
+        }
+
+        protected override void OnWindowMessageReceived(WindowMessageReceivedEventArgs e)
+        {
+            base.OnWindowMessageReceived(e);
+        }
     }
 }

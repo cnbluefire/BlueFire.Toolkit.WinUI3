@@ -10,6 +10,17 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 {
     public class WindowMessageReceivedEventArgs
     {
+        public WindowMessageReceivedEventArgs() { }
+
+        public WindowMessageReceivedEventArgs(WindowMessageReceivedEventArgs args) : this()
+        {
+            WindowId = args.WindowId;
+            MessageId = args.MessageId;
+            WParam = args.WParam;
+            LParam = args.LParam;
+            LResult = args.LResult;
+        }
+
         public WindowId WindowId { get; internal set; }
 
         public uint MessageId { get; internal set; }

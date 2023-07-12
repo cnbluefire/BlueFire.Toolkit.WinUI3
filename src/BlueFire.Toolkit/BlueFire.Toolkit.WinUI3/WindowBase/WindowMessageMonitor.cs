@@ -64,7 +64,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                     {
                         if (handler2 != null)
                         {
-                            var args2 = new WindowMessageReceivedEventArgs();
+                            var args2 = new WindowMessageReceivedEventArgs(args);
                             handler2.Invoke(windowManager, args2);
 
                             if (args2.Handled)

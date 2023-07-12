@@ -25,6 +25,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         private readonly WindowId windowId;
         private readonly HWND hWnd;
         private AppWindow? appWindow;
+        private WindowEx? windowExInternal;
         private WindowMessageMonitor? messageMonitor;
         private bool wndProcInstalled;
 
@@ -52,6 +53,12 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         internal HWND HWND => hWnd;
 
         public AppWindow? AppWindow => appWindow ??= AppWindow.GetFromWindowId(windowId);
+
+        internal WindowEx? WindowExInternal
+        {
+            get => windowExInternal;
+            set => windowExInternal = value;
+        }
 
         internal WindowMessageMonitor GetMonitorInternal()
         {

@@ -49,6 +49,5 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             ExceptionHelpers.ThrowExceptionForHR(((delegate* unmanaged[Stdcall]<IntPtr, out WindowId, int>)(*(IntPtr*)((nint)(*(IntPtr*)(void*)thisPtr) + (nint)10 * (nint)sizeof(delegate* unmanaged[Stdcall]<IntPtr, out WindowId, int>))))(thisPtr, out result));
             return result;
         }
-
     }
 }

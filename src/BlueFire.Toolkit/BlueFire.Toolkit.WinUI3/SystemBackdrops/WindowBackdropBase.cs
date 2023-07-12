@@ -20,5 +20,10 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
         }
 
         protected virtual void OnTargetConnected(WindowId windowId, ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot) { }
+
+        protected override void OnDefaultSystemBackdropConfigurationChanged(ICompositionSupportsSystemBackdrop target, XamlRoot xamlRoot)
+        {
+            //base.OnDefaultSystemBackdropConfigurationChanged(target, xamlRoot);
+        }
     }
 }
