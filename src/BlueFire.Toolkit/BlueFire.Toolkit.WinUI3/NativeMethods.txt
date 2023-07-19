@@ -1,6 +1,8 @@
 ﻿Windows.Win32.UI.Shell.SetWindowSubclass
 Windows.Win32.UI.Shell.RemoveWindowSubclass
 Windows.Win32.UI.Shell.DefSubclassProc
+Windows.Win32.UI.Shell.ExtractIconW
+Windows.Win32.UI.Shell.ExtractIconExW
 
 Windows.Win32.UI.WindowsAndMessaging.GetClassNameW
 Windows.Win32.UI.WindowsAndMessaging.IsWindow
@@ -29,6 +31,12 @@ Windows.Win32.UI.WindowsAndMessaging.MINMAXINFO
 Windows.Win32.UI.WindowsAndMessaging.SendMessageW
 Windows.Win32.UI.WindowsAndMessaging.PostMessageW
 Windows.Win32.UI.WindowsAndMessaging.GetSystemMetrics
+Windows.Win32.UI.WindowsAndMessaging.GetIconInfo
+Windows.Win32.UI.WindowsAndMessaging.PrivateExtractIconsW
+Windows.Win32.UI.WindowsAndMessaging.IMAGE_FLAGS
+Windows.Win32.UI.WindowsAndMessaging.CopyImage
+Windows.Win32.UI.WindowsAndMessaging.CreateIcon
+Windows.Win32.UI.WindowsAndMessaging.CreateIconIndirect
 
 Windows.Win32.UI.HiDpi.GetDpiForWindow
 
@@ -45,6 +53,11 @@ Windows.Win32.Graphics.Gdi.GetSysColor
 Windows.Win32.Graphics.Gdi.CreateRectRgn
 Windows.Win32.Graphics.Gdi.CreateSolidBrush
 Windows.Win32.Graphics.Gdi.FillRect
+Windows.Win32.Graphics.Gdi.GetObjectW
+Windows.Win32.Graphics.Gdi.SelectObject
+Windows.Win32.Graphics.Gdi.DeleteObject
+Windows.Win32.Graphics.Gdi.BITMAP
+Windows.Win32.Graphics.Gdi.CreateBitmap
 
 Windows.Win32.Graphics.Dwm.DwmExtendFrameIntoClientArea
 Windows.Win32.Graphics.Dwm.DwmEnableBlurBehindWindow
@@ -67,3 +80,7 @@ Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop2
 Windows.Win32.System.WinRT.Composition.ICompositorDesktopInterop
 
 Windows.Win32.System.WinRT.IMemoryBufferByteAccess
+Windows.Win32.System.WinRT.CreateDispatcherQueueController
+
+Windows.Win32.Storage.Packaging.Appx.GetCurrentApplicationUserModelId
+Windows.Win32.Storage.Packaging.Appx.ParseApplicationUserModelId

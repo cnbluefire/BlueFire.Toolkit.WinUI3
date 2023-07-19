@@ -13,7 +13,7 @@
     Width="500" MinWidth="400" MaxWidth="800"
     Height="350" MinHeight="350" MaxHeight="500">
 
-    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <Button x:Name="myButton" Click="myButton_Click" Opacity="0">Click Me</Button>
+    <StackPanel x:Name="LayoutRoot" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
     </StackPanel>
 </windowBase:WindowEx>

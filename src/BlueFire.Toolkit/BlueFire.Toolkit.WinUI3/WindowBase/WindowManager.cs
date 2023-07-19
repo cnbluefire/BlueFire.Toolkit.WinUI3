@@ -1,21 +1,8 @@
-﻿using BlueFire.Toolkit.WinUI3.Extensions;
-using Microsoft.UI;
+﻿using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Hosting;
-using Microsoft.UI.Xaml.Media;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.Win32.Foundation;
-using WinRT;
 using Windows.Win32;
-using Microsoft.UI.Xaml.Controls;
 
 namespace BlueFire.Toolkit.WinUI3.WindowBase
 {

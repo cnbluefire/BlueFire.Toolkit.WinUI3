@@ -1,5 +1,6 @@
 using BlueFire.Toolkit.WinUI3.Compositions;
 using BlueFire.Toolkit.WinUI3.Extensions;
+using BlueFire.Toolkit.WinUI3.Icons;
 using BlueFire.Toolkit.WinUI3.Media;
 using BlueFire.Toolkit.WinUI3.SystemBackdrops;
 using BlueFire.Toolkit.WinUI3.WindowBase;
@@ -55,11 +56,20 @@ namespace BlueFire.Toolkit.Sample.WinUI3
             rootVisual.Brush = brush;
 
             this.RootVisual = rootVisual;
+
+            icon = DefaultIconProvider.Instance.GetSmallIcon(
+                WindowDpi,
+                LayoutRoot.ActualTheme == ElementTheme.Light ? ApplicationTheme.Light : ApplicationTheme.Dark,
+                true);
+
+            AppWindow.SetIcon(icon.IconId);
         }
 
         CompositionSurfaceLoader surfaceLoader;
 
         TransparentBackdrop backdrop;
+
+        SafeHIconHandle icon;
 
         private void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
         {
@@ -73,8 +83,8 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
             Debug.WriteLine($"DialogResult: {result}");
 
-            //if (this.SystemBackdrop == null) this.SystemBackdrop = backdrop;
-            //else this.SystemBackdrop = null;
+            if (this.SystemBackdrop == null) this.SystemBackdrop = backdrop;
+            else this.SystemBackdrop = null;
         }
 
         protected override void OnSizeChanged(WindowExSizeChangedEventArgs args)

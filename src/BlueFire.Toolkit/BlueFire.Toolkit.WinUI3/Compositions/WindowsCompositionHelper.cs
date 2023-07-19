@@ -43,7 +43,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
                         var handle = new System.Threading.EventWaitHandle(false, System.Threading.EventResetMode.AutoReset);
 
                         // 在子线程创建Compositor
-                        dispatcherQueueController = WinDispatcherQueueController.CreateOnDedicatedThread();
+                        dispatcherQueueController = CreateDispatcherQueueController(false);
                         dispatcherQueueController.DispatcherQueue.TryEnqueue(Windows.System.DispatcherQueuePriority.High, () =>
                         {
                             compositor = new WinCompositor();
@@ -69,6 +69,19 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
             interop.CreateDesktopWindowTarget(hWnd, topMost, out var target);
 
             return target;
+        }
+
+        private static WinDispatcherQueueController CreateDispatcherQueueController(bool currentThread)
+        {
+            var options = new Windows.Win32.System.WinRT.DispatcherQueueOptions()
+            {
+                apartmentType = Windows.Win32.System.WinRT.DISPATCHERQUEUE_THREAD_APARTMENTTYPE.DQTAT_COM_STA,
+                threadType = currentThread ? Windows.Win32.System.WinRT.DISPATCHERQUEUE_THREAD_TYPE.DQTYPE_THREAD_CURRENT :
+                    Windows.Win32.System.WinRT.DISPATCHERQUEUE_THREAD_TYPE.DQTYPE_THREAD_DEDICATED,
+                dwSize = (uint)Marshal.SizeOf<Windows.Win32.System.WinRT.DispatcherQueueOptions>()
+            };
+            Windows.Win32.PInvoke.CreateDispatcherQueueController(options, out var result).ThrowOnFailure();
+            return result;
         }
     }
 }
