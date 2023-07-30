@@ -3,6 +3,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Windows.Win32.Foundation;
 using Windows.Win32;
+using System.Diagnostics;
 
 namespace BlueFire.Toolkit.WinUI3.WindowBase
 {
@@ -14,7 +15,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         private AppWindow? appWindow;
         private WindowEx? windowExInternal;
         private WindowMessageMonitor? messageMonitor;
-        private bool wndProcInstalled;
+        private bool destroying = false;
 
         private double minWidth;
         private double minHeight;
@@ -30,16 +31,21 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
             this.windowId = windowId;
-            this.hWnd = new HWND((nint)windowId.Value);
+
+            this.hWnd = new HWND(Win32Interop.GetWindowFromWindowId(windowId));
 
             messageMonitor = new WindowMessageMonitor(this);
+
+            GetMonitorInternal().WindowMessageBeforeReceived += OverrideWindowProc;
         }
 
         public WindowId WindowId => windowId;
 
-        internal HWND HWND => hWnd;
-
         public AppWindow? AppWindow => appWindow ??= AppWindow.GetFromWindowId(windowId);
+
+        public uint WindowDpi => dpi != 0 ? dpi : (dpi = PInvoke.GetDpiForWindow(HWND));
+
+        internal HWND HWND => hWnd;
 
         internal WindowEx? WindowExInternal
         {
@@ -67,7 +73,6 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 if (minWidth != value)
                 {
                     minWidth = value;
-                    UpdateWindowProcHandler();
                     RefreshWindowSize();
                 }
             }
@@ -81,7 +86,6 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 if (minHeight != value)
                 {
                     minHeight = value;
-                    UpdateWindowProcHandler();
                     RefreshWindowSize();
                 }
             }
@@ -95,7 +99,6 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 if (maxWidth != value)
                 {
                     maxWidth = value;
-                    UpdateWindowProcHandler();
                     RefreshWindowSize();
                 }
             }
@@ -109,27 +112,8 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 if (maxHeight != value)
                 {
                     maxHeight = value;
-                    UpdateWindowProcHandler();
                     RefreshWindowSize();
                 }
-            }
-        }
-
-
-        private void UpdateWindowProcHandler()
-        {
-            var v = !disposedValue
-                && (minWidth != 0 || minHeight != 0 || minWidth != 0 || minHeight != 0);
-
-            if (v && !wndProcInstalled)
-            {
-                wndProcInstalled = true;
-                GetMonitorInternal().WindowMessageBeforeReceived += OverrideWindowProc;
-            }
-            else if (!v && wndProcInstalled)
-            {
-                dpi = 0;
-                GetMonitorInternal().WindowMessageBeforeReceived -= OverrideWindowProc;
             }
         }
 
@@ -167,14 +151,14 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 e.Handled = true;
                 e.LResult = 0;
             }
-        }
-
-        private void OnDestroyProc(WindowManager sender, WindowMessageReceivedEventArgs e)
-        {
-            if (e.MessageId == PInvoke.WM_DESTROY)
+            else if (e.MessageId == PInvoke.WM_CREATE)
             {
-                WindowMessageReceived += OnDestroyProc;
-
+                SetDefaultIcon(WindowId, false);
+            }
+            else if (e.MessageId == PInvoke.WM_DESTROY)
+            {
+                destroying = true;
+                RemoveIcon(WindowId);
                 lock (windowManagers)
                 {
                     if (windowManagers.Remove(WindowId, out var manager))
@@ -183,6 +167,8 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                     }
                 }
             }
+
+            //Debug.WriteLine(e.ToString());
         }
 
         protected virtual void Dispose(bool disposing)
@@ -196,6 +182,8 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
                 if (messageMonitor != null)
                 {
+                    messageMonitor.WindowMessageBeforeReceived -= OverrideWindowProc;
+
                     messageMonitor.Dispose();
                     messageMonitor = null;
                 }

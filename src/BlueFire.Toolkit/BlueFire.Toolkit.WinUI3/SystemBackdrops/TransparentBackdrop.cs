@@ -45,7 +45,11 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
                 defaultWindowBackground = new COLORREF(PInvoke.GetSysColor(SYS_COLOR_INDEX.COLOR_WINDOW));
                 defaultWindowBackground = new COLORREF(0x00000000);
 
+                windowManager.GetMonitorInternal().WindowMessageBeforeReceived -= OnWindowMessageBeforeReceived;
+                windowManager.GetMonitorInternal().WindowMessageAfterReceived -= OnWindowMessageAfterReceived;
+
                 windowManager.GetMonitorInternal().WindowMessageBeforeReceived += OnWindowMessageBeforeReceived;
+                windowManager.GetMonitorInternal().WindowMessageAfterReceived += OnWindowMessageAfterReceived;
 
                 UpdateTransparentAttributes(true);
             }
@@ -60,6 +64,7 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             if (windowManager != null)
             {
                 windowManager.GetMonitorInternal().WindowMessageBeforeReceived -= OnWindowMessageBeforeReceived;
+                windowManager.GetMonitorInternal().WindowMessageAfterReceived -= OnWindowMessageAfterReceived;
 
                 UpdateTransparentAttributes(false);
 
@@ -78,8 +83,6 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             if (e.MessageId == PInvoke.WM_DWMCOMPOSITIONCHANGED)
             {
                 UpdateTransparentAttributes(true);
-
-                e.Handled = true;
             }
             else if (e.MessageId == PInvoke.WM_ERASEBKGND)
             {
@@ -96,14 +99,21 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
                     e.Handled = true;
                 }
             }
-            else if (e.MessageId == PInvoke.WM_STYLECHANGING)
+        }
+
+        private unsafe void OnWindowMessageAfterReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
+        {
+            if (e.MessageId == PInvoke.WM_STYLECHANGING)
             {
                 if (e.WParam == unchecked((nuint)Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE))
                 {
-                    ((Windows.Win32.UI.WindowsAndMessaging.STYLESTRUCT*)e.LParam)->styleNew |=
-                        (uint)(Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_LAYERED);
-
-                    e.Handled = true;
+                    if ((((Windows.Win32.UI.WindowsAndMessaging.STYLESTRUCT*)e.LParam)->styleNew & (uint)(Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_LAYERED)) == 0)
+                    {
+                        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.High, () =>
+                        {
+                            UpdateTransparentAttributes(true);
+                        });
+                    }
                 }
             }
         }

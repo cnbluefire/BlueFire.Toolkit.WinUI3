@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using WinRT;
 using System.Runtime.InteropServices;
 using Microsoft.UI.Windowing;
+using BlueFire.Toolkit.WinUI3.Icons;
+using PInvoke = Windows.Win32.PInvoke;
 
 namespace BlueFire.Toolkit.WinUI3.WindowBase
 {
@@ -17,6 +19,43 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         private static Dictionary<WindowId, WindowManager> windowManagers = new Dictionary<WindowId, WindowManager>();
         private static object windowEventHookLocker = new object();
         private static WindowEventHook? windowEventHook;
+
+        private static void SetDefaultIcon(WindowId windowId, bool useDarkMode)
+        {
+            if (windowId.Value == 0) return;
+            var hWnd = Microsoft.UI.Win32Interop.GetWindowFromWindowId(windowId);
+
+            var dpi = PInvoke.GetDpiForWindow(new Windows.Win32.Foundation.HWND(hWnd));
+            SetIcon(hWnd,
+                DefaultIconProvider.Instance.GetSharedLargeIcon(dpi, useDarkMode ? ApplicationTheme.Dark : ApplicationTheme.Light, false),
+                DefaultIconProvider.Instance.GetSharedSmallIcon(dpi, useDarkMode ? ApplicationTheme.Dark : ApplicationTheme.Light, false));
+        }
+
+        private static void RemoveIcon(WindowId windowId)
+        {
+            if (windowId.Value == 0) return;
+            var hWnd = Win32Interop.GetWindowFromWindowId(windowId);
+
+            SetIcon(hWnd, new IconId(0), new IconId(0));
+        }
+
+        private static void SetIcon(nint hWnd, IconId? bigIconId, IconId? smallIconId)
+        {
+            if (hWnd == IntPtr.Zero) return;
+            if (!bigIconId.HasValue && !smallIconId.HasValue) return;
+
+            if (bigIconId.HasValue)
+            {
+                var icon = Win32Interop.GetIconFromIconId(bigIconId.Value);
+                PInvoke.SendMessage(new Windows.Win32.Foundation.HWND(hWnd), PInvoke.WM_SETICON, PInvoke.ICON_BIG, icon);
+            }
+
+            if (smallIconId.HasValue)
+            {
+                var icon = Win32Interop.GetIconFromIconId(smallIconId.Value);
+                PInvoke.SendMessage(new Windows.Win32.Foundation.HWND(hWnd), PInvoke.WM_SETICON, PInvoke.ICON_SMALL, icon);
+            }
+        }
 
         public static WindowManager? Get(WindowId windowId)
         {
@@ -36,7 +75,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         public static WindowManager? Get(Window window) => Get(window.AppWindow);
 
         public static IReadOnlyList<WindowId> Windows => windowEventHook?.Windows
-            .Select(c => Win32BaseObjectExtensions.ToWindowId(c)).ToArray() 
+            .Select(c => Win32BaseObjectExtensions.ToWindowId(c)).ToArray()
             ?? Array.Empty<WindowId>();
 
         public static IReadOnlyList<WindowManager> GetWindowManagers()
@@ -83,13 +122,6 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 if (e.Type == WindowEventHook.WindowEventType.Created)
                 {
                     windowManagers[windowId] = new WindowManager(windowId);
-                }
-                else
-                {
-                    if(windowManagers.TryGetValue(windowId,out var manager))
-                    {
-                        manager.WindowMessageReceived += manager.OnDestroyProc;
-                    }
                 }
             }
         }

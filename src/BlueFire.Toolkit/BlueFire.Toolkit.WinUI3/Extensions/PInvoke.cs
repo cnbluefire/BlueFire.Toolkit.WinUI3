@@ -9,6 +9,12 @@ namespace Windows.Win32
 {
     internal static partial class PInvoke
     {
+        private static bool? isWindows10OrGreater;
+
+        internal static bool IsWindows10OrGreater() =>
+            isWindows10OrGreater ??
+            (isWindows10OrGreater = Environment.OSVersion.Version >= new Version(10, 0, 22000, 0)).Value;
+
         internal static nint SetWindowLongAuto(HWND hWnd, UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX nIndex, nint dwNewLong)
         {
             if (IntPtr.Size == 8)

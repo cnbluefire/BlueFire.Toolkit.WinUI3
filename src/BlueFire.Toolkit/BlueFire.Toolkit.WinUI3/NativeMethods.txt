@@ -37,6 +37,9 @@ Windows.Win32.UI.WindowsAndMessaging.IMAGE_FLAGS
 Windows.Win32.UI.WindowsAndMessaging.CopyImage
 Windows.Win32.UI.WindowsAndMessaging.CreateIcon
 Windows.Win32.UI.WindowsAndMessaging.CreateIconIndirect
+Windows.Win32.UI.WindowsAndMessaging.ICON_*
+Windows.Win32.UI.WindowsAndMessaging.WINDOWPOS
+Windows.Win32.UI.WindowsAndMessaging.SetForegroundWindow
 
 Windows.Win32.UI.HiDpi.GetDpiForWindow
 
@@ -62,6 +65,7 @@ Windows.Win32.Graphics.Gdi.CreateBitmap
 Windows.Win32.Graphics.Dwm.DwmExtendFrameIntoClientArea
 Windows.Win32.Graphics.Dwm.DwmEnableBlurBehindWindow
 Windows.Win32.Graphics.Dwm.DWM_BB_*
+Windows.Win32.Graphics.Dwm.DwmGetWindowAttribute
 Windows.Win32.Graphics.Dwm.DwmSetWindowAttribute
 
 Windows.Win32.Graphics.Direct2D.ID2D1Factory2

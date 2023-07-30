@@ -12,11 +12,13 @@ using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI.Composition.Desktop;
 using BlueFire.Toolkit.WinUI3.Compositions;
+using Windows.Foundation;
+using Microsoft.UI;
 
 namespace BlueFire.Toolkit.WinUI3.WindowBase
 {
     [ContentProperty(Name = nameof(Content))]
-    public class WindowEx : DependencyObject
+    public class WindowEx : FrameworkElement
     {
         private XamlWindow xamlWindow;
         private WindowManager windowManager;
@@ -27,14 +29,21 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         private DesktopWindowTarget? desktopWindowTarget;
         private bool hasShowed;
 
+        private FrameworkElement? loadHelper;
+
+        private bool isLoading;
+        private bool isLoaded;
+        private TypedEventHandler<FrameworkElement, object?>? loadingHandler;
+        private RoutedEventHandler? loadedHandler;
+
         public WindowEx()
         {
             xamlWindow = new XamlWindow();
 
-            hWnd = new HWND((nint)xamlWindow.AppWindow.Id.Value);
-
             windowManager = WindowManager.Get(xamlWindow.AppWindow)!;
             windowManager.WindowExInternal = this;
+
+            hWnd = windowManager.HWND;
 
             Title = xamlWindow.Title;
 
@@ -51,13 +60,25 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             windowManager.GetMonitorInternal().WindowMessageBeforeReceived += WindowManager_WindowMessageBeforeReceived;
 
             SetWindowSize(Width, Height);
+
+            RegisterPropertyChangedCallback(WidthProperty, OnSizePropertyChanged);
+            RegisterPropertyChangedCallback(HeightProperty, OnSizePropertyChanged);
+            RegisterPropertyChangedCallback(MinWidthProperty, OnSizePropertyChanged);
+            RegisterPropertyChangedCallback(MinHeightProperty, OnSizePropertyChanged);
+            RegisterPropertyChangedCallback(MaxWidthProperty, OnSizePropertyChanged);
+            RegisterPropertyChangedCallback(MaxHeightProperty, OnSizePropertyChanged);
+
         }
+
+        internal HWND Handle => hWnd;
 
         public XamlWindow XamlWindow => xamlWindow;
 
         public AppWindow AppWindow => XamlWindow.AppWindow;
 
         public uint WindowDpi => dpi;
+
+        public new bool IsLoaded => isLoaded;
 
         public Windows.UI.Composition.Visual RootVisual
         {
@@ -83,43 +104,6 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             set { SetValue(TitleProperty, value); }
         }
 
-        public double Width
-        {
-            get { return (double)GetValue(WidthProperty); }
-            set { SetValue(WidthProperty, value); }
-        }
-
-        public double Height
-        {
-            get { return (double)GetValue(HeightProperty); }
-            set { SetValue(HeightProperty, value); }
-        }
-
-        public double MinWidth
-        {
-            get { return (double)GetValue(MinWidthProperty); }
-            set { SetValue(MinWidthProperty, value); }
-        }
-
-        public double MinHeight
-        {
-            get { return (double)GetValue(MinHeightProperty); }
-            set { SetValue(MinHeightProperty, value); }
-        }
-
-        public double MaxWidth
-        {
-            get { return (double)GetValue(MaxWidthProperty); }
-            set { SetValue(MaxWidthProperty, value); }
-        }
-
-        public double MaxHeight
-        {
-            get { return (double)GetValue(MaxHeightProperty); }
-            set { SetValue(MaxHeightProperty, value); }
-        }
-
-
 
         public static readonly DependencyProperty ContentProperty =
             DependencyProperty.Register("Content", typeof(UIElement), typeof(WindowEx), new PropertyMetadata(null, (s, a) =>
@@ -127,6 +111,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 if (s is WindowEx sender && !Equals(a.NewValue, a.OldValue) && sender.windowInitialized)
                 {
                     sender.xamlWindow.Content = a.NewValue as UIElement;
+                    sender.UpdateLoadHelper(a.NewValue as FrameworkElement);
                 }
             }));
 
@@ -150,65 +135,57 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 }
             }));
 
-        public static readonly DependencyProperty WidthProperty =
-            DependencyProperty.Register("Width", typeof(double), typeof(WindowEx), new PropertyMetadata(0d, (s, a) =>
+        private static void OnSizePropertyChanged(DependencyObject sender, DependencyProperty dp)
+        {
+            var window = (WindowEx)sender;
+            if (dp == WidthProperty || dp == HeightProperty)
             {
-                if (s is WindowEx sender && !Equals(a.NewValue, a.OldValue) && sender.windowInitialized)
-                {
-                    sender.SetWindowSize(sender.Width, sender.Height);
-                }
-            }));
-
-        public static readonly DependencyProperty HeightProperty =
-            DependencyProperty.Register("Height", typeof(double), typeof(WindowEx), new PropertyMetadata(0d, (s, a) =>
+                window.SetWindowSize(window.Width, window.Height);
+            }
+            else if (dp == MinWidthProperty)
             {
-                if (s is WindowEx sender && !Equals(a.NewValue, a.OldValue) && sender.windowInitialized)
-                {
-                    sender.SetWindowSize(sender.Width, sender.Height);
-                }
-            }));
-
-        public static readonly DependencyProperty MinWidthProperty =
-            DependencyProperty.Register("MinWidth", typeof(double), typeof(WindowEx), new PropertyMetadata(0d, (s, a) =>
+                window.windowManager.MinWidth = (double)window.MinWidth;
+            }
+            else if (dp == MinHeightProperty)
             {
-                if (s is WindowEx sender && !Equals(a.NewValue, a.OldValue) && sender.windowInitialized)
-                {
-                    sender.windowManager.MinWidth = (double)a.NewValue;
-                }
-            }));
-
-        public static readonly DependencyProperty MinHeightProperty =
-            DependencyProperty.Register("MinHeight", typeof(double), typeof(WindowEx), new PropertyMetadata(0d, (s, a) =>
+                window.windowManager.MinHeight = (double)window.MinHeight;
+            }
+            else if (dp == MaxWidthProperty)
             {
-                if (s is WindowEx sender && !Equals(a.NewValue, a.OldValue) && sender.windowInitialized)
-                {
-                    sender.windowManager.MinHeight = (double)a.NewValue;
-                }
-            }));
-
-        public static readonly DependencyProperty MaxWidthProperty =
-            DependencyProperty.Register("MaxWidth", typeof(double), typeof(WindowEx), new PropertyMetadata(0d, (s, a) =>
+                window.windowManager.MaxWidth = (double)window.MaxWidth;
+            }
+            else if (dp == MaxHeightProperty)
             {
-                if (s is WindowEx sender && !Equals(a.NewValue, a.OldValue) && sender.windowInitialized)
-                {
-                    sender.windowManager.MaxWidth = (double)a.NewValue;
-                }
-            }));
-
-        public static readonly DependencyProperty MaxHeightProperty =
-            DependencyProperty.Register("MaxHeight", typeof(double), typeof(WindowEx), new PropertyMetadata(0d, (s, a) =>
-            {
-                if (s is WindowEx sender && !Equals(a.NewValue, a.OldValue) && sender.windowInitialized)
-                {
-                    sender.windowManager.MaxHeight = (double)a.NewValue;
-                }
-            }));
+                window.windowManager.MaxHeight = (double)window.MaxHeight;
+            }
+        }
 
         public void Activate()
         {
             xamlWindow.Activate();
         }
 
+        private void UpdateLoadHelper(FrameworkElement? loadHelper)
+        {
+            if (isLoading) return;
+
+            var oldHelper = this.loadHelper;
+            this.loadHelper = null;
+
+            if (oldHelper != null)
+            {
+                oldHelper.Loading += LoadHelper_Loading;
+                oldHelper.Loaded += LoadHelper_Loaded;
+            }
+
+            if (loadHelper != null)
+            {
+                this.loadHelper = loadHelper;
+
+                loadHelper.Loading += LoadHelper_Loading;
+                loadHelper.Loaded += LoadHelper_Loaded;
+            }
+        }
 
         private void WindowManager_WindowMessageBeforeReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
         {
@@ -262,7 +239,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
                     if (hasShowed)
                     {
-                        OnSizeChanged(new Windows.Foundation.Size(Width, Height), new Windows.Foundation.Size(0, 0));
+                        RaiseLoadEvent();
                     }
                 }
             }
@@ -294,9 +271,33 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             return desktopWindowTarget;
         }
 
-        public event WindowExSizeChangedEventHandler? SizeChanged;
+        public new event WindowExSizeChangedEventHandler? SizeChanged;
         public event WindowExDpiChangedEventHandler? DpiChanged;
         public event WindowExMessageReceivedEventHandler? WindowMessageReceived;
+
+        public new event TypedEventHandler<FrameworkElement, object?>? Loading
+        {
+            add
+            {
+                loadingHandler += value;
+            }
+            remove
+            {
+                loadingHandler -= value;
+            }
+        }
+
+        public new event RoutedEventHandler? Loaded
+        {
+            add
+            {
+                loadedHandler += value;
+            }
+            remove
+            {
+                loadedHandler -= value;
+            }
+        }
 
         private void OnSizeChanged(Windows.Foundation.Size newSize, Windows.Foundation.Size previousSize)
         {
@@ -323,6 +324,43 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         protected virtual void OnWindowMessageReceived(WindowMessageReceivedEventArgs e)
         {
             WindowMessageReceived?.Invoke(this, e);
+        }
+
+
+        private void LoadHelper_Loading(FrameworkElement sender, object args)
+        {
+            isLoading = true;
+
+            sender.Loading -= LoadHelper_Loading;
+
+            loadingHandler?.Invoke(this, null);
+        }
+
+        private void LoadHelper_Loaded(object sender, RoutedEventArgs e)
+        {
+            isLoaded = true;
+
+            ((FrameworkElement)sender).Loaded -= LoadHelper_Loaded;
+            loadHelper = null;
+
+            loadedHandler?.Invoke(this, new RoutedEventArgs());
+        }
+
+        private void RaiseLoadEvent()
+        {
+            var loadHelper = this.loadHelper;
+
+            if (loadHelper == null)
+            {
+                loadingHandler?.Invoke(this, null);
+                isLoaded = true;
+            }
+            OnSizeChanged(new Windows.Foundation.Size(Width, Height), new Windows.Foundation.Size(0, 0));
+
+            if (loadHelper == null)
+            {
+                loadedHandler?.Invoke(this, new RoutedEventArgs());
+            }
         }
     }
 
