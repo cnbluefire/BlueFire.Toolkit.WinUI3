@@ -44,10 +44,6 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                     {
                         if (windowHandles.Add(hWnd))
                         {
-                            var exStyle = (uint)PInvoke.GetWindowLongAuto(new HWND(hWnd), WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
-                            exStyle |= (uint)(WINDOW_EX_STYLE.WS_EX_NOREDIRECTIONBITMAP);
-                            PInvoke.SetWindowLongAuto(new HWND(hWnd), WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (nint)exStyle);
-
                             WindowChanged?.Invoke(this, new WindowEventArgs(new HWND(hWnd), WindowEventType.Created));
                         }
                     }

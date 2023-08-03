@@ -38,5 +38,16 @@ namespace Windows.Win32
                 return GetWindowLong(hWnd, nIndex);
             }
         }
+
+        private static nint SetWindowLongPtr(nint hWnd, UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX nIndex, nint dwNewLong)
+        {
+            return 0;
+        }
+
+        private static nint GetWindowLongPtr(nint hWnd, UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX nIndex)
+        {
+            return 0;
+        }
+
     }
 }

@@ -21,7 +21,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
     public class WindowEx : FrameworkElement
     {
         private XamlWindow xamlWindow;
-        private WindowManager windowManager;
+        private WindowManager? windowManager;
         private bool windowInitialized;
         private HWND hWnd;
         private uint dpi;
@@ -41,9 +41,17 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             xamlWindow = new XamlWindow();
 
             windowManager = WindowManager.Get(xamlWindow.AppWindow)!;
-            windowManager.WindowExInternal = this;
 
-            hWnd = windowManager.HWND;
+            if (windowManager != null)
+            {
+                windowManager.WindowExInternal = this;
+
+                hWnd = windowManager.HWND;
+            }
+            else
+            {
+                hWnd = new HWND(Win32Interop.GetWindowFromWindowId(xamlWindow.AppWindow.Id));
+            }
 
             Title = xamlWindow.Title;
 
@@ -57,7 +65,10 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
             windowInitialized = true;
 
-            windowManager.GetMonitorInternal().WindowMessageBeforeReceived += WindowManager_WindowMessageBeforeReceived;
+            if (windowManager != null)
+            {
+                windowManager.GetMonitorInternal().WindowMessageBeforeReceived += WindowManager_WindowMessageBeforeReceived;
+            }
 
             SetWindowSize(Width, Height);
 
@@ -142,21 +153,24 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             {
                 window.SetWindowSize(window.Width, window.Height);
             }
-            else if (dp == MinWidthProperty)
+            else if (window.windowManager != null)
             {
-                window.windowManager.MinWidth = (double)window.MinWidth;
-            }
-            else if (dp == MinHeightProperty)
-            {
-                window.windowManager.MinHeight = (double)window.MinHeight;
-            }
-            else if (dp == MaxWidthProperty)
-            {
-                window.windowManager.MaxWidth = (double)window.MaxWidth;
-            }
-            else if (dp == MaxHeightProperty)
-            {
-                window.windowManager.MaxHeight = (double)window.MaxHeight;
+                if (dp == MinWidthProperty)
+                {
+                    window.windowManager.MinWidth = (double)window.MinWidth;
+                }
+                else if (dp == MinHeightProperty)
+                {
+                    window.windowManager.MinHeight = (double)window.MinHeight;
+                }
+                else if (dp == MaxWidthProperty)
+                {
+                    window.windowManager.MaxWidth = (double)window.MaxWidth;
+                }
+                else if (dp == MaxHeightProperty)
+                {
+                    window.windowManager.MaxHeight = (double)window.MaxHeight;
+                }
             }
         }
 

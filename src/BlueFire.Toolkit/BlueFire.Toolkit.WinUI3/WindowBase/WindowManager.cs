@@ -4,6 +4,7 @@ using Microsoft.UI.Windowing;
 using Windows.Win32.Foundation;
 using Windows.Win32;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace BlueFire.Toolkit.WinUI3.WindowBase
 {
@@ -130,7 +131,8 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         {
             if (e.MessageId == PInvoke.WM_GETMINMAXINFO)
             {
-                var info = (global::Windows.Win32.UI.WindowsAndMessaging.MINMAXINFO*)e.LParam;
+                ref var info = ref Unsafe.AsRef<global::Windows.Win32.UI.WindowsAndMessaging.MINMAXINFO>((void*)e.LParam);
+
                 if (dpi == 0)
                 {
                     dpi = PInvoke.GetDpiForWindow(HWND);
@@ -145,11 +147,15 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 if (maxWidthPixel == 0) maxWidthPixel = PInvoke.GetSystemMetrics(global::Windows.Win32.UI.WindowsAndMessaging.SYSTEM_METRICS_INDEX.SM_CXMAXTRACK);
                 if (maxHeightPixel == 0) maxHeightPixel = PInvoke.GetSystemMetrics(global::Windows.Win32.UI.WindowsAndMessaging.SYSTEM_METRICS_INDEX.SM_CYMAXTRACK);
 
-                info->ptMinTrackSize = new System.Drawing.Point(minWidthPixel, minHeightPixel);
-                info->ptMaxTrackSize = new System.Drawing.Point(maxWidthPixel, maxHeightPixel);
+                info.ptMinTrackSize = new System.Drawing.Point(minWidthPixel, minHeightPixel);
+                info.ptMaxTrackSize = new System.Drawing.Point(maxWidthPixel, maxHeightPixel);
 
                 e.Handled = true;
                 e.LResult = 0;
+            }
+            else if (e.MessageId == PInvoke.WM_DPICHANGED)
+            {
+                dpi = 0;
             }
             else if (e.MessageId == PInvoke.WM_CREATE)
             {

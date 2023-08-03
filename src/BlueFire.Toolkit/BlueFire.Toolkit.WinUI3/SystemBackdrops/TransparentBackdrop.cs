@@ -17,6 +17,7 @@ using System.Runtime.InteropServices;
 using Microsoft.UI;
 using Microsoft.UI.Xaml.Markup;
 using BlueFire.Toolkit.WinUI3.Extensions;
+using System.Runtime.CompilerServices;
 
 namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 {
@@ -107,7 +108,9 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             {
                 if (e.WParam == unchecked((nuint)Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE))
                 {
-                    if ((((Windows.Win32.UI.WindowsAndMessaging.STYLESTRUCT*)e.LParam)->styleNew & (uint)(Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_LAYERED)) == 0)
+                    var styleStruct = Unsafe.AsRef<Windows.Win32.UI.WindowsAndMessaging.STYLESTRUCT>((void*)e.LParam);
+
+                    if ((styleStruct.styleNew & (uint)(Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_LAYERED)) == 0)
                     {
                         DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.High, () =>
                         {
