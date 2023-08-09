@@ -16,8 +16,8 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         private const string IID_ICanvasDeviceString = "A27F0B5D-EC2C-4D4F-948F-0AA1E95E33E6";
         private static readonly Guid IID_ICanvasDevice = new Guid(IID_ICanvasDeviceString);
 
-        private static IObjectReference? canvasDeviceFactory;
         private static bool canvasDeviceFactoryNotSupported;
+        private static ICanvasFactoryNative? canvasFactoryNative;
 
         // https://microsoft.github.io/Win2D/WinUI3/html/Interop.htm
         // Microsoft.Graphics.Canvas.native.h
@@ -70,10 +70,8 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
 
         public static T? GetOrCreateFromPtr<T>(IDirect3DDevice? device, nint resource, float dpi) where T : class, IWinRTObject
         {
-            var factory = GetCanvasDeviceFactory();
-            if (factory == null) return null;
-
-            var factoryNative = factory.AsInterface<ICanvasFactoryNative>();
+            var factoryNative = GetCanvasDeviceFactory();
+            if (factoryNative == null) return null;
 
             using var objRef = GetCanvasDeviceReference(device);
 
@@ -140,47 +138,69 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             void UnregisterEffectFactory(ref Guid effectId);
         }
 
-        private static IObjectReference? GetCanvasDeviceFactory()
+        public static void InitializeCanvasDeviceFactory<T>() where T : class, IDirect3DDevice
         {
-            if (canvasDeviceFactory == null && !canvasDeviceFactoryNotSupported)
+            InitializeCanvasDeviceFactory(typeof(T));
+        }
+
+        private static void InitializeCanvasDeviceFactory(Type canvasDeviceType)
+        {
+            if (canvasFactoryNative == null)
             {
                 lock (typeof(Direct2DInterop))
                 {
-                    if (canvasDeviceFactory == null && !canvasDeviceFactoryNotSupported)
+                    if (canvasFactoryNative == null)
                     {
-                        var type = Type.GetType("Microsoft.Graphics.Canvas.CanvasDevice, Microsoft.Graphics.Canvas.Interop");
-                        var canvasDeviceFactoryType = Type.GetType("Microsoft.Graphics.Canvas.ICanvasDeviceFactory, Microsoft.Graphics.Canvas.Interop");
+                        var canvasFactoryNativeType = typeof(ICanvasFactoryNative);
 
-                        if (type != null && canvasDeviceFactoryType != null)
+                        var methodInfo = canvasDeviceType.GetMethod(
+                            "As",
+                            1,
+                            BindingFlags.Static | BindingFlags.Public,
+                            null,
+                            Type.EmptyTypes,
+                            null);
+
+                        if (methodInfo != null)
                         {
-                            var methodInfo = type.GetMethod(
-                                "As",
-                                1,
-                                BindingFlags.Static | BindingFlags.Public,
-                                null,
-                                Type.EmptyTypes,
-                                null);
-
-                            if (methodInfo != null)
-                            {
-                                var factoryObj = methodInfo.MakeGenericMethod(canvasDeviceFactoryType).Invoke(null, null);
-
-                                if (factoryObj is WinRT.IWinRTObject factory)
-                                {
-                                    canvasDeviceFactory = factory.NativeObject;
-                                }
-                            }
-                        }
-
-                        if (canvasDeviceFactory == null)
-                        {
-                            canvasDeviceFactoryNotSupported = true;
+                            canvasFactoryNative = (ICanvasFactoryNative?)methodInfo.MakeGenericMethod(canvasFactoryNativeType).Invoke(null, null);
                         }
                     }
                 }
             }
+        }
 
-            return canvasDeviceFactory;
+        private static ICanvasFactoryNative? GetCanvasDeviceFactory()
+        {
+            if (canvasFactoryNative == null && !canvasDeviceFactoryNotSupported)
+            {
+                lock (typeof(Direct2DInterop))
+                {
+                    if (canvasFactoryNative == null && !canvasDeviceFactoryNotSupported)
+                    {
+                        var type = Type.GetType("Microsoft.Graphics.Canvas.CanvasDevice, Microsoft.Graphics.Canvas.Interop")
+                            ?? FindRcwTypeByNameCached("Microsoft.Graphics.Canvas.CanvasDevice");
+
+                        if (type != null)
+                        {
+                            InitializeCanvasDeviceFactory(type);
+                        }
+                    }
+
+                    if (canvasFactoryNative == null)
+                    {
+                        canvasDeviceFactoryNotSupported = true;
+                    }
+                }
+            }
+
+            return canvasFactoryNative;
+
+
+            static Type? FindRcwTypeByNameCached(string runtimeClassName) =>
+                Type.GetType("WinRT.TypeNameSupport, WinRT.Runtime")?
+                    .GetMethod("FindRcwTypeByNameCached")?
+                    .Invoke(null, new object[] { runtimeClassName }) as Type;
         }
 
         private static IObjectReference? GetCanvasDeviceReference(IDirect3DDevice? device)
