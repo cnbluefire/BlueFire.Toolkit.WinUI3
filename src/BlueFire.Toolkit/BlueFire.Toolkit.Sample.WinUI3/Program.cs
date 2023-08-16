@@ -22,8 +22,6 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
             ComWrappersSupport.InitializeComWrappers();
 
-            WindowManager.Initialize();
-
             global::Microsoft.UI.Xaml.Application.Start((p) =>
             {
                 var context = new global::Microsoft.UI.Dispatching.DispatcherQueueSynchronizationContext(global::Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread());

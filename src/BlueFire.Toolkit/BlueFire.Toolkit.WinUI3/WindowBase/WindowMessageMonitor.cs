@@ -34,6 +34,8 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             this.windowManager = windowManager;
         }
 
+        internal bool MessageReceivedEventHandled => windowMessageReceived != null;
+
         [DebuggerNonUserCode]
         private LRESULT SubClassProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, nuint uIdSubclass, nuint dwRefData)
         {

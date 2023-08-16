@@ -25,7 +25,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.0.5.1" />
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230628000-preview1" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230811000-preview2" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.755" />
 		<Manifest Include="$(ApplicationManifest)" />
 	</ItemGroup>

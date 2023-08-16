@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlueFire.Toolkit.WinUI3.WindowBase
+namespace BlueFire.Toolkit.WinUI3
 {
     public class WindowMessageReceivedEventArgs
     {

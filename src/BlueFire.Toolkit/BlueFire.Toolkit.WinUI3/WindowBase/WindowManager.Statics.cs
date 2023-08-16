@@ -1,31 +1,61 @@
-﻿using BlueFire.Toolkit.WinUI3.Extensions;
-using Microsoft.UI.Xaml;
+﻿using BlueFire.Toolkit.WinUI3.Icons;
 using Microsoft.UI;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using WinRT;
-using System.Runtime.InteropServices;
-using Microsoft.UI.Windowing;
-using BlueFire.Toolkit.WinUI3.Icons;
+using Windows.Win32.Foundation;
 using PInvoke = Windows.Win32.PInvoke;
 
-namespace BlueFire.Toolkit.WinUI3.WindowBase
+namespace BlueFire.Toolkit.WinUI3
 {
     partial class WindowManager
     {
         private static Dictionary<WindowId, WindowManager> windowManagers = new Dictionary<WindowId, WindowManager>();
-        private static object windowEventHookLocker = new object();
-        private static WindowEventHook? windowEventHook;
 
-        private static void SetDefaultIcon(WindowId windowId, bool useDarkMode)
+        public static WindowManager? Get(WindowId windowId)
+        {
+            if (windowId.Value == 0) return null;
+
+            lock (windowManagers)
+            {
+                if (windowManagers.TryGetValue(windowId, out var manager)) return manager;
+
+                var hWnd = Win32Interop.GetWindowFromWindowId(windowId);
+                if (!PInvoke.IsWindow(new HWND(hWnd))) return null;
+
+                manager = new WindowManager(windowId);
+                windowManagers[windowId] = manager;
+
+                return manager;
+            }
+        }
+
+        public static WindowManager? Get(AppWindow appWindow) => Get(appWindow.Id);
+
+        public static WindowManager? Get(Window window) => Get(window.AppWindow.Id);
+
+        public static WindowManager? Get(XamlRoot xamlRoot) => Get(xamlRoot.ContentIslandEnvironment.AppWindowId);
+
+        private static void OnWindowDestroy(WindowId windowId)
+        {
+            lock (windowManagers)
+            {
+                windowManagers.Remove(windowId);
+            }
+        }
+
+        #region Window Icon
+
+        private static void SetDefaultIcon(WindowId windowId, bool useDarkMode, uint dpi)
         {
             if (windowId.Value == 0) return;
             var hWnd = Microsoft.UI.Win32Interop.GetWindowFromWindowId(windowId);
 
-            var dpi = PInvoke.GetDpiForWindow(new Windows.Win32.Foundation.HWND(hWnd));
             SetIcon(hWnd,
                 DefaultIconProvider.Instance.GetSharedLargeIcon(dpi, useDarkMode ? ApplicationTheme.Dark : ApplicationTheme.Light, false),
                 DefaultIconProvider.Instance.GetSharedSmallIcon(dpi, useDarkMode ? ApplicationTheme.Dark : ApplicationTheme.Light, false));
@@ -57,73 +87,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             }
         }
 
-        public static WindowManager? Get(WindowId windowId)
-        {
-            lock (windowManagers)
-            {
-                if (windowManagers.TryGetValue(windowId, out var manager))
-                {
-                    return manager;
-                }
 
-                return null;
-            }
-        }
-
-        public static WindowManager? Get(AppWindow window) => Get(window.Id);
-
-        public static WindowManager? Get(Window window) => Get(window.AppWindow);
-
-        public static IReadOnlyList<WindowId> Windows => windowEventHook?.Windows
-            .Select(c => Win32BaseObjectExtensions.ToWindowId(c)).ToArray()
-            ?? Array.Empty<WindowId>();
-
-        public static IReadOnlyList<WindowManager> GetWindowManagers()
-        {
-            lock (windowManagers)
-            {
-                return windowManagers.Values.ToArray();
-            }
-        }
-
-        public static void Initialize()
-        {
-            if (windowEventHook == null)
-            {
-                lock (windowEventHookLocker)
-                {
-                    windowEventHook = new WindowEventHook();
-                    windowEventHook.WindowChanged += WindowEventHook_WindowChanged;
-                }
-            }
-        }
-
-        public static void Uninitialize()
-        {
-            if (windowEventHook != null)
-            {
-                lock (windowEventHookLocker)
-                {
-                    if (windowEventHook != null)
-                    {
-                        windowEventHook.WindowChanged -= WindowEventHook_WindowChanged;
-                        windowEventHook?.Dispose();
-                        windowEventHook = null;
-                    }
-                }
-            }
-        }
-
-        private static void WindowEventHook_WindowChanged(object sender, in WindowEventHook.WindowEventArgs e)
-        {
-            lock (windowManagers)
-            {
-                var windowId = new WindowId((ulong)e.HWND.Value.ToInt64());
-                if (e.Type == WindowEventHook.WindowEventType.Created)
-                {
-                    windowManagers[windowId] = new WindowManager(windowId);
-                }
-            }
-        }
+        #endregion Window Icon
     }
 }

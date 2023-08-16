@@ -303,11 +303,6 @@ namespace BlueFire.Toolkit.WinUI3.Media
             }
         }
 
-        ~CompositionSurfaceLoader()
-        {
-            Dispose(disposing: false);
-        }
-
         public void Dispose()
         {
             Dispose(disposing: true);

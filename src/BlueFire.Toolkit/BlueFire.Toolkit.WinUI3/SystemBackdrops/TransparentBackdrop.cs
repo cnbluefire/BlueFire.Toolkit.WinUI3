@@ -73,12 +73,6 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             }
         }
 
-        private bool TryGetWindowId(ICompositionSupportsSystemBackdrop target, XamlRoot xamlRoot, out WindowId windowId)
-        {
-            windowId = xamlRoot.GetContentWindowId();
-            return windowId.Value != 0;
-        }
-
         private unsafe void OnWindowMessageBeforeReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
         {
             if (e.MessageId == PInvoke.WM_DWMCOMPOSITIONCHANGED)

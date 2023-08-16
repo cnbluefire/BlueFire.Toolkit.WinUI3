@@ -15,7 +15,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
         {
             if (element?.XamlRoot != null)
             {
-                return XamlRootExtensions.GetContentWindowId(element.XamlRoot);
+                return element.XamlRoot.ContentIslandEnvironment.AppWindowId;
             }
             return default;
         }

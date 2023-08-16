@@ -1,69 +1,134 @@
-﻿using Microsoft.UI;
-using Microsoft.UI.Dispatching;
+﻿using BlueFire.Toolkit.WinUI3.Icons;
+using Microsoft.UI;
 using Microsoft.UI.Windowing;
-using Windows.Win32.Foundation;
-using Windows.Win32;
-using System.Diagnostics;
+using Microsoft.UI.Xaml;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading.Tasks;
+using Windows.Win32.Foundation;
+using PInvoke = Windows.Win32.PInvoke;
 
-namespace BlueFire.Toolkit.WinUI3.WindowBase
+namespace BlueFire.Toolkit.WinUI3
 {
-    public partial class WindowManager : IDisposable
+    public sealed partial class WindowManager
     {
-        private DispatcherQueue dispatcherQueue;
-        private readonly WindowId windowId;
-        private readonly HWND hWnd;
+        private bool destroyed;
+        private WindowBase.WindowMessageMonitor? messageMonitor;
         private AppWindow? appWindow;
         private WindowEx? windowExInternal;
-        private WindowMessageMonitor? messageMonitor;
-        private bool destroying = false;
+        private bool internalEnableWindowProc;
 
         private double minWidth;
         private double minHeight;
         private double maxWidth;
         private double maxHeight;
+        private bool useDefaultIcon;
+        private bool messageHandleInstalled;
+        private uint dpi;
 
-        private uint dpi = 0;
-
-        private bool disposedValue;
-
-        internal WindowManager(WindowId windowId)
+        private WindowManager(WindowId windowId)
         {
-            dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+            HWND = new HWND(Win32Interop.GetWindowFromWindowId(windowId));
+            if (!PInvoke.IsWindow(HWND)) throw new ArgumentException(null, nameof(windowId));
 
-            this.windowId = windowId;
-
-            this.hWnd = new HWND(Win32Interop.GetWindowFromWindowId(windowId));
-
-            messageMonitor = new WindowMessageMonitor(this);
-
-            GetMonitorInternal().WindowMessageBeforeReceived += OverrideWindowProc;
+            WindowId = windowId;
+            messageMonitor = new WindowBase.WindowMessageMonitor(this);
         }
 
-        public WindowId WindowId => windowId;
-
-        public AppWindow? AppWindow => appWindow ??= AppWindow.GetFromWindowId(windowId);
-
-        public uint WindowDpi => dpi != 0 ? dpi : (dpi = PInvoke.GetDpiForWindow(HWND));
-
-        internal HWND HWND => hWnd;
+        internal HWND HWND { get; }
 
         internal WindowEx? WindowExInternal
         {
             get => windowExInternal;
-            set => windowExInternal = value;
+            set
+            {
+                if (windowExInternal != value)
+                {
+                    windowExInternal = value;
+                    UpdateWindowProc();
+                }
+            }
         }
 
-        internal WindowMessageMonitor GetMonitorInternal()
+        internal bool InternalEnableWindowProc
         {
-            if (disposedValue) throw new ObjectDisposedException(nameof(WindowManager));
+            get => internalEnableWindowProc;
+            set
+            {
+                if (internalEnableWindowProc != value)
+                {
+                    internalEnableWindowProc = value;
+                    UpdateWindowProc();
+                }
+            }
+        }
+
+        public WindowId WindowId { get; }
+
+        public AppWindow? AppWindow => !destroyed ? (appWindow ??= AppWindow.GetFromWindowId(WindowId)) : null;
+
+        public nint WindowHandle => HWND.Value;
+
+        public bool UseDefaultIcon
+        {
+            get => useDefaultIcon;
+            set
+            {
+                if (useDefaultIcon != value)
+                {
+                    useDefaultIcon = value;
+                    if (!destroyed)
+                    {
+                        if (useDefaultIcon)
+                        {
+                            SetDefaultIcon(WindowId, false, WindowDpi);
+                        }
+                        else
+                        {
+                            RemoveIcon(WindowId);
+                        }
+                        UpdateWindowProc();
+                    }
+                }
+            }
+        }
+
+        public uint WindowDpi
+        {
+            get
+            {
+                if (!messageHandleInstalled || dpi == 0)
+                {
+                    var _dpi = PInvoke.GetDpiForWindow(HWND);
+                    if (messageHandleInstalled) dpi = _dpi;
+                    return _dpi;
+                }
+
+                return dpi;
+            }
+        }
+
+        internal WindowBase.WindowMessageMonitor GetMonitorInternal()
+        {
+            if (destroyed) throw new ObjectDisposedException(nameof(WindowManager));
             return messageMonitor!;
         }
 
         public event WindowMessageReceivedEventHandler? WindowMessageReceived
         {
-            add => messageMonitor!.WindowMessageReceived += value;
-            remove => messageMonitor!.WindowMessageReceived -= value;
+            add
+            {
+                messageMonitor!.WindowMessageReceived += value;
+                UpdateWindowProc();
+            }
+            remove
+            {
+                messageMonitor!.WindowMessageReceived -= value;
+                UpdateWindowProc();
+            }
         }
 
         public double MinWidth
@@ -120,23 +185,58 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
         private void RefreshWindowSize()
         {
-            if (!disposedValue && PInvoke.GetWindowRect(HWND, out var rect))
+            if (!destroyed && PInvoke.GetWindowRect(HWND, out var rect))
             {
                 PInvoke.SetWindowPos(HWND, default, rect.X, rect.Y, rect.Width, rect.Height,
                     global::Windows.Win32.UI.WindowsAndMessaging.SET_WINDOW_POS_FLAGS.SWP_NOZORDER);
+
+                UpdateWindowProc();
+            }
+        }
+
+        private void UpdateWindowProc()
+        {
+            if (destroyed) return;
+
+            var flag = false;
+            if (useDefaultIcon) flag = true;
+
+            if (!flag) flag = InternalEnableWindowProc;
+
+            if (!flag) flag = WindowExInternal != null;
+
+            if (!flag)
+            {
+                if (minWidth != 0 || minHeight != 0 || maxWidth != 0 || maxHeight != 0)
+                {
+                    flag = true;
+                }
+            }
+
+            if (!flag) flag = GetMonitorInternal().MessageReceivedEventHandled;
+
+            if (messageHandleInstalled != flag)
+            {
+                messageHandleInstalled = flag;
+                GetMonitorInternal().WindowMessageBeforeReceived -= OverrideWindowProc;
+                dpi = 0;
+
+                if (flag)
+                {
+                    GetMonitorInternal().WindowMessageBeforeReceived += OverrideWindowProc;
+                }
             }
         }
 
         private unsafe void OverrideWindowProc(WindowManager sender, WindowMessageReceivedEventArgs e)
         {
+            if (destroyed) return;
+
             if (e.MessageId == PInvoke.WM_GETMINMAXINFO)
             {
-                ref var info = ref Unsafe.AsRef<global::Windows.Win32.UI.WindowsAndMessaging.MINMAXINFO>((void*)e.LParam);
+                ref var info = ref Unsafe.AsRef<Windows.Win32.UI.WindowsAndMessaging.MINMAXINFO>((void*)e.LParam);
 
-                if (dpi == 0)
-                {
-                    dpi = PInvoke.GetDpiForWindow(HWND);
-                }
+                var dpi = WindowDpi;
 
                 var minWidthPixel = (int)(minWidth * dpi / 96);
                 var minHeightPixel = (int)(minHeight * dpi / 96);
@@ -144,8 +244,8 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 var maxWidthPixel = (int)(maxWidth * dpi / 96);
                 var maxHeightPixel = (int)(maxHeight * dpi / 96);
 
-                if (maxWidthPixel == 0) maxWidthPixel = PInvoke.GetSystemMetrics(global::Windows.Win32.UI.WindowsAndMessaging.SYSTEM_METRICS_INDEX.SM_CXMAXTRACK);
-                if (maxHeightPixel == 0) maxHeightPixel = PInvoke.GetSystemMetrics(global::Windows.Win32.UI.WindowsAndMessaging.SYSTEM_METRICS_INDEX.SM_CYMAXTRACK);
+                if (maxWidthPixel == 0) maxWidthPixel = PInvoke.GetSystemMetrics(Windows.Win32.UI.WindowsAndMessaging.SYSTEM_METRICS_INDEX.SM_CXMAXTRACK);
+                if (maxHeightPixel == 0) maxHeightPixel = PInvoke.GetSystemMetrics(Windows.Win32.UI.WindowsAndMessaging.SYSTEM_METRICS_INDEX.SM_CYMAXTRACK);
 
                 info.ptMinTrackSize = new System.Drawing.Point(minWidthPixel, minHeightPixel);
                 info.ptMaxTrackSize = new System.Drawing.Point(maxWidthPixel, maxHeightPixel);
@@ -156,63 +256,34 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             else if (e.MessageId == PInvoke.WM_DPICHANGED)
             {
                 dpi = 0;
+                SetDefaultIcon(WindowId, false, WindowDpi);
             }
             else if (e.MessageId == PInvoke.WM_CREATE)
             {
-                SetDefaultIcon(WindowId, false);
+                SetDefaultIcon(WindowId, false, WindowDpi);
             }
             else if (e.MessageId == PInvoke.WM_DESTROY)
             {
-                destroying = true;
-                RemoveIcon(WindowId);
-                lock (windowManagers)
-                {
-                    if (windowManagers.Remove(WindowId, out var manager))
-                    {
-                        manager.Dispose();
-                    }
-                }
+                OnDestroy();
             }
-
-            //Debug.WriteLine(e.ToString());
         }
 
-        protected virtual void Dispose(bool disposing)
+        private void OnDestroy()
         {
-            if (!disposedValue)
+            if (!destroyed)
             {
-                if (disposing)
-                {
-                    // TODO: 释放托管状态(托管对象)
-                }
+                destroyed = true;
 
+                OnWindowDestroy(WindowId);
                 if (messageMonitor != null)
                 {
                     messageMonitor.WindowMessageBeforeReceived -= OverrideWindowProc;
-
                     messageMonitor.Dispose();
-                    messageMonitor = null;
+                    messageMonitor = null!;
                 }
 
-                // TODO: 释放未托管的资源(未托管的对象)并重写终结器
-                // TODO: 将大型字段设置为 null
-                disposedValue = true;
+                RemoveIcon(WindowId);
             }
         }
-
-        // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
-        ~WindowManager()
-        {
-            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-            Dispose(disposing: false);
-        }
-
-        public void Dispose()
-        {
-            // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-
     }
 }

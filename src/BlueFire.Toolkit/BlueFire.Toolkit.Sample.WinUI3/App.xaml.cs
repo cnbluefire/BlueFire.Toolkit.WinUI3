@@ -1,4 +1,4 @@
-﻿using BlueFire.Toolkit.WinUI3.WindowBase;
+﻿using BlueFire.Toolkit.WinUI3;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -44,7 +44,6 @@ namespace BlueFire.Toolkit.Sample.WinUI3
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             m_window = new MainWindow();
-            //await Task.Delay(1000);
             m_window.Activate();
         }
 

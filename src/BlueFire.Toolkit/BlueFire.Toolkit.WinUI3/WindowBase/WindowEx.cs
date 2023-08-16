@@ -14,20 +14,25 @@ using Windows.UI.Composition.Desktop;
 using BlueFire.Toolkit.WinUI3.Compositions;
 using Windows.Foundation;
 using Microsoft.UI;
+using Microsoft.UI.Content;
+using System.Numerics;
 
-namespace BlueFire.Toolkit.WinUI3.WindowBase
+namespace BlueFire.Toolkit.WinUI3
 {
     [ContentProperty(Name = nameof(Content))]
     public class WindowEx : FrameworkElement
     {
         private XamlWindow xamlWindow;
-        private WindowManager? windowManager;
+        private WindowManager windowManager;
         private bool windowInitialized;
         private HWND hWnd;
         private uint dpi;
         private bool destroying;
         private DesktopWindowTarget? desktopWindowTarget;
         private bool hasShowed;
+        private bool isActivated;
+        private bool needFlushCompTarget;
+        private Windows.UI.Composition.ContainerVisual rootVisual;
 
         private FrameworkElement? loadHelper;
 
@@ -40,22 +45,20 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         {
             xamlWindow = new XamlWindow();
 
-            windowManager = WindowManager.Get(xamlWindow.AppWindow)!;
+            var manager = WindowManager.Get(xamlWindow.AppWindow);
 
-            if (windowManager != null)
-            {
-                windowManager.WindowExInternal = this;
+            if (manager == null) throw new ArgumentException(null, nameof(xamlWindow.AppWindow));
 
-                hWnd = windowManager.HWND;
-            }
-            else
-            {
-                hWnd = new HWND(Win32Interop.GetWindowFromWindowId(xamlWindow.AppWindow.Id));
-            }
+            windowManager = manager;
+            windowManager.WindowExInternal = this;
+
+            hWnd = windowManager.HWND;
+
+            windowManager.UseDefaultIcon = true;
 
             Title = xamlWindow.Title;
 
-            dpi = PInvoke.GetDpiForWindow(hWnd);
+            dpi = windowManager.WindowDpi;
 
             Width = 800;
             Height = 600;
@@ -65,10 +68,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
             windowInitialized = true;
 
-            if (windowManager != null)
-            {
-                windowManager.GetMonitorInternal().WindowMessageBeforeReceived += WindowManager_WindowMessageBeforeReceived;
-            }
+            windowManager.GetMonitorInternal().WindowMessageBeforeReceived += WindowManager_WindowMessageBeforeReceived;
 
             SetWindowSize(Width, Height);
 
@@ -79,6 +79,8 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             RegisterPropertyChangedCallback(MaxWidthProperty, OnSizePropertyChanged);
             RegisterPropertyChangedCallback(MaxHeightProperty, OnSizePropertyChanged);
 
+            rootVisual = WindowsCompositionHelper.Compositor.CreateContainerVisual();
+            rootVisual.RelativeSizeAdjustment = Vector2.One;
         }
 
         internal HWND Handle => hWnd;
@@ -91,10 +93,17 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
         public new bool IsLoaded => isLoaded;
 
-        public Windows.UI.Composition.Visual RootVisual
+        public Windows.UI.Composition.Visual? RootVisual
         {
-            get => EnsureDesktopWindowTarget().Root;
-            set => EnsureDesktopWindowTarget().Root = value;
+            get => rootVisual.Children?.FirstOrDefault();
+            set
+            {
+                if (!rootVisual.Children.Contains(value))
+                {
+                    rootVisual.Children.RemoveAll();
+                    rootVisual.Children.InsertAtTop(value);
+                }
+            }
         }
 
         public UIElement Content
@@ -206,7 +215,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             if (e.MessageId == PInvoke.WM_DPICHANGED)
             {
                 var oldDpi = dpi;
-                dpi = PInvoke.GetDpiForWindow(hWnd);
+                dpi = windowManager.WindowDpi;
                 windowInitialized = false;
                 try
                 {
@@ -257,12 +266,28 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                     }
                 }
             }
+            else if (e.MessageId == PInvoke.WM_ACTIVATE)
+            {
+                isActivated = unchecked((ushort)e.WParam) != 0;
+                if (!isActivated) needFlushCompTarget = true;
+            }
             else if (e.MessageId == PInvoke.WM_DESTROY)
             {
                 destroying = true;
 
-                desktopWindowTarget?.Dispose();
-                desktopWindowTarget = null;
+                if (desktopWindowTarget != null)
+                {
+                    desktopWindowTarget.Root = null;
+                    desktopWindowTarget.Dispose();
+                    desktopWindowTarget = null;
+                }
+
+                if (rootVisual != null)
+                {
+                    rootVisual.Children.RemoveAll();
+                    rootVisual.Dispose();
+                    rootVisual = null!;
+                }
             }
 
             OnWindowMessageReceived(e);
@@ -280,6 +305,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             if (desktopWindowTarget == null)
             {
                 desktopWindowTarget = WindowsCompositionHelper.CreateDesktopWindowTarget(xamlWindow.AppWindow.Id, false);
+                desktopWindowTarget.Root = rootVisual;
             }
 
             return desktopWindowTarget;
@@ -357,6 +383,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             ((FrameworkElement)sender).Loaded -= LoadHelper_Loaded;
             loadHelper = null;
 
+            EnsureDesktopWindowTarget();
             loadedHandler?.Invoke(this, new RoutedEventArgs());
         }
 
@@ -366,14 +393,22 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
             if (loadHelper == null)
             {
+                isLoading = true;
                 loadingHandler?.Invoke(this, null);
-                isLoaded = true;
             }
             OnSizeChanged(new Windows.Foundation.Size(Width, Height), new Windows.Foundation.Size(0, 0));
 
             if (loadHelper == null)
             {
-                loadedHandler?.Invoke(this, new RoutedEventArgs());
+                DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+                {
+                    if (!destroying)
+                    {
+                        isLoaded = true;
+                        EnsureDesktopWindowTarget();
+                        loadedHandler?.Invoke(this, new RoutedEventArgs());
+                    }
+                });
             }
         }
     }

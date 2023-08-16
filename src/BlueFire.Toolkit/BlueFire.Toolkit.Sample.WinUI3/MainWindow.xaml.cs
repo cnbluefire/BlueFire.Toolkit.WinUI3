@@ -3,7 +3,7 @@ using BlueFire.Toolkit.WinUI3.Extensions;
 using BlueFire.Toolkit.WinUI3.Icons;
 using BlueFire.Toolkit.WinUI3.Media;
 using BlueFire.Toolkit.WinUI3.SystemBackdrops;
-using BlueFire.Toolkit.WinUI3.WindowBase;
+using BlueFire.Toolkit.WinUI3;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
