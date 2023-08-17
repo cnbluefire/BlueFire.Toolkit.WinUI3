@@ -41,6 +41,27 @@ namespace Windows.Win32
             }
         }
 
+        internal static HWND[]? EnumThreadWindows(Func<HWND, nint, bool> predicate, nint lParam)
+        {
+            var list = new List<HWND>();
+            var handler = new UI.WindowsAndMessaging.WNDENUMPROC((_hWnd, _lParam) =>
+            {
+                try
+                {
+                    if (predicate(_hWnd, _lParam.Value)) list.Add(_hWnd);
+                }
+                catch { }
+
+                return true;
+            });
+
+            if (EnumThreadWindows(PInvoke.GetCurrentThreadId(), handler, new LPARAM(lParam)))
+            {
+                return list.Distinct().ToArray();
+            }
+            return null;
+        }
+
         private static nint SetWindowLongPtr(nint hWnd, UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX nIndex, nint dwNewLong)
         {
             return 0;

@@ -1,8 +1,10 @@
 ﻿using BlueFire.Toolkit.WinUI3.Icons;
 using Microsoft.UI;
+using Microsoft.UI.Content;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -40,6 +42,43 @@ namespace BlueFire.Toolkit.WinUI3
         public static WindowManager? Get(Window window) => Get(window.AppWindow.Id);
 
         public static WindowManager? Get(XamlRoot xamlRoot) => Get(xamlRoot.ContentIslandEnvironment.AppWindowId);
+
+        public static unsafe IReadOnlyList<WindowId> TryGetAllWindowIds()
+        {
+            var charArray = ArrayPool<char>.Shared.Rent(256);
+
+            try
+            {
+                fixed (char* _pChar = &charArray[0])
+                {
+                    var pChar = _pChar;
+                    var str = new PWSTR(pChar);
+
+                    var hWndArray = PInvoke.EnumThreadWindows((_hWnd, _) =>
+                    {
+                        var length = PInvoke.GetClassName(_hWnd, str, 255);
+
+                        if (length > 0)
+                        {
+                            var className = new string(pChar, 0, length);
+                            
+                            return className == "Microsoft.UI.Windowing.Window" 
+                                || className == "WinUIDesktopWin32WindowClass";
+                        }
+
+                        return false;
+                    }, 0);
+
+                    return hWndArray?
+                        .Select(c => Win32Interop.GetWindowIdFromWindow(c.Value))
+                        .ToArray() ?? Array.Empty<WindowId>();
+                }
+            }
+            finally
+            {
+                ArrayPool<char>.Shared.Return(charArray);
+            }
+        }
 
         private static void OnWindowDestroy(WindowId windowId)
         {

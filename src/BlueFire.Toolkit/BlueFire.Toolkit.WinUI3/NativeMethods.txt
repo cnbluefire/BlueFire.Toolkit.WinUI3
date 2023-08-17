@@ -40,6 +40,8 @@ Windows.Win32.UI.WindowsAndMessaging.CreateIconIndirect
 Windows.Win32.UI.WindowsAndMessaging.ICON_*
 Windows.Win32.UI.WindowsAndMessaging.WINDOWPOS
 Windows.Win32.UI.WindowsAndMessaging.SetForegroundWindow
+Windows.Win32.UI.WindowsAndMessaging.EnumWindows
+Windows.Win32.UI.WindowsAndMessaging.EnumThreadWindows
 
 Windows.Win32.UI.HiDpi.GetDpiForWindow
 
