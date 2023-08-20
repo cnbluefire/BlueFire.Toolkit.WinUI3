@@ -23,6 +23,8 @@ using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using WinRT;
+using Microsoft.UI.Content;
+using BlueFire.Toolkit.WinUI3.Input;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -40,7 +42,7 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
             backdrop = new TransparentBackdrop();
 
-            this.SystemBackdrop = backdrop;
+            //this.SystemBackdrop = backdrop;
 
             this.AppWindow.Closing += AppWindow_Closing;
 
@@ -58,6 +60,17 @@ namespace BlueFire.Toolkit.Sample.WinUI3
             rootVisual.Brush = brush;
 
             this.RootVisual = rootVisual;
+
+            MyHotKeyInputBox.HotKeyModel = HotKeyManager.RegisterKey(
+                HotKeyModifiers.MOD_CONTROL | HotKeyModifiers.MOD_ALT, 
+                VirtualKeys.VK_C);
+
+            MyHotKeyInputBox.HotKeyModel.Invoked += HotKeyModel_Invoked;
+        }
+
+        private void HotKeyModel_Invoked(HotKeyModel sender, HotKeyInvokedEventArgs args)
+        {
+            Debug.WriteLine(sender);
         }
 
         CompositionSurfaceLoader surfaceLoader;

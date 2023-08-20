@@ -39,14 +39,23 @@ Windows.Win32.UI.WindowsAndMessaging.CreateIcon
 Windows.Win32.UI.WindowsAndMessaging.CreateIconIndirect
 Windows.Win32.UI.WindowsAndMessaging.ICON_*
 Windows.Win32.UI.WindowsAndMessaging.WINDOWPOS
+Windows.Win32.UI.WindowsAndMessaging.GetForegroundWindow
 Windows.Win32.UI.WindowsAndMessaging.SetForegroundWindow
 Windows.Win32.UI.WindowsAndMessaging.EnumWindows
 Windows.Win32.UI.WindowsAndMessaging.EnumThreadWindows
+Windows.Win32.UI.WindowsAndMessaging.CreateWindowExW
+Windows.Win32.UI.WindowsAndMessaging.RegisterClassExW
+Windows.Win32.UI.WindowsAndMessaging.DefWindowProcW
 
 Windows.Win32.UI.HiDpi.GetDpiForWindow
 
 Windows.Win32.UI.Input.KeyboardAndMouse.EnableWindow
 Windows.Win32.UI.Input.KeyboardAndMouse.SetActiveWindow
+Windows.Win32.UI.Input.KeyboardAndMouse.RegisterHotKey
+Windows.Win32.UI.Input.KeyboardAndMouse.UnregisterHotKey
+Windows.Win32.UI.Input.KeyboardAndMouse.MapVirtualKeyW
+Windows.Win32.UI.Input.KeyboardAndMouse.GetKeyNameTextW
+Windows.Win32.UI.Input.KeyboardAndMouse.SendInput
 
 Windows.Win32.System.LibraryLoader.GetModuleHandleW
 

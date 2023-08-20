@@ -7,13 +7,17 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:toolkit="using:BlueFire.Toolkit.WinUI3"
+    xmlns:toolkitControls="using:BlueFire.Toolkit.WinUI3.Controls"
     mc:Ignorable="d"
     
     Title="Haha"
     Width="500" MinWidth="400" MaxWidth="800"
     Height="350" MinHeight="350" MaxHeight="500">
 
-    <StackPanel x:Name="LayoutRoot" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+    <StackPanel x:Name="LayoutRoot" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
         <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
+        <Grid Background="Black" Padding="20" Margin="20">
+            <toolkitControls:HotKeyInputBox x:Name="MyHotKeyInputBox" />
+        </Grid>
     </StackPanel>
 </toolkit:WindowEx>

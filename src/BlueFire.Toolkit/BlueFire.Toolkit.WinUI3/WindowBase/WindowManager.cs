@@ -28,6 +28,8 @@ namespace BlueFire.Toolkit.WinUI3
         private bool useDefaultIcon;
         private bool messageHandleInstalled;
         private uint dpi;
+        private bool isActivated;
+        private EventHandler activatedStateChanged;
 
         private WindowManager(WindowId windowId)
         {
@@ -65,6 +67,8 @@ namespace BlueFire.Toolkit.WinUI3
                 }
             }
         }
+
+        internal bool IsForegroundWindow => messageHandleInstalled ? isActivated : PInvoke.GetForegroundWindow() == HWND;
 
         public WindowId WindowId { get; }
 
@@ -127,6 +131,20 @@ namespace BlueFire.Toolkit.WinUI3
             remove
             {
                 messageMonitor!.WindowMessageReceived -= value;
+                UpdateWindowProc();
+            }
+        }
+
+        public event EventHandler? ActivatedStateChanged
+        {
+            add
+            {
+                activatedStateChanged += value;
+                UpdateWindowProc();
+            }
+            remove
+            {
+                activatedStateChanged -= value;
                 UpdateWindowProc();
             }
         }
@@ -215,6 +233,8 @@ namespace BlueFire.Toolkit.WinUI3
 
             if (!flag) flag = GetMonitorInternal().MessageReceivedEventHandled;
 
+            if (!flag) flag = activatedStateChanged != null;
+
             if (messageHandleInstalled != flag)
             {
                 messageHandleInstalled = flag;
@@ -257,6 +277,11 @@ namespace BlueFire.Toolkit.WinUI3
             {
                 dpi = 0;
                 SetDefaultIcon(WindowId, false, WindowDpi);
+            }
+            else if (e.MessageId == PInvoke.WM_ACTIVATE)
+            {
+                isActivated = unchecked((ushort)e.WParam) != 0;
+                activatedStateChanged?.Invoke(this, EventArgs.Empty);
             }
             else if (e.MessageId == PInvoke.WM_CREATE)
             {
