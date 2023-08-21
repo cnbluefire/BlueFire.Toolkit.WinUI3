@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Foundation;
 using Windows.Win32.Foundation;
 using PInvoke = Windows.Win32.PInvoke;
 
@@ -17,6 +18,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
         internal static object locker = new object();
 
         private static bool isEnabledInternal = true;
+        private static bool isEnabled = true;
 
         internal static bool IsEnabledInternal
         {
@@ -28,6 +30,23 @@ namespace BlueFire.Toolkit.WinUI3.Input
                     if (isEnabledInternal != value)
                     {
                         isEnabledInternal = value;
+
+                        UpdateModelsRegistration();
+                    }
+                }
+            }
+        }
+
+        public static bool IsEnabled
+        {
+            get => isEnabled;
+            set
+            {
+                lock (locker)
+                {
+                    if (isEnabled != value)
+                    {
+                        isEnabled = value;
 
                         UpdateModelsRegistration();
                     }
@@ -99,7 +118,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
                     listener.UnregisterAllKeys().GetAwaiter().GetResult();
                 }
 
-                if (!isEnabledInternal) return;
+                if (!isEnabledInternal || !isEnabled) return;
 
                 var states = new Dictionary<(HotKeyModifiers, VirtualKeys), bool>();
 
@@ -218,7 +237,8 @@ namespace BlueFire.Toolkit.WinUI3.Input
                     var model = models[i];
                     try
                     {
-                        if (model.ModifiersInternal == args.Modifier
+                        if (model.IsEnabledInternal
+                            && model.ModifiersInternal == args.Modifier
                             && model.VirtualKeyInternal == args.Key)
                         {
                             model.RaiseInvoked(args);
@@ -226,8 +246,12 @@ namespace BlueFire.Toolkit.WinUI3.Input
                     }
                     catch { }
                 }
+
+                HotKeyInvoked?.Invoke(null, args);
             }
         }
+
+        public static event TypedEventHandler<object?, HotKeyInvokedEventArgs>? HotKeyInvoked;
 
         private static HotKeyListener EnsureListener()
         {

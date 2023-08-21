@@ -18,8 +18,6 @@ namespace BlueFire.Toolkit.WinUI3.Input
         {
             registered = false;
 
-            IsEnabled = false;
-
             UpdateStatus();
         }
 
@@ -69,7 +67,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
 
         public HotKeyModifiers Modifiers
         {
-            get { return (HotKeyModifiers)GetValue(ModifiersProperty); }
+            get { return DispatcherQueue.HasThreadAccess ? (HotKeyModifiers)GetValue(ModifiersProperty) : ModifiersInternal; }
             set { SetValue(ModifiersProperty, value); }
         }
 
@@ -92,7 +90,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
 
         public VirtualKeys VirtualKey
         {
-            get { return (VirtualKeys)GetValue(VirtualKeyProperty); }
+            get { return DispatcherQueue.HasThreadAccess ? (VirtualKeys)GetValue(VirtualKeyProperty) : VirtualKeyInternal; }
             set { SetValue(VirtualKeyProperty, value); }
         }
 
@@ -115,7 +113,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
 
         public bool IsEnabled
         {
-            get { return (bool)GetValue(IsEnabledProperty); }
+            get { return DispatcherQueue.HasThreadAccess ? (bool)GetValue(IsEnabledProperty) : IsEnabledInternal; }
             set { SetValue(IsEnabledProperty, value); }
         }
 
@@ -138,7 +136,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
 
         public HotKeyModelStatus Status
         {
-            get { return (HotKeyModelStatus)GetValue(StatusProperty); }
+            get { return DispatcherQueue.HasThreadAccess ? (HotKeyModelStatus)GetValue(StatusProperty) : StatusInternal; }
             private set { SetValue(StatusProperty, value); }
         }
 

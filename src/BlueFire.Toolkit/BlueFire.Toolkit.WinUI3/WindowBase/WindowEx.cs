@@ -98,10 +98,19 @@ namespace BlueFire.Toolkit.WinUI3
             get => rootVisual.Children?.FirstOrDefault();
             set
             {
-                if (!rootVisual.Children.Contains(value))
+                if (value != null)
+                {
+                    if (!rootVisual.Children.Contains(value))
+                    {
+                        rootVisual.Children.RemoveAll();
+                        rootVisual.Children.InsertAtTop(value);
+
+                        EnsureDesktopWindowTarget();
+                    }
+                }
+                else
                 {
                     rootVisual.Children.RemoveAll();
-                    rootVisual.Children.InsertAtTop(value);
                 }
             }
         }
@@ -383,7 +392,10 @@ namespace BlueFire.Toolkit.WinUI3
             ((FrameworkElement)sender).Loaded -= LoadHelper_Loaded;
             loadHelper = null;
 
-            EnsureDesktopWindowTarget();
+            if (rootVisual.Children.Count > 0)
+            {
+                EnsureDesktopWindowTarget();
+            }
             loadedHandler?.Invoke(this, new RoutedEventArgs());
         }
 
