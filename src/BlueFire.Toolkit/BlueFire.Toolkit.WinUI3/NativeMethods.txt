@@ -95,6 +95,13 @@ Windows.Win32.Graphics.Direct3D11.ID3D11Device4
 Windows.Win32.Graphics.Dxgi.IDXGIDevice3
 Windows.Win32.Graphics.Dxgi.IDXGIFactory7
 
+Windows.Win32.Graphics.DirectWrite.IDWriteTextFormat1
+Windows.Win32.Graphics.DirectWrite.IDWriteFactory
+Windows.Win32.Graphics.DirectWrite.IDWriteFactory3
+Windows.Win32.Graphics.DirectWrite.IDWriteFontSet
+Windows.Win32.Graphics.DirectWrite.IDWriteFontFaceReference
+Windows.Win32.Graphics.DirectWrite.DWriteCreateFactory
+
 Windows.Win32.System.WinRT.Composition.ICompositorInterop
 Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop2
 Windows.Win32.System.WinRT.Composition.ICompositorDesktopInterop

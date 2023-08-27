@@ -8,6 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:toolkit="using:BlueFire.Toolkit.WinUI3"
     xmlns:toolkitControls="using:BlueFire.Toolkit.WinUI3.Controls"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     mc:Ignorable="d"
     
     Title="Haha"
@@ -17,7 +18,7 @@
     <StackPanel x:Name="LayoutRoot" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
         <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
         <Grid Background="Black" Padding="20" Margin="20">
-            <toolkitControls:HotKeyInputBox x:Name="MyHotKeyInputBox" />
+            <canvas:CanvasControl x:Name="myCanvasControl" Draw="myCanvasControl_Draw" Width="150" Height="150" />
         </Grid>
     </StackPanel>
 </toolkit:WindowEx>

@@ -25,6 +25,8 @@ using Windows.Foundation.Collections;
 using WinRT;
 using Microsoft.UI.Content;
 using BlueFire.Toolkit.WinUI3.Input;
+using Microsoft.Graphics.Canvas.Text;
+using BlueFire.Toolkit.WinUI3.Graphics;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -60,12 +62,6 @@ namespace BlueFire.Toolkit.Sample.WinUI3
             rootVisual.Brush = brush;
 
             this.RootVisual = rootVisual;
-
-            MyHotKeyInputBox.HotKeyModel = HotKeyManager.RegisterKey(
-                HotKeyModifiers.MOD_CONTROL | HotKeyModifiers.MOD_ALT, 
-                VirtualKeys.VK_C);
-
-            MyHotKeyInputBox.HotKeyModel.Invoked += HotKeyModel_Invoked;
         }
 
         private void HotKeyModel_Invoked(HotKeyModel sender, HotKeyInvokedEventArgs args)
@@ -113,6 +109,24 @@ namespace BlueFire.Toolkit.Sample.WinUI3
         protected override void OnWindowMessageReceived(WindowMessageReceivedEventArgs e)
         {
             base.OnWindowMessageReceived(e);
+        }
+
+        private void myCanvasControl_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
+        {
+            using (var format = new CanvasTextFormat()
+            {
+                FontFamily = "Monotype Corsiva"
+            })
+            {
+                CanvasTextFormatHelper.SetFallbackFonts(format, new[]
+                {
+                    new CanvasTextFormatHelper.FontIdentifier("ÀŒÃÂ", null, 1)
+                });
+                using (var layout = new CanvasTextLayout(sender, "≤‚ ‘“ªœ¬ABC", format, float.MaxValue, float.MaxValue))
+                {
+                    args.DrawingSession.DrawTextLayout(layout, 0, 0, Windows.UI.Color.FromArgb(255, 255, 0, 0));
+                }
+            }
         }
     }
 }
