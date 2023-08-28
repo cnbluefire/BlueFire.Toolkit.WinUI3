@@ -4,6 +4,7 @@ using WinRT;
 using Windows.Win32.Graphics.DirectWrite;
 using PInvoke = Windows.Win32.PInvoke;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace BlueFire.Toolkit.WinUI3.Graphics
 {
@@ -11,8 +12,82 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
     {
         private static IDWriteFactory? sharedFactory;
         private static object sharedFactoryLocker = new object();
+        private static HashSet<string> genericFamilyNames = new HashSet<string>()
+        {
+            "SERIF",
+            "SANS-SERIF",
+            "MONOSPACE",
+            "UI-SERIF",
+            "UI-SANS-SERIF",
+            "UI-MONOSPACE",
+            "SYSTEM-UI",
+            "EMOJI"
+        };
 
-        public static unsafe void SetFallbackFonts(object canvasTextFormat, IReadOnlyList<FontIdentifier> fallbackFonts)
+        public static void SetFontFamilySource<T>(
+            T canvasTextFormat,
+            string fontFamilySource,
+            string? languageTag,
+            Action<T, string> setFontFamilyAction,
+            Func<Uri, IWinRTObject> createCanvasFontSetFunction) where T : IWinRTObject
+        {
+            var collection = new FontFamilyIdentifierCollection(fontFamilySource);
+
+            if (collection.Count > 0)
+            {
+                if (string.IsNullOrEmpty(languageTag))
+                {
+                    languageTag = CultureInfo.CurrentUICulture.Name;
+
+                    if (string.IsNullOrEmpty(languageTag))
+                    {
+                        languageTag = "en";
+                    }
+                }
+
+                var mainFontFamily = GetActualFamilyName(collection[0], languageTag, out _);
+
+                setFontFamilyAction.Invoke(canvasTextFormat, mainFontFamily);
+
+                if (collection.Count > 1)
+                {
+                    var list = new List<CanvasFontFamily>(collection.Count - 1);
+
+                    for (int i = 1; i < collection.Count; i++)
+                    {
+                        if (collection[i].LocationUri != null)
+                        {
+                            try
+                            {
+                                var fontSet = createCanvasFontSetFunction.Invoke(collection[i].LocationUri!);
+                                if (fontSet != null)
+                                {
+                                    list.Add(new CanvasFontFamily(collection[i].FontFamilyName, fontSet));
+                                }
+                            }
+                            catch { }
+                        }
+                        else
+                        {
+                            var familyName = GetActualFamilyName(collection[i], languageTag, out var scaleFactor);
+                            list.Add(new CanvasFontFamily(familyName, null, scaleFactor));
+                        }
+                    }
+
+                    SetFallbackFonts(canvasTextFormat, list);
+
+                    foreach (var item in list)
+                    {
+                        if (item.CanvasFontSet is IDisposable disposable)
+                        {
+                            disposable.Dispose();
+                        }
+                    }
+                }
+            }
+        }
+
+        public static unsafe void SetFallbackFonts(object canvasTextFormat, IReadOnlyList<CanvasFontFamily> fallbackFonts)
         {
             if (fallbackFonts == null || fallbackFonts.Count == 0) return;
 
@@ -29,33 +104,24 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
                     {
                         try
                         {
-                            fontFace.GetFamilyNames(out var names);
+                            var rangeArray = GetUnicodeRanges(fontFace);
 
-                            if (names != null && names.GetCount() > 0)
+                            if (rangeArray != null && rangeArray.Length > 0)
                             {
-                                var rangeArray = GetUnicodeRanges(fontFace);
+                                var actualName = fallbackFonts[i].FontFamilyName;
 
-                                if (rangeArray != null && rangeArray.Length > 0)
+                                fixed (DWRITE_UNICODE_RANGE* ptr = rangeArray)
+                                fixed (char* pActualName = actualName)
                                 {
-                                    var len = fallbackFonts[i].FontFamilyName.Length + 1;
-                                    var familyNameArray = new char[1][] { new char[len] };
-
-                                    fallbackFonts[i].FontFamilyName.CopyTo(familyNameArray[0]);
-                                    familyNameArray[0][len - 1] = '\0';
-
-                                    fixed (DWRITE_UNICODE_RANGE* ptr = rangeArray)
-                                    fixed (char* familyNameArrayPtr = familyNameArray[0])
-                                    {
-                                        builder.AddMapping(
-                                            ptr,
-                                            (uint)rangeArray.Length,
-                                            (ushort**)(&familyNameArrayPtr),
-                                            (uint)familyNameArray.Length,
-                                            fontCollection,
-                                            default,
-                                            default,
-                                            fallbackFonts[i].ScaleFactor);
-                                    }
+                                    builder.AddMapping(
+                                        ptr,
+                                        (uint)rangeArray.Length,
+                                        (ushort**)(&pActualName),
+                                        1,
+                                        fontCollection,
+                                        default,
+                                        default,
+                                        fallbackFonts[i].ScaleFactor);
                                 }
                             }
                         }
@@ -100,7 +166,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         }
 
         private static unsafe bool TryGetFontFace(
-            FontIdentifier fontIdentifier,
+            CanvasFontFamily fontIdentifier,
             [NotNullWhen(true)]
             out IDWriteFontFace3? fontFace,
             out IDWriteFontCollection? fontCollection)
@@ -228,6 +294,53 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             return (T)GetSharedFactory();
         }
 
-        public record class FontIdentifier(string FontFamilyName, IWinRTObject? CanvasFontSet, float ScaleFactor = 1);
+        internal static bool IsGenericFamilyName(string name)
+        {
+            return genericFamilyNames.Contains(name, StringComparer.OrdinalIgnoreCase);
+        }
+
+        internal static string GetActualFamilyName(FontFamilyIdentifier identifier, string languageTag, out float scaleFactor)
+        {
+            scaleFactor = 1;
+
+            if (!identifier.IsGenericFamilyName) return identifier.ToString();
+
+            var languageFontGroup = new Windows.Globalization.Fonts.LanguageFontGroup(languageTag);
+
+            var name = identifier.FontFamilyName;
+
+            if (name == "SERIF" || name == "UI-SERIF")
+            {
+                scaleFactor = (float)(languageFontGroup.TraditionalDocumentFont.ScaleFactor / 100);
+                return languageFontGroup.TraditionalDocumentFont.FontFamily;
+            }
+
+            if (name == "SANS-SERIF" || name == "UI-SANS-SERIF")
+            {
+                scaleFactor = (float)(languageFontGroup.ModernDocumentFont.ScaleFactor / 100);
+                return languageFontGroup.ModernDocumentFont.FontFamily;
+            }
+
+            if (name == "MONOSPACE" || name == "UI-MONOSPACE")
+            {
+                scaleFactor = (float)(languageFontGroup.FixedWidthTextFont.ScaleFactor / 100);
+                return languageFontGroup.FixedWidthTextFont.FontFamily;
+            }
+
+            if (name == "SYSTEM-UI")
+            {
+                scaleFactor = (float)(languageFontGroup.UITextFont.ScaleFactor / 100);
+                return languageFontGroup.UITextFont.FontFamily;
+            }
+
+            if (name == "EMOJI")
+            {
+                return "Segoe UI Emoji";
+            }
+
+            throw new ArgumentException(name, nameof(identifier.FontFamilyName));
+        }
+
+        public record class CanvasFontFamily(string FontFamilyName, IWinRTObject? CanvasFontSet, float ScaleFactor = 1);
     }
 }

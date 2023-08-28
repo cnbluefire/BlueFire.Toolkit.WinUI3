@@ -27,6 +27,7 @@ using Microsoft.UI.Content;
 using BlueFire.Toolkit.WinUI3.Input;
 using Microsoft.Graphics.Canvas.Text;
 using BlueFire.Toolkit.WinUI3.Graphics;
+using System.Globalization;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -113,15 +114,15 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
         private void myCanvasControl_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
         {
-            using (var format = new CanvasTextFormat()
+            using (var format = new CanvasTextFormat())
             {
-                FontFamily = "Monotype Corsiva"
-            })
-            {
-                CanvasTextFormatHelper.SetFallbackFonts(format, new[]
-                {
-                    new CanvasTextFormatHelper.FontIdentifier("ÀŒÃÂ", null, 1)
-                });
+                CanvasTextFormatHelper.SetFontFamilySource(
+                    format,
+                    "Monotype Corsiva, serif",
+                    CultureInfo.CurrentUICulture.Name,
+                    (obj, fontFamilyName) => obj.FontFamily = fontFamilyName,
+                    (fontFileUri) => new CanvasFontSet(fontFileUri));
+
                 using (var layout = new CanvasTextLayout(sender, "≤‚ ‘“ªœ¬ABC", format, float.MaxValue, float.MaxValue))
                 {
                     args.DrawingSession.DrawTextLayout(layout, 0, 0, Windows.UI.Color.FromArgb(255, 255, 0, 0));
