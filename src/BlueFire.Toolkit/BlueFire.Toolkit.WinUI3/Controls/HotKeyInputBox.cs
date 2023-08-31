@@ -16,6 +16,7 @@ namespace BlueFire.Toolkit.WinUI3.Controls
         public HotKeyInputBox()
         {
             this.DefaultStyleKey = typeof(HotKeyInputBox);
+            this.DefaultStyleResourceUri = new Uri("ms-appx:///BlueFire.Toolkit.WinUI3/Themes/Generic.xaml");
             this.IsEnabledChanged += HotKeyInputBox_IsEnabledChanged;
             this.Loaded += HotKeyInputBox_Loaded;
             this.Unloaded += HotKeyInputBox_Unloaded;

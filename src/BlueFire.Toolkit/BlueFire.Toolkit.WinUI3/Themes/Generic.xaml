@@ -5,7 +5,7 @@
     xmlns:local="using:BlueFire.Toolkit.WinUI3.Themes">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/BlueFire.Toolkit.WinUI3/Controls/HotKeyInputBox.xaml" />
+        <ResourceDictionary Source="ms-appx:///BlueFire.Toolkit.WinUI3/Controls/HotKeyInputBox.xaml" />
     </ResourceDictionary.MergedDictionaries>
     
 </ResourceDictionary>

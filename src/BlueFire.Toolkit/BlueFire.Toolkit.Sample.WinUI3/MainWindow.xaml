@@ -20,5 +20,6 @@
         <Grid Background="Black" Padding="20" Margin="20">
             <canvas:CanvasControl x:Name="myCanvasControl" Draw="myCanvasControl_Draw" Width="150" Height="150" />
         </Grid>
+        <toolkitControls:HotKeyInputBox />
     </StackPanel>
 </toolkit:WindowEx>

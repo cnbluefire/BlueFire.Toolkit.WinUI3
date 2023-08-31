@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>blue-fire</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="file">LICENSE</license>
+    <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
+    <projectUrl>https://github.com/cnbluefire/BlueFire.Toolkit.WinUI3</projectUrl>
+    <description>Package Description</description>
+    <tags>winui3 winappsdk</tags>
+    <dependencies>
+      <group targetFramework="net6.0-windows10.0.18362">
+        <dependency id="Microsoft.WindowsAppSDK" version="1.4.230822000" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\..\..\LICENSE" target="\LICENSE" />
+
+    <file src=".\build-files\x86\**\*.pri" target="runtimes\win10-x86\lib\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\x86\**\*.dll" target="runtimes\win10-x86\lib\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\x86\**\*.pdb" target="runtimes\win10-x86\lib\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\x86\**\*.xaml" target="runtimes\win10-x86\lib\net6.0-windows10.0.18362\" />
+    
+    <file src=".\build-files\x64\**\*.pri" target="runtimes\win10-x64\lib\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\x64\**\*.dll" target="runtimes\win10-x64\lib\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\x64\**\*.pdb" target="runtimes\win10-x64\lib\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\x64\**\*.xaml" target="runtimes\win10-x64\lib\net6.0-windows10.0.18362\" />
+    
+    <file src=".\build-files\arm64\**\*.pri" target="runtimes\win10-arm64\lib\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\arm64\**\*.dll" target="runtimes\win10-arm64\lib\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\arm64\**\*.pdb" target="runtimes\win10-arm64\lib\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\arm64\**\*.xaml" target="runtimes\win10-arm64\lib\net6.0-windows10.0.18362\" />
+    
+    <file src=".\build-files\AnyCPU\**\*.pri" target="ref\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\AnyCPU\**\*.dll" target="ref\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\AnyCPU\**\*.pdb" target="ref\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\AnyCPU\**\*.xaml" target="ref\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\AnyCPU\**\*.xbf" target="ref\net6.0-windows10.0.18362\" />
+
+    <file src=".\build-files\AnyCPU\**\*.pri" target="lib\uap10.0\" />
+    <file src=".\build-files\AnyCPU\**\*.xaml" target="lib\uap10.0\" />
+  </files>
+</package>

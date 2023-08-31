@@ -13,6 +13,14 @@
 		<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<UseLocalNugetLibrary>false</UseLocalNugetLibrary>
+		<RestoreSources Condition="$(UseLocalNugetLibrary)">
+			$(RestoreSources);
+			$(MSBuildProjectDirectory)\..\build\nupkgs
+		</RestoreSources>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<Content Include="Assets\SplashScreen.scale-200.png" />
 		<Content Include="Assets\LockScreenLogo.scale-200.png" />
@@ -24,8 +32,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="BlueFire.Toolkit.WinUI3" Version="*-*" Condition="$(UseLocalNugetLibrary)" />
 		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.0.5.1" />
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230811000-preview2" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.230822000" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.755" />
 		<Manifest Include="$(ApplicationManifest)" />
 	</ItemGroup>
@@ -38,7 +47,7 @@
 	<ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
 		<ProjectCapability Include="Msix" />
 	</ItemGroup>
-	<ItemGroup>
+	<ItemGroup Condition="!($(UseLocalNugetLibrary))">
 		<ProjectReference Include="..\BlueFire.Toolkit.WinUI3\BlueFire.Toolkit.WinUI3.csproj" />
 	</ItemGroup>
 
