@@ -28,11 +28,10 @@ namespace BlueFire.Toolkit.WinUI3
         private HWND hWnd;
         private uint dpi;
         private bool destroying;
-        private DesktopWindowTarget? desktopWindowTarget;
         private bool hasShowed;
         private bool isActivated;
         private bool needFlushCompTarget;
-        private Windows.UI.Composition.ContainerVisual rootVisual;
+        private Windows.UI.Composition.Visual? rootVisual;
 
         private FrameworkElement? loadHelper;
 
@@ -78,9 +77,6 @@ namespace BlueFire.Toolkit.WinUI3
             RegisterPropertyChangedCallback(MinHeightProperty, OnSizePropertyChanged);
             RegisterPropertyChangedCallback(MaxWidthProperty, OnSizePropertyChanged);
             RegisterPropertyChangedCallback(MaxHeightProperty, OnSizePropertyChanged);
-
-            rootVisual = WindowsCompositionHelper.Compositor.CreateContainerVisual();
-            rootVisual.RelativeSizeAdjustment = Vector2.One;
         }
 
         internal HWND Handle => hWnd;
@@ -95,22 +91,18 @@ namespace BlueFire.Toolkit.WinUI3
 
         public Windows.UI.Composition.Visual? RootVisual
         {
-            get => rootVisual.Children?.FirstOrDefault();
+            get => rootVisual;
             set
             {
-                if (value != null)
+                if (value != rootVisual)
                 {
-                    if (!rootVisual.Children.Contains(value))
-                    {
-                        rootVisual.Children.RemoveAll();
-                        rootVisual.Children.InsertAtTop(value);
+                    rootVisual = value;
 
-                        EnsureDesktopWindowTarget();
+                    windowManager.WindowContentVisual.Children.RemoveAll();
+                    if (rootVisual != null)
+                    {
+                        windowManager.WindowContentVisual.Children.InsertAtTop(rootVisual);
                     }
-                }
-                else
-                {
-                    rootVisual.Children.RemoveAll();
                 }
             }
         }
@@ -283,20 +275,6 @@ namespace BlueFire.Toolkit.WinUI3
             else if (e.MessageId == PInvoke.WM_DESTROY)
             {
                 destroying = true;
-
-                if (desktopWindowTarget != null)
-                {
-                    desktopWindowTarget.Root = null;
-                    desktopWindowTarget.Dispose();
-                    desktopWindowTarget = null;
-                }
-
-                if (rootVisual != null)
-                {
-                    rootVisual.Children.RemoveAll();
-                    rootVisual.Dispose();
-                    rootVisual = null!;
-                }
             }
 
             OnWindowMessageReceived(e);
@@ -305,19 +283,6 @@ namespace BlueFire.Toolkit.WinUI3
         private void SetWindowSize(double width, double height)
         {
             xamlWindow.AppWindow.Resize(new Windows.Graphics.SizeInt32((int)(width * dpi / 96), (int)(height * dpi / 96)));
-        }
-
-        private DesktopWindowTarget EnsureDesktopWindowTarget()
-        {
-            if (destroying) throw new ObjectDisposedException(nameof(WindowEx));
-
-            if (desktopWindowTarget == null)
-            {
-                desktopWindowTarget = WindowsCompositionHelper.CreateDesktopWindowTarget(xamlWindow.AppWindow.Id, false);
-                desktopWindowTarget.Root = rootVisual;
-            }
-
-            return desktopWindowTarget;
         }
 
         public new event WindowExSizeChangedEventHandler? SizeChanged;
@@ -392,10 +357,6 @@ namespace BlueFire.Toolkit.WinUI3
             ((FrameworkElement)sender).Loaded -= LoadHelper_Loaded;
             loadHelper = null;
 
-            if (rootVisual.Children.Count > 0)
-            {
-                EnsureDesktopWindowTarget();
-            }
             loadedHandler?.Invoke(this, new RoutedEventArgs());
         }
 
@@ -417,7 +378,6 @@ namespace BlueFire.Toolkit.WinUI3
                     if (!destroying)
                     {
                         isLoaded = true;
-                        EnsureDesktopWindowTarget();
                         loadedHandler?.Invoke(this, new RoutedEventArgs());
                     }
                 });

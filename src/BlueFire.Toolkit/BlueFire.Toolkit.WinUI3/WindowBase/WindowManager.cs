@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Win32.Foundation;
 using PInvoke = Windows.Win32.PInvoke;
+using WinComposition = Windows.UI.Composition;
 
 namespace BlueFire.Toolkit.WinUI3
 {
@@ -19,6 +20,7 @@ namespace BlueFire.Toolkit.WinUI3
         private WindowBase.WindowMessageMonitor? messageMonitor;
         private AppWindow? appWindow;
         private WindowEx? windowExInternal;
+        private WindowBase.WindowCompositionResources? compositionResources;
         private bool internalEnableWindowProc;
 
         private double minWidth;
@@ -29,7 +31,7 @@ namespace BlueFire.Toolkit.WinUI3
         private bool messageHandleInstalled;
         private uint dpi;
         private bool isActivated;
-        private EventHandler activatedStateChanged;
+        private EventHandler? activatedStateChanged;
 
         private WindowManager(WindowId windowId)
         {
@@ -212,6 +214,22 @@ namespace BlueFire.Toolkit.WinUI3
             }
         }
 
+        internal WinComposition.SpriteVisual WindowContentVisual => EnsureCompositionResources().WindowContentVisual;
+
+        internal WinComposition.SpriteVisual BackdropVisual => EnsureCompositionResources().BackdropVisual;
+
+        private WindowBase.WindowCompositionResources EnsureCompositionResources()
+        {
+            if (destroyed) throw new ObjectDisposedException(nameof(WindowManager));
+
+            if (compositionResources == null)
+            {
+                compositionResources = new WindowBase.WindowCompositionResources(this);
+            }
+
+            return compositionResources;
+        }
+
         private void UpdateWindowProc()
         {
             if (destroyed) return;
@@ -305,6 +323,12 @@ namespace BlueFire.Toolkit.WinUI3
                     messageMonitor.WindowMessageBeforeReceived -= OverrideWindowProc;
                     messageMonitor.Dispose();
                     messageMonitor = null!;
+                }
+
+                if (compositionResources != null)
+                {
+                    compositionResources.Dispose();
+                    compositionResources = null;
                 }
 
                 RemoveIcon(WindowId);

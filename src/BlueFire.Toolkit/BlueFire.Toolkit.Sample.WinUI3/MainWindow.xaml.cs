@@ -45,7 +45,7 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
             backdrop = new TransparentBackdrop();
 
-            //this.SystemBackdrop = backdrop;
+            this.SystemBackdrop = backdrop;
 
             this.AppWindow.Closing += AppWindow_Closing;
 
