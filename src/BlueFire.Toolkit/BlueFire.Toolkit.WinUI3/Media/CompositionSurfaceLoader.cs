@@ -14,6 +14,8 @@ using Windows.Storage.Streams;
 using Windows.UI.Composition;
 using LoadedImageSourceLoadStatus = Microsoft.UI.Xaml.Media.LoadedImageSourceLoadStatus;
 using WinRT;
+using BlueFire.Toolkit.WinUI3.Extensions;
+using Windows.Win32.System.Com;
 
 namespace BlueFire.Toolkit.WinUI3.Media
 {
@@ -95,16 +97,35 @@ namespace BlueFire.Toolkit.WinUI3.Media
 
         #region Create Resource
 
-        private void CreateDevice()
+        private unsafe void CreateDevice()
         {
             if (softwareD2dDeviceHolder == null)
             {
                 softwareD2dDeviceHolder = new D2DDeviceHolder(true);
 
-                var compositor = WindowsCompositionHelper.Compositor;
-                var interop = compositor.As<Windows.Win32.System.WinRT.Composition.ICompositorInterop>();
+                ComPtr<Windows.Win32.System.WinRT.Composition.ICompositorInterop> interop = default;
+                nint pGraphicsDevice = 0;
 
-                interop.CreateGraphicsDevice(softwareD2dDeviceHolder.D2D1Device, out graphicsDevice);
+                try
+                {
+                    ComObjectHelper.QueryInterface(
+                        WindowsCompositionHelper.Compositor,
+                        Windows.Win32.System.WinRT.Composition.ICompositorInterop.IID_Guid,
+                        out interop);
+
+
+                    ((delegate* unmanaged[Stdcall]<Windows.Win32.System.WinRT.Composition.ICompositorInterop*, void*, void**, HRESULT>)(*(void***)interop.AsPointer())[5])(
+                        interop.AsTypedPointer(),
+                        softwareD2dDeviceHolder.D2D1Device.AsPointer(),
+                        (void**)(&pGraphicsDevice));
+
+                    graphicsDevice = CompositionGraphicsDevice.FromAbi(pGraphicsDevice);
+                }
+                finally
+                {
+                    ComPtr<IUnknown>.Attach(pGraphicsDevice).Release();
+                    interop.Release();
+                }
             }
         }
 
@@ -191,24 +212,33 @@ namespace BlueFire.Toolkit.WinUI3.Media
                 ExifOrientationMode.RespectExifOrientation,
                 ColorManagementMode.DoNotColorManage).AsTask(cancellationToken);
 
-            var interop = surface.As<Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop>();
+            ComPtr<Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop> interop = default;
 
-            interop.Resize(new SIZE(image.PixelWidth, image.PixelHeight));
+            try
+            {
+                ComObjectHelper.QueryInterface(surface, Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop.IID_Guid, out interop);
 
-            DrawImage(interop, image, cancellationToken);
+                interop.Value.Resize(new SIZE(image.PixelWidth, image.PixelHeight));
 
-            unsafe static void DrawImage(Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop _interop, SoftwareBitmap _softwareBitmap, CancellationToken _cancellationToken)
+                DrawImage(interop, image, cancellationToken);
+            }
+            finally
+            {
+                interop.Release();
+            }
+
+            unsafe static void DrawImage(ComPtr<Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop> _interop, SoftwareBitmap _softwareBitmap, CancellationToken _cancellationToken)
             {
                 lock (graphicsDevice!)
                 {
                     var iid = typeof(Windows.Win32.Graphics.Direct2D.ID2D1DeviceContext).GUID;
                     System.Drawing.Point updateOffset = default;
 
-                    _interop.BeginDraw((RECT*)0, &iid, out var updateObject, &updateOffset);
-
+                    ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1DeviceContext> deviceContext = default;
+                    ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1Bitmap1> bitmap = default;
                     try
                     {
-                        var deviceContext = updateObject.As<Windows.Win32.Graphics.Direct2D.ID2D1DeviceContext>();
+                        _interop.Value.BeginDraw((RECT*)0, &iid, deviceContext.PointerRef, &updateOffset);
 
                         var offsetX = updateOffset.X * 96 / (float)_softwareBitmap.DpiX;
                         var offsetY = updateOffset.Y * 96 / (float)_softwareBitmap.DpiY;
@@ -219,17 +249,17 @@ namespace BlueFire.Toolkit.WinUI3.Media
                         transform.Anonymous.Anonymous1.dx = offsetX;
                         transform.Anonymous.Anonymous1.dy = offsetY;
 
-                        deviceContext.SetTransform(&transform);
-                        deviceContext.SetDpi((float)_softwareBitmap.DpiX, (float)_softwareBitmap.DpiY);
+                        deviceContext.Value.SetTransform(&transform);
+                        deviceContext.Value.SetDpi((float)_softwareBitmap.DpiX, (float)_softwareBitmap.DpiY);
 
                         _cancellationToken.ThrowIfCancellationRequested();
 
-                        var bitmap = CreateBitmap(_softwareBitmap, deviceContext);
+                        bitmap = CreateBitmap(_softwareBitmap, deviceContext);
 
                         _cancellationToken.ThrowIfCancellationRequested();
 
-                        deviceContext.DrawBitmap(
-                            bitmap,
+                        deviceContext.Value.DrawBitmap(
+                            bitmap.AsTypedPointer<Windows.Win32.Graphics.Direct2D.ID2D1Bitmap>(),
                             (Windows.Win32.Graphics.Direct2D.Common.D2D_RECT_F*)0,
                             1,
                             Windows.Win32.Graphics.Direct2D.D2D1_BITMAP_INTERPOLATION_MODE.D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
@@ -237,12 +267,14 @@ namespace BlueFire.Toolkit.WinUI3.Media
                     }
                     finally
                     {
-                        _interop.EndDraw();
+                        _interop.Value.EndDraw();
+                        deviceContext.Release();
+                        bitmap.Release();
                     }
                 }
             }
 
-            unsafe static Windows.Win32.Graphics.Direct2D.ID2D1Bitmap1 CreateBitmap(SoftwareBitmap _softwareBitmap, Windows.Win32.Graphics.Direct2D.ID2D1DeviceContext _deviceContext)
+            unsafe static ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1Bitmap1> CreateBitmap(SoftwareBitmap _softwareBitmap, ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1DeviceContext> _deviceContext)
             {
                 var _props = new Windows.Win32.Graphics.Direct2D.D2D1_BITMAP_PROPERTIES()
                 {
@@ -261,21 +293,45 @@ namespace BlueFire.Toolkit.WinUI3.Media
                 var _bitmapDesc = _buffer.GetPlaneDescription(0);
 
                 var _pBuffer = (byte*)0;
+                uint _bufferSize = 0;
 
-                _reference.As<Windows.Win32.System.WinRT.IMemoryBufferByteAccess>().GetBuffer(&_pBuffer, out uint _bufferSize);
+                ComPtr<Windows.Win32.System.WinRT.IMemoryBufferByteAccess> _memoryBufferByteAccess = default;
 
-                _deviceContext.CreateBitmap(
-                    new Windows.Win32.Graphics.Direct2D.Common.D2D_SIZE_U()
+                try
+                {
+                    ComObjectHelper.QueryInterface<Windows.Win32.System.WinRT.IMemoryBufferByteAccess>(
+                        _reference,
+                        Windows.Win32.System.WinRT.IMemoryBufferByteAccess.IID_Guid,
+                        out _memoryBufferByteAccess);
+
+                    _memoryBufferByteAccess.Value.GetBuffer(&_pBuffer, &_bufferSize);
+
+                    using (ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1Bitmap> bitmap = default)
                     {
-                        width = (uint)_softwareBitmap.PixelWidth,
-                        height = (uint)_softwareBitmap.PixelHeight
-                    },
-                    (void*)(_pBuffer + _bitmapDesc.StartIndex),
-                    (uint)_bitmapDesc.Stride,
-                    &_props,
-                    out var _bitmap);
+                        _deviceContext.Value.CreateBitmap(
+                            new Windows.Win32.Graphics.Direct2D.Common.D2D_SIZE_U()
+                            {
+                                width = (uint)_softwareBitmap.PixelWidth,
+                                height = (uint)_softwareBitmap.PixelHeight
+                            },
+                            (void*)(_pBuffer + _bitmapDesc.StartIndex),
+                            (uint)_bitmapDesc.Stride,
+                            &_props,
+                            bitmap.TypedPointerRef);
 
-                return (Windows.Win32.Graphics.Direct2D.ID2D1Bitmap1)_bitmap;
+                        fixed (Guid* IID_ID2D1Bitmap1 = &Windows.Win32.Graphics.Direct2D.ID2D1Bitmap1.IID_Guid)
+                        {
+                            nint result = 0;
+                            bitmap.QueryInterface(IID_ID2D1Bitmap1, (void**)(&result));
+
+                            return ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1Bitmap1>.Attach(result);
+                        }
+                    }
+                }
+                finally
+                {
+                    _memoryBufferByteAccess.Release();
+                }
             }
         }
 
@@ -324,8 +380,10 @@ namespace BlueFire.Toolkit.WinUI3.Media
     }
     internal class D2DDeviceHolder
     {
-        private Windows.Win32.Graphics.Direct2D.ID2D1Factory2 d2D1Factory2;
-        private Windows.Win32.Graphics.Direct3D11.ID3D11Device d3d11Device;
+        private ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1Factory2> d2D1Factory2;
+        private ComPtr<Windows.Win32.Graphics.Direct3D11.ID3D11Device> d3d11Device;
+        private ComPtr<Windows.Win32.Graphics.Dxgi.IDXGIDevice3> dxgiDevice;
+        private ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1Device1> d2d1Device;
 
         public unsafe D2DDeviceHolder(bool useSoftwareRenderer)
         {
@@ -334,13 +392,14 @@ namespace BlueFire.Toolkit.WinUI3.Media
                 debugLevel = Windows.Win32.Graphics.Direct2D.D2D1_DEBUG_LEVEL.D2D1_DEBUG_LEVEL_NONE,
             };
 
-            ExceptionHelpers.ThrowExceptionForHR(PInvoke.D2D1CreateFactory(
-                Windows.Win32.Graphics.Direct2D.D2D1_FACTORY_TYPE.D2D1_FACTORY_TYPE_MULTI_THREADED,
-                typeof(Windows.Win32.Graphics.Direct2D.ID2D1Factory2).GUID,
-                options,
-                out var raw));
-
-            d2D1Factory2 = (Windows.Win32.Graphics.Direct2D.ID2D1Factory2)raw;
+            fixed (Guid* IID_ID2D1Factory2 = &Windows.Win32.Graphics.Direct2D.ID2D1Factory2.IID_Guid)
+            {
+                PInvoke.D2D1CreateFactory(
+                    Windows.Win32.Graphics.Direct2D.D2D1_FACTORY_TYPE.D2D1_FACTORY_TYPE_MULTI_THREADED,
+                    IID_ID2D1Factory2,
+                    &options,
+                    d2D1Factory2.PointerRef).ThrowOnFailure();
+            }
 
             Windows.Win32.Graphics.Direct3D.D3D_DRIVER_TYPE driverType = useSoftwareRenderer ?
                 Windows.Win32.Graphics.Direct3D.D3D_DRIVER_TYPE.D3D_DRIVER_TYPE_WARP :
@@ -363,7 +422,7 @@ namespace BlueFire.Toolkit.WinUI3.Media
 
             fixed (Windows.Win32.Graphics.Direct3D.D3D_FEATURE_LEVEL* pFeatureLevels = featureLevels)
             {
-                ExceptionHelpers.ThrowExceptionForHR(PInvoke.D3D11CreateDevice(
+                PInvoke.D3D11CreateDevice(
                     null,
                     driverType,
                     HMODULE.Null,
@@ -371,24 +430,26 @@ namespace BlueFire.Toolkit.WinUI3.Media
                     pFeatureLevels,
                     (uint)featureLevels.Length,
                     PInvoke.D3D11_SDK_VERSION,
-                    out d3d11Device,
+                    d3d11Device.TypedPointerRef,
                     &outFeatureLevel,
-                    out _));
+                    (Windows.Win32.Graphics.Direct3D11.ID3D11DeviceContext**)0).ThrowOnFailure();
             }
 
-            DXGIDevice = d3d11Device.As<Windows.Win32.Graphics.Dxgi.IDXGIDevice3>();
+            fixed (Guid* IID_IDXGIDevice3 = &Windows.Win32.Graphics.Dxgi.IDXGIDevice3.IID_Guid)
+            {
+                d3d11Device.QueryInterface(IID_IDXGIDevice3, dxgiDevice.PointerRef);
+            }
 
-            D2D1Factory2.CreateDevice(DXGIDevice, out Windows.Win32.Graphics.Direct2D.ID2D1Device1 d2d1Device);
-            D2D1Device = d2d1Device;
+            d2D1Factory2.Value.CreateDevice(dxgiDevice.AsTypedPointer<Windows.Win32.Graphics.Dxgi.IDXGIDevice>(), d2d1Device.TypedPointerRef);
         }
 
-        public Windows.Win32.Graphics.Direct2D.ID2D1Factory2 D2D1Factory2 => d2D1Factory2;
+        public ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1Factory2> D2D1Factory2 => d2D1Factory2;
 
-        public Windows.Win32.Graphics.Direct3D11.ID3D11Device D3D11Device => d3d11Device;
+        public ComPtr<Windows.Win32.Graphics.Direct3D11.ID3D11Device> D3D11Device => d3d11Device;
 
-        public Windows.Win32.Graphics.Dxgi.IDXGIDevice3 DXGIDevice { get; }
+        public ComPtr<Windows.Win32.Graphics.Dxgi.IDXGIDevice3> DXGIDevice => dxgiDevice;
 
-        public Windows.Win32.Graphics.Direct2D.ID2D1Device1 D2D1Device { get; }
+        public ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1Device1> D2D1Device => d2d1Device;
     }
 
     public delegate void SurfaceLoadCompletedEventHandler(CompositionSurfaceLoader sender, SurfaceLoadCompletedEventArgs args);

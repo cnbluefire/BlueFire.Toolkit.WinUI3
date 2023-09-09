@@ -44,7 +44,7 @@ namespace Windows.Win32
         internal static HWND[]? EnumThreadWindows(Func<HWND, nint, bool> predicate, nint lParam)
         {
             var list = new List<HWND>();
-            var handler = new UI.WindowsAndMessaging.WNDENUMPROC((_hWnd, _lParam) =>
+            var handler = new WNDENUMPROC((_hWnd, _lParam) =>
             {
                 try
                 {
@@ -72,5 +72,10 @@ namespace Windows.Win32
             return 0;
         }
 
+        [DllImport("USER32.dll", ExactSpelling = true, PreserveSig = false)]
+        internal static extern BOOL EnumThreadWindows([In] uint dwThreadId, [In] WNDENUMPROC lpfn, [In] LPARAM lParam);
+
+        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+        internal delegate BOOL WNDENUMPROC([In] HWND param0, [In] LPARAM param1);
     }
 }

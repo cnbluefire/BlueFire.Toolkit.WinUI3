@@ -5,28 +5,28 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlueFire.Toolkit.WinUI3.Graphics
+namespace BlueFire.Toolkit.WinUI3.Text
 {
-    public class FontFamilyIdentifierCollection : IReadOnlyList<FontFamilyIdentifier>
+    public class CanvasFontFamilyCollection : IReadOnlyList<CanvasFontFamily>
     {
-        private List<FontFamilyIdentifier> internalList;
+        private List<CanvasFontFamily> internalList;
 
-        public FontFamilyIdentifierCollection(string source)
+        public CanvasFontFamilyCollection(string source)
         {
             Source = source ?? "";
-            internalList = new List<FontFamilyIdentifier>();
+            internalList = new List<CanvasFontFamily>();
             Canonicalize();
         }
 
-        public FontFamilyIdentifier this[int index] => ((IReadOnlyList<FontFamilyIdentifier>)internalList)[index];
+        public CanvasFontFamily this[int index] => ((IReadOnlyList<CanvasFontFamily>)internalList)[index];
 
-        public int Count => ((IReadOnlyCollection<FontFamilyIdentifier>)internalList).Count;
+        public int Count => ((IReadOnlyCollection<CanvasFontFamily>)internalList).Count;
 
         public string Source { get; }
 
-        public IEnumerator<FontFamilyIdentifier> GetEnumerator()
+        public IEnumerator<CanvasFontFamily> GetEnumerator()
         {
-            return ((IEnumerable<FontFamilyIdentifier>)internalList).GetEnumerator();
+            return ((IEnumerable<CanvasFontFamily>)internalList).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -89,23 +89,14 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
 
                     unescapeName = Uri.UnescapeDataString(familyName2).ToUpperInvariant();
 
-                    internalList.Add(new FontFamilyIdentifier(unescapeName, locationUri));
+                    var isMainFont = internalList.Count == 0;
+
+                    internalList.Add(new CanvasFontFamily(unescapeName, locationUri)
+                    {
+                        IsMainFont = isMainFont
+                    });
                 }
             }
-        }
-    }
-
-    public record class FontFamilyIdentifier(string FontFamilyName, Uri? LocationUri)
-    {
-        public bool IsGenericFamilyName => LocationUri == null && CanvasTextFormatHelper.IsGenericFamilyName(FontFamilyName);
-
-        public override string ToString()
-        {
-            if (LocationUri != null)
-            {
-                return $"{LocationUri.OriginalString}#{FontFamilyName}";
-            }
-            return FontFamilyName;
         }
     }
 }

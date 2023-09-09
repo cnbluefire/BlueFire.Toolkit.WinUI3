@@ -12,6 +12,8 @@ using WinCompositor = Windows.UI.Composition.Compositor;
 using WinDispatcherQueueController = Windows.System.DispatcherQueueController;
 using WinDispatcherQueue = Windows.System.DispatcherQueue;
 using Windows.Win32.Foundation;
+using BlueFire.Toolkit.WinUI3.Extensions;
+using Windows.Win32.System.Com;
 
 namespace BlueFire.Toolkit.WinUI3.Compositions
 {
@@ -58,17 +60,33 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
             return compositor!;
         }
 
-        public static DesktopWindowTarget CreateDesktopWindowTarget(WindowId windowId, bool topMost)
+        public static unsafe DesktopWindowTarget CreateDesktopWindowTarget(WindowId windowId, bool topMost)
         {
             if (windowId.Value == 0) throw new ArgumentNullException(nameof(windowId));
 
             var hWnd = new HWND((nint)windowId.Value);
 
-            var interop = WindowsCompositionHelper.Compositor.As<Windows.Win32.System.WinRT.Composition.ICompositorDesktopInterop>();
+            ComPtr<Windows.Win32.System.WinRT.Composition.ICompositorDesktopInterop> interop = default;
+            nint pTarget = 0;
 
-            interop.CreateDesktopWindowTarget(hWnd, topMost, out var target);
+            try
+            {
+                ComObjectHelper.QueryInterface(WindowsCompositionHelper.Compositor, Windows.Win32.System.WinRT.Composition.ICompositorDesktopInterop.IID_Guid, out interop);
 
-            return target;
+
+                ((delegate* unmanaged[Stdcall]<Windows.Win32.System.WinRT.Composition.ICompositorDesktopInterop*, Windows.Win32.Foundation.HWND, Windows.Win32.Foundation.BOOL, void**, Windows.Win32.Foundation.HRESULT>)(*(void***)(interop.AsPointer()))[3])(
+                    interop.AsTypedPointer(),
+                    hWnd,
+                    topMost,
+                    (void**)(&pTarget));
+
+                return DesktopWindowTarget.FromAbi(pTarget);
+            }
+            finally
+            {
+                ComPtr<IUnknown>.Attach(pTarget).Release();
+                interop.Release();
+            }
         }
 
         private static WinDispatcherQueueController CreateDispatcherQueueController(bool currentThread)

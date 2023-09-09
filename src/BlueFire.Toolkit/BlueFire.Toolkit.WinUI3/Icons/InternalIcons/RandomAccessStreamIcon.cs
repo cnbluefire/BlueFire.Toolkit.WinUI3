@@ -96,40 +96,55 @@ namespace BlueFire.Toolkit.WinUI3.Icons.InternalIcons
             using var reference = bitmapBuffer.CreateReference();
 
             var pBytes = (byte*)0;
+            uint capacity = 0;
 
-            reference.As<Windows.Win32.System.WinRT.IMemoryBufferByteAccess>().GetBuffer(&pBytes, out var capacity);
+            ComPtr<Windows.Win32.System.WinRT.IMemoryBufferByteAccess> memoryBufferByteAccess = default;
 
-            if (capacity > 0)
+            try
             {
-                var span = new Span<byte>(pBytes, (int)capacity);
-                var desc = bitmapBuffer.GetPlaneDescription(0);
+                ComObjectHelper.QueryInterface<Windows.Win32.System.WinRT.IMemoryBufferByteAccess>(
+                    reference,
+                    Windows.Win32.System.WinRT.IMemoryBufferByteAccess.IID_Guid,
+                    out memoryBufferByteAccess);
 
-                HBITMAP hBitmap = default;
+                memoryBufferByteAccess.Value.GetBuffer(&pBytes, &capacity);
 
-                try
+                if (capacity > 0)
                 {
-                    hBitmap = PInvoke.CreateBitmap(desc.Width, desc.Height, 1, 32, pBytes);
+                    var span = new Span<byte>(pBytes, (int)capacity);
+                    var desc = bitmapBuffer.GetPlaneDescription(0);
 
-                    var iconInfo = new ICONINFO()
+                    HBITMAP hBitmap = default;
+
+                    try
                     {
-                        fIcon = true,
-                        hbmColor = hBitmap,
-                        hbmMask = hBitmap
-                    };
+                        hBitmap = PInvoke.CreateBitmap(desc.Width, desc.Height, 1, 32, pBytes);
 
-                    var icon = PInvoke.CreateIconIndirect(&iconInfo);
+                        var iconInfo = new ICONINFO()
+                        {
+                            fIcon = true,
+                            hbmColor = hBitmap,
+                            hbmMask = hBitmap
+                        };
 
-                    return icon.Value;
-                }
-                finally
-                {
-                    if (!hBitmap.IsNull)
+                        var icon = PInvoke.CreateIconIndirect(&iconInfo);
+
+                        return icon.Value;
+                    }
+                    finally
                     {
-                        PInvoke.DeleteObject(hBitmap);
+                        if (!hBitmap.IsNull)
+                        {
+                            PInvoke.DeleteObject(hBitmap);
+                        }
                     }
                 }
             }
-
+            finally
+            {
+                //memoryBufferByteAccess.Value.Release();
+                memoryBufferByteAccess.Release();
+            }
             return 0;
         }
     }

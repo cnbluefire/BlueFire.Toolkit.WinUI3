@@ -3,19 +3,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Win32.Foundation;
 using PInvoke = Windows.Win32.PInvoke;
 using WNDCLASSEXW = Windows.Win32.UI.WindowsAndMessaging.WNDCLASSEXW;
-using WNDPROC = Windows.Win32.UI.WindowsAndMessaging.WNDPROC;
 using HOT_KEY_MODIFIERS = Windows.Win32.UI.Input.KeyboardAndMouse.HOT_KEY_MODIFIERS;
 
 namespace BlueFire.Toolkit.WinUI3.Input
 {
     internal class HotKeyListener : IDisposable
     {
+        private static Dictionary<nint, HotKeyListener> listeners = new Dictionary<nint, HotKeyListener>();
+
         private bool disposedValue;
 
         private static int id;
@@ -23,7 +25,6 @@ namespace BlueFire.Toolkit.WinUI3.Input
         private DispatcherQueueController? dispatcherQueueController;
         private EventWaitHandle? initializeWaitHandle;
         private HWND messageWindowHandle;
-        private WNDPROC? wndProcHandler;
         private Dictionary<(HotKeyModifiers modifiers, VirtualKeys key), int> hotkeyEventHandlers
             = new Dictionary<(HotKeyModifiers modifiers, VirtualKeys key), int>();
 
@@ -39,6 +40,11 @@ namespace BlueFire.Toolkit.WinUI3.Input
             initializeWaitHandle.WaitOne();
             initializeWaitHandle.Dispose();
             initializeWaitHandle = null;
+
+            lock (listeners)
+            {
+                listeners[messageWindowHandle.Value] = this;
+            }
         }
 
         private void ThreadMain()
@@ -65,12 +71,10 @@ namespace BlueFire.Toolkit.WinUI3.Input
 
             fixed (char* pClassName = className)
             {
-                wndProcHandler = new WNDPROC(WndProc);
-
                 var wndClassEx = new WNDCLASSEXW()
                 {
                     cbSize = (uint)Marshal.SizeOf<WNDCLASSEXW>(),
-                    lpfnWndProc = wndProcHandler,
+                    lpfnWndProc = &GlobalWndProc,
                     lpszClassName = pClassName
                 };
 
@@ -279,6 +283,12 @@ namespace BlueFire.Toolkit.WinUI3.Input
                     }
 
                     backgroundThread = null!;
+
+                    lock (listeners)
+                    {
+                        listeners.Remove(messageWindowHandle.Value);
+                    }
+
                 }
 
                 disposedValue = true;
@@ -289,6 +299,20 @@ namespace BlueFire.Toolkit.WinUI3.Input
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+        private static LRESULT GlobalWndProc(HWND hwnd, uint uMsg, WPARAM wParam, LPARAM lParam)
+        {
+            lock (listeners)
+            {
+                if (listeners.TryGetValue(hwnd.Value, out var value))
+                {
+                    return value.WndProc(hwnd, uMsg, wParam, lParam);
+                }
+            }
+
+            return PInvoke.DefWindowProc(hwnd, uMsg, wParam, lParam);
         }
     }
 

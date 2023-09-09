@@ -28,6 +28,8 @@ using BlueFire.Toolkit.WinUI3.Input;
 using Microsoft.Graphics.Canvas.Text;
 using BlueFire.Toolkit.WinUI3.Graphics;
 using System.Globalization;
+using BlueFire.Toolkit.WinUI3.Text;
+using System.Threading;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -63,6 +65,34 @@ namespace BlueFire.Toolkit.Sample.WinUI3
             rootVisual.Brush = brush;
 
             this.RootVisual = rootVisual;
+
+            this.Loaded += MainWindow_Loaded;
+
+        }
+
+        int threadId;
+
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            threadId = Thread.CurrentThread.ManagedThreadId;
+            SystemFontHelper.GetFontProperties("Simsun");
+
+            var a = CanvasFontSet.GetSystemFontSet();
+            var child1 = a.GetMatchingFonts(new[] { new CanvasFontProperty(CanvasFontPropertyIdentifier.FamilyName, "Simsun", null) });
+
+            for (int i = 0; i < 10; i++)
+            {
+                await Task.Run(() =>
+                {
+                    lock (this)
+                    {
+                        var b = CanvasFontSet.GetSystemFontSet();
+                        var child = b.GetMatchingFonts(new[] { new CanvasFontProperty(CanvasFontPropertyIdentifier.FamilyName, "Simsun", null) });
+                        SystemFontHelper.GetFontProperties("Simsun " + i);
+                    }
+                });
+
+            }
         }
 
         private void HotKeyModel_Invoked(HotKeyModel sender, HotKeyInvokedEventArgs args)
@@ -114,14 +144,33 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
         private void myCanvasControl_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
         {
+            var threadId = this.threadId;
+            var threadId2 = Thread.CurrentThread.ManagedThreadId;
+
             using (var format = new CanvasTextFormat())
             {
-                CanvasTextFormatHelper.SetFontFamilySource(
-                    format,
-                    "Monotype Corsiva, serif",
-                    CultureInfo.CurrentUICulture.Name,
-                    (obj, fontFamilyName) => obj.FontFamily = fontFamilyName,
-                    (fontFileUri) => new CanvasFontSet(fontFileUri));
+                format.FontFamily = null;
+
+                var list = new List<CanvasFontFamily>()
+                {
+                    new CanvasFontFamily("SYSTEM-UI")
+                    {
+                        UnicodeRanges = new []
+                        {
+                            new UnicodeRange()
+                            {
+                                first = '≤‚',
+                                last = '≤‚'
+                            }
+                        },
+                    },
+                    new CanvasFontFamily("Segoe UI")
+                };
+
+                lock (this)
+                {
+                    CanvasTextFormatHelper.SetFallbackFontFamilies(format, list, CultureInfo.CurrentUICulture.Name, (fontFileUri) => new CanvasFontSet(fontFileUri));
+                }
 
                 using (var layout = new CanvasTextLayout(sender, "≤‚ ‘“ªœ¬ABC", format, float.MaxValue, float.MaxValue))
                 {

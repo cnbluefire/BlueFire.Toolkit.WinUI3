@@ -20,8 +20,8 @@
 		<PackageTags>winui3;winappsdk</PackageTags>
 		<Authors>blue-fire</Authors>
 		<IncludeSymbols>true</IncludeSymbols>
-		<VersionPrefix>0.0.1</VersionPrefix>
-		<VersionSuffix>preview.7</VersionSuffix>
+		<VersionPrefix>0.0.3</VersionPrefix>
+		<VersionSuffix>preview.1</VersionSuffix>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -50,6 +50,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<AdditionalFiles Update="NativeMethods.json">
+		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</AdditionalFiles>
 		<AdditionalFiles Update="NativeMethods.txt">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</AdditionalFiles>

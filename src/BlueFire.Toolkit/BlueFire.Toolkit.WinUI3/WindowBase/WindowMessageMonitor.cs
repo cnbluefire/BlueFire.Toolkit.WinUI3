@@ -1,11 +1,12 @@
 ﻿using Microsoft.UI;
 using System;
+using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Win32.Foundation;
-using SUBCLASSPROC = global::Windows.Win32.UI.Shell.SUBCLASSPROC;
 using PInvoke = global::Windows.Win32.PInvoke;
 using BlueFire.Toolkit.WinUI3.Extensions;
 using System.Diagnostics;
@@ -26,11 +27,14 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         private WindowMessageReceivedEventHandler? windowMessageBeforeReceived;
         private WindowMessageReceivedEventHandler? windowMessageAfterReceived;
 
-        internal WindowMessageMonitor(WindowManager windowManager)
+        internal unsafe WindowMessageMonitor(WindowManager windowManager)
         {
             hWnd = windowManager.HWND;
 
-            subClassProc = new SUBCLASSPROC(SubClassProc);
+            subClassProc = new SUBCLASSPROC()
+            {
+                Func = &GlobalSubClassProc
+            };
             this.windowManager = windowManager;
         }
 
@@ -131,14 +135,14 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             return result.Value;
         }
 
-        private bool Install()
+        private unsafe bool Install()
         {
             if (attached) return true;
             if (disposedValue) return false;
 
             if (PInvoke.IsWindow(hWnd))
             {
-                PInvoke.SetWindowSubclass(hWnd, subClassProc, subClassId, 0).ThrowIfFalse();
+                PInvoke.SetWindowSubclass(hWnd, subClassProc.Func, subClassId, 0).ThrowIfFalse();
                 attached = true;
                 return true;
             }
@@ -146,11 +150,11 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             return false;
         }
 
-        private void Uninstall()
+        private unsafe void Uninstall()
         {
             if (attached)
             {
-                PInvoke.RemoveWindowSubclass(hWnd, subClassProc, subClassId).ThrowIfFalse();
+                PInvoke.RemoveWindowSubclass(hWnd, subClassProc.Func, subClassId).ThrowIfFalse();
                 attached = false;
             }
         }
@@ -258,5 +262,20 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+
+
+        private unsafe struct SUBCLASSPROC
+        {
+            public delegate* unmanaged[Stdcall]<global::Windows.Win32.Foundation.HWND, uint, global::Windows.Win32.Foundation.WPARAM, global::Windows.Win32.Foundation.LPARAM, nuint, nuint, global::Windows.Win32.Foundation.LRESULT> Func;
+        }
+
+        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+        private static unsafe LRESULT GlobalSubClassProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, nuint uIdSubclass, nuint dwRefData)
+        {
+            return WindowManager.Get(Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd.Value))
+                .GetMonitorInternal()
+                .SubClassProc(hWnd, uMsg, wParam, lParam, uIdSubclass, dwRefData);
+        }
+
     }
 }
