@@ -84,7 +84,8 @@ namespace BlueFire.Toolkit.WinUI3.Text
                     list.Add(new CanvasFontFamily(actualName)
                     {
                         IsMainFont = fontFamilies[i].IsMainFont,
-                        UnicodeRanges = fontFamilies[i].UnicodeRanges
+                        UnicodeRanges = fontFamilies[i].UnicodeRanges,
+                        ScaleFactor = fontFamilies[i].ScaleFactor,
                     });
                 }
             }
@@ -119,6 +120,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
                 CanvasFontProperties? primaryFontProperties = null;
                 IWinRTObject? primaryCanvasFontSet = null;
                 var primaryFontLineHeight = 0f;
+                float primaryFontScaleFactor = 1f;
 
                 ComPtr<IDWriteFontFace3> primaryFontFace = default;
                 ComPtr<IDWriteFontCollection> primaryFontCollection = default;
@@ -130,7 +132,8 @@ namespace BlueFire.Toolkit.WinUI3.Text
                         primaryFontProperties = DWriteHelper.GetFontProperties(primaryFontFamily, createCanvasFontSetFunction, out primaryFontFace, out primaryFontCollection, out primaryCanvasFontSet);
                         if (primaryFontProperties != null)
                         {
-                            primaryFontLineHeight = primaryFontProperties.Ascent + primaryFontProperties.Descent + primaryFontProperties.LineGap;
+                            primaryFontLineHeight = primaryFontProperties.CapHeight;
+                            primaryFontScaleFactor = primaryFontFamily.ScaleFactor ?? 1;
                         }
                     }
 
@@ -187,13 +190,17 @@ namespace BlueFire.Toolkit.WinUI3.Text
                                     {
                                         var scaleFactor = 1f;
 
-                                        if (fontFamilies[i].IsMainFont && primaryFontLineHeight > 0)
+                                        if (fontFamilies[i].ScaleFactor.HasValue)
                                         {
-                                            var lineHeight = fontProperties.Ascent + fontProperties.Descent + fontProperties.LineGap;
+                                            scaleFactor = fontFamilies[i].ScaleFactor!.Value;
+                                        }
+                                        else if (!fontFamilies[i].IsMainFont && primaryFontLineHeight > 0)
+                                        {
+                                            var lineHeight = fontProperties.CapHeight;
 
                                             if (lineHeight != 0)
                                             {
-                                                scaleFactor = primaryFontLineHeight / lineHeight;
+                                                scaleFactor = primaryFontLineHeight / lineHeight * primaryFontScaleFactor;
                                             }
                                         }
 

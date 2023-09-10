@@ -111,10 +111,10 @@ namespace BlueFire.Toolkit.WinUI3.Text
         }
 
         internal static CanvasFontProperties? GetFontProperties(
-            CanvasFontFamily fontFamily, 
-            Func<Uri, IWinRTObject> createCanvasFontSetFunction, 
-            out ComPtr<IDWriteFontFace3> fontFace, 
-            out ComPtr<IDWriteFontCollection> fontCollection, 
+            CanvasFontFamily fontFamily,
+            Func<Uri, IWinRTObject> createCanvasFontSetFunction,
+            out ComPtr<IDWriteFontFace3> fontFace,
+            out ComPtr<IDWriteFontCollection> fontCollection,
             out IWinRTObject? canvasFontSet)
         {
             CanvasFontProperties? fontProperties = null;
@@ -150,9 +150,6 @@ namespace BlueFire.Toolkit.WinUI3.Text
         internal static unsafe CanvasFontProperties GetFontProperties(ComPtr<IDWriteFontFace3> fontFace)
         {
             DWRITE_UNICODE_RANGE[]? unicodeRanges = null;
-            float ascent = 0f;
-            float descent = 0f;
-            float lineGap = 0f;
 
             uint actualRangeCount = 0;
             try
@@ -176,16 +173,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
             DWRITE_FONT_METRICS metrics = default;
             fontFace.Value.GetMetrics(&metrics);
 
-            ascent = DesignSpaceToEmSpace(metrics.ascent, metrics.designUnitsPerEm);
-            descent = DesignSpaceToEmSpace(metrics.descent, metrics.designUnitsPerEm);
-            lineGap = DesignSpaceToEmSpace(metrics.lineGap, metrics.designUnitsPerEm);
-
-            return new CanvasFontProperties(unicodeRanges ?? Array.Empty<DWRITE_UNICODE_RANGE>(), ascent, descent, lineGap);
-        }
-
-        private static float DesignSpaceToEmSpace(int designSpaceUnits, ushort designUnitsPerEm)
-        {
-            return (float)(designSpaceUnits) / (float)(designUnitsPerEm);
+            return new CanvasFontProperties(unicodeRanges ?? Array.Empty<DWRITE_UNICODE_RANGE>(), metrics);
         }
 
         private static unsafe nint GetFactoryCore(DWRITE_FACTORY_TYPE type)
@@ -222,23 +210,42 @@ namespace BlueFire.Toolkit.WinUI3.Text
     public class CanvasFontProperties
     {
         internal readonly DWRITE_UNICODE_RANGE[] unicodeRanges;
+        private DWRITE_FONT_METRICS fontMetrics;
 
-        internal CanvasFontProperties(DWRITE_UNICODE_RANGE[] unicodeRanges, float ascent, float descent, float lineGap)
+        internal CanvasFontProperties(DWRITE_UNICODE_RANGE[] unicodeRanges, DWRITE_FONT_METRICS fontMetrics)
         {
             this.unicodeRanges = unicodeRanges;
-            Ascent = ascent;
-            Descent = descent;
-            LineGap = lineGap;
+            this.fontMetrics = fontMetrics;
         }
 
-        public float Ascent { get; }
+        public float Ascent => DesignSpaceToEmSpace(fontMetrics.ascent, fontMetrics.designUnitsPerEm);
 
-        public float Descent { get; }
+        public float Descent => DesignSpaceToEmSpace(fontMetrics.descent, fontMetrics.designUnitsPerEm);
 
-        public float LineGap { get; }
+        public float LineGap => DesignSpaceToEmSpace(fontMetrics.lineGap, fontMetrics.designUnitsPerEm);
+
+        public float CapHeight => DesignSpaceToEmSpace(fontMetrics.capHeight, fontMetrics.designUnitsPerEm);
+
+        public float LowercaseLetterHeight => DesignSpaceToEmSpace(fontMetrics.xHeight, fontMetrics.designUnitsPerEm);
+
+        public float UnderlinePosition => DesignSpaceToEmSpace(fontMetrics.underlinePosition, fontMetrics.designUnitsPerEm);
+
+        public float UnderlineThickness => DesignSpaceToEmSpace(fontMetrics.underlineThickness, fontMetrics.designUnitsPerEm);
+
+        public float StrikethroughPosition => DesignSpaceToEmSpace(fontMetrics.strikethroughPosition, fontMetrics.designUnitsPerEm);
+
+        public float StrikethroughThickness => DesignSpaceToEmSpace(fontMetrics.strikethroughThickness, fontMetrics.designUnitsPerEm);
 
         public UnicodeRange[] UnicodeRanges => MemoryMarshal.Cast<DWRITE_UNICODE_RANGE, UnicodeRange>(unicodeRanges).ToArray();
+
+
+        private static float DesignSpaceToEmSpace(int designSpaceUnits, ushort designUnitsPerEm)
+        {
+            return (float)(designSpaceUnits) / (float)(designUnitsPerEm);
+        }
+
     }
+
 
     public struct UnicodeRange
     {

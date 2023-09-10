@@ -31,10 +31,12 @@ namespace BlueFire.Toolkit.WinUI3.Text
         public Uri? LocationUri { get; }
 
         public bool IsGenericFamilyName => LocationUri == null && CanvasTextFormatHelper.IsGenericFamilyName(FontFamilyName);
-        
+
         public UnicodeRange[]? UnicodeRanges { get; set; }
 
         public bool IsMainFont { get; set; }
+
+        public float? ScaleFactor { get; set; }
 
         public override string ToString()
         {

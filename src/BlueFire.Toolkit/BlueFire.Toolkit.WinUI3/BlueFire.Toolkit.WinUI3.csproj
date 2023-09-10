@@ -21,7 +21,7 @@
 		<Authors>blue-fire</Authors>
 		<IncludeSymbols>true</IncludeSymbols>
 		<VersionPrefix>0.0.3</VersionPrefix>
-		<VersionSuffix>preview.1</VersionSuffix>
+		<VersionSuffix>preview.4</VersionSuffix>
 	</PropertyGroup>
 
 	<PropertyGroup>
