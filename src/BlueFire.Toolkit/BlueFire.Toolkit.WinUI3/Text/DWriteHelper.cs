@@ -218,6 +218,8 @@ namespace BlueFire.Toolkit.WinUI3.Text
             this.fontMetrics = fontMetrics;
         }
 
+        public string FontFamilyName { get; internal set; } = "";
+
         public float Ascent => DesignSpaceToEmSpace(fontMetrics.ascent, fontMetrics.designUnitsPerEm);
 
         public float Descent => DesignSpaceToEmSpace(fontMetrics.descent, fontMetrics.designUnitsPerEm);
@@ -244,6 +246,13 @@ namespace BlueFire.Toolkit.WinUI3.Text
             return (float)(designSpaceUnits) / (float)(designUnitsPerEm);
         }
 
+        internal CanvasFontProperties Clone(string fontFamilyName)
+        {
+            return new CanvasFontProperties(unicodeRanges, fontMetrics)
+            {
+                FontFamilyName = fontFamilyName
+            };
+        }
     }
 
 

@@ -1,6 +1,7 @@
 ﻿using BlueFire.Toolkit.WinUI3.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -18,14 +19,24 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
         public static CanvasFontProperties? GetFontProperties(string fontFamily)
         {
+            return GetFontProperties(fontFamily, CultureInfo.CurrentUICulture.Name);
+        }
+
+        public static CanvasFontProperties? GetFontProperties(string fontFamily, string languageTag)
+        {
+            var actualName = CanvasTextFormatHelper.GetActualFamilyName(new CanvasFontFamily(fontFamily, null), languageTag, out _);
+            if (string.IsNullOrEmpty(actualName)) return null;
+
+            var cacheKey = actualName.ToUpperInvariant();
+
             lock (fontPropertiesCache)
             {
-                if (!fontPropertiesCache.TryGetValue(fontFamily, out var value))
+                if (!fontPropertiesCache.TryGetValue(cacheKey, out var value))
                 {
-                    value = GetFontPropertiesFromFontSet(fontFamily);
-                    fontPropertiesCache[fontFamily] = value;
+                    value = GetFontPropertiesFromFontSet(actualName);
+                    fontPropertiesCache[cacheKey] = value;
                 }
-                return value;
+                return value?.Clone(actualName);
             }
         }
 
@@ -47,8 +58,6 @@ namespace BlueFire.Toolkit.WinUI3.Text
                         propertyId = DWRITE_FONT_PROPERTY_ID.DWRITE_FONT_PROPERTY_ID_FAMILY_NAME,
                         propertyValue = ptr
                     };
-
-                    var factory = DWriteHelper.GetSharedFactory<IDWriteFactory3>();
 
                     GetSharedSystemFontSet().Value.GetMatchingFonts(&property, 1, filteredSet.TypedPointerRef);
 

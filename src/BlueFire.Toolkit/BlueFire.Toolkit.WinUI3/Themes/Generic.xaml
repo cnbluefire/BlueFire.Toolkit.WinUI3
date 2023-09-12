@@ -6,6 +6,7 @@
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="ms-appx:///BlueFire.Toolkit.WinUI3/Controls/HotKeyInputBox.xaml" />
+        <ResourceDictionary Source="ms-appx:///BlueFire.Toolkit.WinUI3/Controls/Primitives/RedirectVisualView.xaml" />
     </ResourceDictionary.MergedDictionaries>
     
 </ResourceDictionary>

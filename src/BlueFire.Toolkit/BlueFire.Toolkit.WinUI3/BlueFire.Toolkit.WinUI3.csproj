@@ -21,14 +21,14 @@
 		<Authors>blue-fire</Authors>
 		<IncludeSymbols>true</IncludeSymbols>
 		<VersionPrefix>0.0.3</VersionPrefix>
-		<VersionSuffix>preview.4</VersionSuffix>
+		<VersionSuffix>preview.5</VersionSuffix>
 	</PropertyGroup>
 
 	<PropertyGroup>
 		<VersionPrefix Condition="'$(Configuration)' != 'Release'">$(VersionPrefix).1</VersionPrefix>
 		<VersionSuffix Condition="'$(Configuration)' != 'Release'">$(VersionSuffix)-debug</VersionSuffix>
 	</PropertyGroup>
-	
+
 	<PropertyGroup>
 		<PackageVersion>$(VersionPrefix)-$(VersionSuffix)</PackageVersion>
 		<IsPackable>true</IsPackable>
@@ -51,19 +51,12 @@
 
 	<ItemGroup>
 		<AdditionalFiles Update="NativeMethods.json">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</AdditionalFiles>
 		<AdditionalFiles Update="NativeMethods.txt">
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</AdditionalFiles>
 
-		<Page Update="Themes\Generic.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-
-		<Page Update="Controls\HotKeyInputBox.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
 	</ItemGroup>
 
 </Project>
