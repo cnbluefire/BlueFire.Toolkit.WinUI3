@@ -152,12 +152,9 @@ namespace BlueFire.Toolkit.WinUI3.Text
             DWRITE_UNICODE_RANGE[]? unicodeRanges = null;
 
             uint actualRangeCount = 0;
-            try
-            {
-                fontFace.Value.GetUnicodeRanges(0, (DWRITE_UNICODE_RANGE*)0, &actualRangeCount);
-            }
-            catch (Exception ex) when (ex.HResult == unchecked((int)0x8007007A)) { }
-            if (actualRangeCount > 0)
+            var hr = fontFace.Value.GetUnicodeRanges(0, (DWRITE_UNICODE_RANGE*)0, &actualRangeCount);
+
+            if (hr.Value == unchecked((int)0x8007007A) && actualRangeCount > 0)
             {
                 var rangeArray = new DWRITE_UNICODE_RANGE[actualRangeCount];
 

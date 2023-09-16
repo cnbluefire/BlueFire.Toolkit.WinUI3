@@ -28,7 +28,6 @@ namespace BlueFire.Toolkit.WinUI3.Text
             T canvasTextFormat,
             string fontFamilySource,
             string? languageTag,
-            Action<T, string> setFontFamilyAction,
             Func<Uri, IWinRTObject> createCanvasFontSetFunction) where T : IWinRTObject
         {
             var collection = new CanvasFontFamilyCollection(fontFamilySource);
@@ -47,219 +46,125 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
                 var mainFontFamily = GetActualFamilyName(collection[0], languageTag, out _);
 
-                setFontFamilyAction.Invoke(canvasTextFormat, mainFontFamily);
-
-                if (collection.Count > 1)
-                {
-                    SetFallbackFontFamilies(canvasTextFormat, collection, true, createCanvasFontSetFunction);
-                }
+                SetFallbackFontFamilies(canvasTextFormat, collection, createCanvasFontSetFunction);
             }
         }
 
-        public static unsafe void SetFallbackFontFamilies(object canvasTextFormat, IReadOnlyList<CanvasFontFamily> fontFamilies, string? languageTag, Func<Uri, IWinRTObject> createCanvasFontSetFunction)
-        {
-            if (fontFamilies.Count == 0) return;
-
-            var list = new List<CanvasFontFamily>();
-
-            if (string.IsNullOrEmpty(languageTag))
-            {
-                languageTag = CultureInfo.CurrentUICulture.Name;
-
-                if (string.IsNullOrEmpty(languageTag))
-                {
-                    languageTag = "en";
-                }
-            }
-
-            for (int i = 0; i < fontFamilies.Count; i++)
-            {
-                if (fontFamilies[i].LocationUri != null)
-                {
-                    list.Add(fontFamilies[i]);
-                }
-                else
-                {
-                    var actualName = GetActualFamilyName(fontFamilies[i], languageTag, out var scaleFactor);
-                    list.Add(new CanvasFontFamily(actualName)
-                    {
-                        IsMainFont = fontFamilies[i].IsMainFont,
-                        UnicodeRanges = fontFamilies[i].UnicodeRanges,
-                        ScaleFactor = fontFamilies[i].ScaleFactor,
-                    });
-                }
-            }
-
-            SetFallbackFontFamilies(canvasTextFormat, list, false, createCanvasFontSetFunction);
-        }
-
-        private static unsafe void SetFallbackFontFamilies(object canvasTextFormat, IReadOnlyList<CanvasFontFamily> fontFamilies, bool ignoreMainFont, Func<Uri, IWinRTObject> createCanvasFontSetFunction)
+        private static unsafe void SetFallbackFontFamilies(object canvasTextFormat, IReadOnlyList<CanvasFontFamily> fontFamilies, Func<Uri, IWinRTObject> createCanvasFontSetFunction)
         {
             if (fontFamilies == null || fontFamilies.Count == 0) return;
-
-            CanvasFontFamily? primaryFontFamily = null;
-
-            for (int i = 0; i < fontFamilies.Count; i++)
-            {
-                if (fontFamilies[i].IsMainFont)
-                {
-                    if (primaryFontFamily != null)
-                    {
-                        throw new ArgumentException(nameof(CanvasFontFamily.IsMainFont));
-                    }
-
-                    primaryFontFamily = fontFamilies[i];
-                }
-            }
 
             using var dWriteTextFormat1 = Direct2DInterop.GetWrappedResourcePtr<IDWriteTextFormat1>(canvasTextFormat);
             if (dWriteTextFormat1.HasValue)
             {
                 using var factory = DWriteHelper.GetSharedFactory<IDWriteFactory2>();
 
-                CanvasFontProperties? primaryFontProperties = null;
-                IWinRTObject? primaryCanvasFontSet = null;
-                var primaryFontLineHeight = 0f;
-                float primaryFontScaleFactor = 1f;
-
-                ComPtr<IDWriteFontFace3> primaryFontFace = default;
-                ComPtr<IDWriteFontCollection> primaryFontCollection = default;
-
-                try
+                using (ComPtr<IDWriteFontFallbackBuilder> builder = default)
                 {
-                    if (primaryFontFamily != null)
+                    factory.Value.CreateFontFallbackBuilder(builder.TypedPointerRef);
+
+                    for (int i = 0; i < fontFamilies.Count; i++)
                     {
-                        primaryFontProperties = DWriteHelper.GetFontProperties(primaryFontFamily, createCanvasFontSetFunction, out primaryFontFace, out primaryFontCollection, out primaryCanvasFontSet);
-                        if (primaryFontProperties != null)
-                        {
-                            primaryFontLineHeight = primaryFontProperties.CapHeight;
-                            primaryFontScaleFactor = primaryFontFamily.ScaleFactor ?? 1;
-                        }
+                        AppendToFontFallback(builder, fontFamilies[i], createCanvasFontSetFunction);
                     }
 
-                    using (ComPtr<IDWriteFontFallbackBuilder> builder = default)
+                    ComPtr<IDWriteFontFallback> systemFontFallback = default;
+                    ComPtr<IDWriteFontFallback> fontFallback = default;
+                    try
                     {
-                        factory.Value.CreateFontFallbackBuilder(builder.TypedPointerRef);
+                        factory.Value.GetSystemFontFallback(systemFontFallback.TypedPointerRef);
+                        builder.Value.AddMappings(systemFontFallback.AsTypedPointer());
+                        builder.Value.CreateFontFallback(fontFallback.TypedPointerRef);
 
-                        for (int i = 0; i < fontFamilies.Count; i++)
-                        {
-                            if (ignoreMainFont && fontFamilies[i].IsMainFont)
-                            {
-                                continue;
-                            }
-
-                            CanvasFontProperties? fontProperties = null;
-                            IWinRTObject? canvasFontSet = null;
-                            ComPtr<IDWriteFontCollection> fontCollection = default;
-                            ComPtr<IDWriteFontFace3> fontFace = default;
-
-                            try
-                            {
-                                if (fontFamilies[i].IsMainFont)
-                                {
-                                    if (ignoreMainFont)
-                                    {
-                                        continue;
-                                    }
-
-                                    fontProperties = primaryFontProperties;
-                                    fontFace = primaryFontFace;
-                                    fontCollection = primaryFontCollection;
-                                    canvasFontSet = primaryCanvasFontSet;
-                                }
-                                else
-                                {
-                                    fontProperties = DWriteHelper.GetFontProperties(fontFamilies[i], createCanvasFontSetFunction, out fontFace, out fontCollection, out canvasFontSet);
-                                }
-
-                                if (fontProperties != null && fontProperties.UnicodeRanges.Length > 0)
-                                {
-                                    DWRITE_UNICODE_RANGE[]? unicodeRanges = default;
-
-                                    if (fontFamilies[i].UnicodeRanges != null)
-                                    {
-                                        unicodeRanges = MemoryMarshal.Cast<UnicodeRange, DWRITE_UNICODE_RANGE>(fontFamilies[i].UnicodeRanges)
-                                            .ToArray();
-                                    }
-                                    else
-                                    {
-                                        unicodeRanges = fontProperties.unicodeRanges;
-                                    }
-
-                                    if (unicodeRanges != null && unicodeRanges.Length > 0)
-                                    {
-                                        var scaleFactor = 1f;
-
-                                        if (fontFamilies[i].ScaleFactor.HasValue)
-                                        {
-                                            scaleFactor = fontFamilies[i].ScaleFactor!.Value;
-                                        }
-                                        else if (!fontFamilies[i].IsMainFont && primaryFontLineHeight > 0)
-                                        {
-                                            var lineHeight = fontProperties.CapHeight;
-
-                                            if (lineHeight != 0)
-                                            {
-                                                scaleFactor = primaryFontLineHeight / lineHeight * primaryFontScaleFactor;
-                                            }
-                                        }
-
-                                        var actualName = fontFamilies[i].FontFamilyName;
-
-                                        fixed (DWRITE_UNICODE_RANGE* ptr = unicodeRanges)
-                                        fixed (char* pActualName = actualName)
-                                        {
-                                            builder.Value.AddMapping(
-                                                ptr,
-                                                (uint)unicodeRanges.Length,
-                                                (ushort**)(&pActualName),
-                                                1,
-                                                fontCollection.AsTypedPointer(),
-                                                default,
-                                                default,
-                                                scaleFactor);
-                                        }
-                                    }
-                                }
-                            }
-                            finally
-                            {
-                                if (!fontFamilies[i].IsMainFont)
-                                {
-                                    fontFace.Release();
-                                    fontCollection.Release();
-                                    if (canvasFontSet is IDisposable disposable) disposable.Dispose();
-                                }
-                            }
-                        }
-
-                        ComPtr<IDWriteFontFallback> systemFontFallback = default;
-                        ComPtr<IDWriteFontFallback> fontFallback = default;
-                        try
-                        {
-                            factory.Value.GetSystemFontFallback(systemFontFallback.TypedPointerRef);
-                            builder.Value.AddMappings(systemFontFallback.AsTypedPointer());
-                            builder.Value.CreateFontFallback(fontFallback.TypedPointerRef);
-
-                            dWriteTextFormat1.Value.SetFontFallback(fontFallback.AsTypedPointer());
-                        }
-                        finally
-                        {
-                            systemFontFallback.Release();
-                            fontFallback.Release();
-                        }
+                        dWriteTextFormat1.Value.SetFontFallback(fontFallback.AsTypedPointer());
                     }
-                }
-                finally
-                {
-                    primaryFontFace.Release();
-                    primaryFontCollection.Release();
-                    if (primaryCanvasFontSet is IDisposable disposable) disposable.Dispose();
+                    finally
+                    {
+                        systemFontFallback.Release();
+                        fontFallback.Release();
+                    }
                 }
             }
         }
 
-        public static UnicodeRange[]? GetMergedUnicodeRange(UnicodeRange[]? unicodeRange1, UnicodeRange[]? unicodeRange2)
+        private static unsafe void AppendToFontFallback(ComPtr<IDWriteFontFallbackBuilder> builder, CanvasFontFamily fontFamily, Func<Uri, IWinRTObject> createCanvasFontSetFunction)
+        {
+            CanvasFontProperties? fontProperties = null;
+            IWinRTObject? canvasFontSet = null;
+            ComPtr<IDWriteFontCollection> fontCollection = default;
+            ComPtr<IDWriteFontFace3> fontFace = default;
+
+            try
+            {
+                if (!fontFamily.IsGenericFamilyName && fontFamily.LocationUri == null)
+                {
+                    var compositeFont = CompositeFontManager.Find(fontFamily.FontFamilyName);
+                    if (compositeFont != null)
+                    {
+                        if (compositeFont.FamilyMaps != null)
+                        {
+                            for (int i = 0; i < compositeFont.FamilyMaps.Count; i++)
+                            {
+                                var map = compositeFont.FamilyMaps[i];
+                                var mapTargetFamilies = map.GetFamilies();
+                                for (int j = 0; j < mapTargetFamilies.Count; j++)
+                                {
+                                    var mapTargetFamily = mapTargetFamilies[j];
+                                    AppendToFontFallback(builder, mapTargetFamily, createCanvasFontSetFunction);
+                                }
+                            }
+                        }
+                        return;
+                    }
+                }
+
+                fontProperties = DWriteHelper.GetFontProperties(fontFamily, createCanvasFontSetFunction, out fontFace, out fontCollection, out canvasFontSet);
+
+                if (fontProperties != null && fontProperties.UnicodeRanges.Length > 0)
+                {
+                    DWRITE_UNICODE_RANGE[]? unicodeRanges = default;
+
+                    if (fontFamily.UnicodeRanges != null)
+                    {
+                        unicodeRanges = MemoryMarshal.Cast<UnicodeRange, DWRITE_UNICODE_RANGE>(fontFamily.UnicodeRanges)
+                            .ToArray();
+                    }
+                    else
+                    {
+                        unicodeRanges = fontProperties.unicodeRanges;
+                    }
+
+                    if (unicodeRanges != null && unicodeRanges.Length > 0)
+                    {
+                        var scaleFactor = fontFamily.ScaleFactor;
+
+                        var actualName = fontFamily.FontFamilyName;
+
+                        fixed (DWRITE_UNICODE_RANGE* ptr = unicodeRanges)
+                        fixed (char* pActualName = actualName)
+                        {
+                            builder.Value.AddMapping(
+                                ptr,
+                                (uint)unicodeRanges.Length,
+                                (ushort**)(&pActualName),
+                                1,
+                                fontCollection.AsTypedPointer(),
+                                default,
+                                default,
+                                scaleFactor);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                fontFace.Release();
+                fontCollection.Release();
+                if (canvasFontSet is IDisposable disposable) disposable.Dispose();
+            }
+        }
+
+        internal static UnicodeRange[]? GetMergedUnicodeRange(UnicodeRange[]? unicodeRange1, UnicodeRange[]? unicodeRange2)
         {
             if (unicodeRange1 == null && unicodeRange2 == null) return null;
             else if (unicodeRange1 != null && unicodeRange2 == null) return unicodeRange1;

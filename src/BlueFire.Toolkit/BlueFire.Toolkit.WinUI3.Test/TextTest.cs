@@ -40,74 +40,56 @@ namespace BlueFire.Toolkit.WinUI3.Test
         [TestMethod]
         public void SetFallbackFontFamilies()
         {
-            using (var format = new CanvasTextFormat())
+            var compositeFont = new CompositeFontFamily()
             {
-                format.FontFamily = null;
-
-                var list = new List<CanvasFontFamily>()
+                FontFamilyName = "Custom Font",
+                FamilyMaps = new List<CompositeFontFamilyMap>()
                 {
-                    new CanvasFontFamily("Simsun")
+                    new CompositeFontFamilyMap()
                     {
-                        UnicodeRanges = new []
+                        Target = "Segoe Print, Simsun",
+                        LanguageTag = "zh",
+                        UnicodeRanges = new[]
                         {
                             new UnicodeRange()
                             {
                                 first = '测',
                                 last = '测'
+                            },
+                            new UnicodeRange()
+                            {
+                                first = 'A',
+                                last = 'A'
                             }
-                        },
-                    },
-                    new CanvasFontFamily("Segoe UI")
-                };
-
-                lock (this)
-                {
-                    CanvasTextFormatHelper.SetFallbackFontFamilies(format, list, CultureInfo.CurrentUICulture.Name, (fontFileUri) => new CanvasFontSet(fontFileUri));
+                        }
+                    }
                 }
+            };
 
-                using (var layout = new CanvasTextLayout(CanvasDevice.GetSharedDevice(), "测A", format, float.MaxValue, float.MaxValue))
+            CompositeFontManager.Register(compositeFont);
+
+            using (var format = new CanvasTextFormat())
+            {
+                format.FontFamily = null;
+
+                CanvasTextFormatHelper.SetFontFamilySource(
+                    format,
+                    "Custom Font, Wide Latin, 方正舒体",
+                    "en",
+                    fontFileUri => new CanvasFontSet(fontFileUri));
+
+                using (var layout = new CanvasTextLayout(CanvasDevice.GetSharedDevice(), "测试AB", format, float.MaxValue, float.MaxValue))
                 {
                     var renderer = new TextRenderer();
 
                     layout.DrawToTextRenderer(renderer, default);
 
-                    Assert.AreEqual(renderer.Fonts[0].FamilyNames["zh-cn"], "宋体");
-                    Assert.AreEqual(renderer.Fonts[1].FamilyNames["en-us"], "Segoe UI");
+                    Assert.AreEqual(renderer.Fonts[0].FamilyNames["en-us"], "SimSun");
+                    Assert.AreEqual(renderer.Fonts[1].FamilyNames["en-us"], "FZShuTi");
+                    Assert.AreEqual(renderer.Fonts[2].FamilyNames["en-us"], "Segoe Print");
+                    Assert.AreEqual(renderer.Fonts[3].FamilyNames["en-us"], "Wide Latin");
                 }
             }
-        }
-
-        [TestMethod]
-        public void MergeUnicodeRanges()
-        {
-            var defaultRange = new[]
-            {
-                new UnicodeRange()
-                {
-                    first = 'A',
-                    last = 'Z'
-                }
-            };
-
-            var defaultRange2 = new[]
-            {
-                new UnicodeRange()
-                {
-                    first = '测',
-                    last = '测'
-                }
-            };
-
-            var props = SystemFontHelper.GetFontProperties("Segoe UI");
-
-            var range1 = CanvasTextFormatHelper.GetMergedUnicodeRange(props.UnicodeRanges, defaultRange);
-
-            Assert.AreEqual(range1[0].first, 'A');
-            Assert.AreEqual(range1[0].last, 'Z');
-
-            var range2 = CanvasTextFormatHelper.GetMergedUnicodeRange(props.UnicodeRanges, defaultRange2);
-
-            Assert.AreEqual(range2.Length, 0);
         }
 
         private class TextRenderer : ICanvasTextRenderer

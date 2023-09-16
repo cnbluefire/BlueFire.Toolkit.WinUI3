@@ -89,12 +89,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
                     unescapeName = Uri.UnescapeDataString(familyName2).ToUpperInvariant();
 
-                    var isMainFont = internalList.Count == 0;
-
-                    internalList.Add(new CanvasFontFamily(unescapeName, locationUri)
-                    {
-                        IsMainFont = isMainFont
-                    });
+                    internalList.Add(new CanvasFontFamily(unescapeName, locationUri));
                 }
             }
         }

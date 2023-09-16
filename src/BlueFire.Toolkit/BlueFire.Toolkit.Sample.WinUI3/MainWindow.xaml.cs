@@ -30,6 +30,7 @@ using BlueFire.Toolkit.WinUI3.Graphics;
 using System.Globalization;
 using BlueFire.Toolkit.WinUI3.Text;
 using System.Threading;
+using Microsoft.UI.Input;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -74,25 +75,33 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            threadId = Thread.CurrentThread.ManagedThreadId;
-            SystemFontHelper.GetFontProperties("Simsun");
-
-            var a = CanvasFontSet.GetSystemFontSet();
-            var child1 = a.GetMatchingFonts(new[] { new CanvasFontProperty(CanvasFontPropertyIdentifier.FamilyName, "Simsun", null) });
-
-            for (int i = 0; i < 10; i++)
+            var compositeFont = new CompositeFontFamily()
             {
-                await Task.Run(() =>
+                FontFamilyName = "Custom Font",
+                FamilyMaps = new List<CompositeFontFamilyMap>()
                 {
-                    lock (this)
+                    new CompositeFontFamilyMap()
                     {
-                        var b = CanvasFontSet.GetSystemFontSet();
-                        var child = b.GetMatchingFonts(new[] { new CanvasFontProperty(CanvasFontPropertyIdentifier.FamilyName, "Simsun", null) });
-                        SystemFontHelper.GetFontProperties("Simsun " + i);
+                        Target = "Segoe Print, Simsun",
+                        LanguageTag = "zh",
+                        UnicodeRanges = new[]
+                        {
+                            new UnicodeRange()
+                            {
+                                first = '测',
+                                last = '测'
+                            },
+                            new UnicodeRange()
+                            {
+                                first = 'A',
+                                last = 'A'
+                            }
+                        }
                     }
-                });
+                }
+            };
 
-            }
+            CompositeFontManager.Register(compositeFont);
         }
 
         private void HotKeyModel_Invoked(HotKeyModel sender, HotKeyInvokedEventArgs args)
@@ -144,33 +153,15 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
         private void myCanvasControl_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
         {
-            var threadId = this.threadId;
-            var threadId2 = Thread.CurrentThread.ManagedThreadId;
-
             using (var format = new CanvasTextFormat())
             {
                 format.FontFamily = null;
 
-                var list = new List<CanvasFontFamily>()
-                {
-                    new CanvasFontFamily("SYSTEM-UI")
-                    {
-                        UnicodeRanges = new []
-                        {
-                            new UnicodeRange()
-                            {
-                                first = '测',
-                                last = '测'
-                            }
-                        },
-                    },
-                    new CanvasFontFamily("Segoe UI")
-                };
-
-                lock (this)
-                {
-                    CanvasTextFormatHelper.SetFallbackFontFamilies(format, list, CultureInfo.CurrentUICulture.Name, (fontFileUri) => new CanvasFontSet(fontFileUri));
-                }
+                CanvasTextFormatHelper.SetFontFamilySource(
+                    format,
+                    "Custom Font, 方正舒体, Wide Latin", 
+                    "en", 
+                    fontFileUri => new CanvasFontSet(fontFileUri));
 
                 using (var layout = new CanvasTextLayout(sender, "测试一下ABC", format, float.MaxValue, float.MaxValue))
                 {
@@ -178,5 +169,23 @@ namespace BlueFire.Toolkit.Sample.WinUI3
                 }
             }
         }
+
+        private void Grid_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            var p = e.GetCurrentPoint((UIElement)sender);
+            if (p.Properties.IsPrimary)
+            {
+                e.Handled = true;
+
+                SendMessage(this.GetWindowHandle(), 0x0202, 0, 0);
+                SendMessage(this.GetWindowHandle(), 0x0112, 0xF010 + 2, 0);
+            }
+        }
+
+        [DllImport("user32.dll")]
+        private extern static int SendMessage(nint hWnd, int msg, nint wParam, nint lParam);
+
+        [DllImport("user32.dll")]
+        private extern static bool ReleaseCapture();
     }
 }

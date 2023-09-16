@@ -34,9 +34,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
         public UnicodeRange[]? UnicodeRanges { get; set; }
 
-        public bool IsMainFont { get; set; }
-
-        public float? ScaleFactor { get; set; }
+        public float ScaleFactor { get; set; } = 1f;
 
         public override string ToString()
         {
