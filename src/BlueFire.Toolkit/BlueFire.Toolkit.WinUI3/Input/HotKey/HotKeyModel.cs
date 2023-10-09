@@ -10,20 +10,19 @@ namespace BlueFire.Toolkit.WinUI3.Input
 {
     public class HotKeyModel : DependencyObject
     {
+        private const HotKeyModifiers DefaultModifiers = HotKeyModifiers.MOD_NONE;
+        private const VirtualKeys DefaultVirtualKeys = (VirtualKeys)0;
+        private const bool DefaultIsEnabled = true;
+        private const HotKeyModelStatus DefaultStatus = HotKeyModelStatus.Invalid;
+
         private bool registered;
         private bool internalSet;
         private bool registrationSuccessful;
 
-        public HotKeyModel()
-        {
-            registered = false;
-
-            UpdateStatus();
-        }
-
-        internal HotKeyModel(HotKeyModifiers modifiers, VirtualKeys virtualKey)
+        internal HotKeyModel(string id, HotKeyModifiers modifiers, VirtualKeys virtualKey)
         {
             registered = true;
+            Id = id;
 
             Modifiers = modifiers;
             VirtualKey = virtualKey;
@@ -44,13 +43,13 @@ namespace BlueFire.Toolkit.WinUI3.Input
             }
         }
 
-        internal HotKeyModifiers ModifiersInternal { get; private set; }
+        internal HotKeyModifiers ModifiersInternal { get; private set; } = DefaultModifiers;
 
-        internal VirtualKeys VirtualKeyInternal { get; private set; }
+        internal VirtualKeys VirtualKeyInternal { get; private set; } = DefaultVirtualKeys;
 
-        internal bool IsEnabledInternal { get; private set; }
+        internal bool IsEnabledInternal { get; private set; } = DefaultIsEnabled;
 
-        internal HotKeyModelStatus StatusInternal { get; private set; }
+        internal HotKeyModelStatus StatusInternal { get; private set; } = DefaultStatus;
 
         internal bool RegistrationSuccessful
         {
@@ -65,6 +64,20 @@ namespace BlueFire.Toolkit.WinUI3.Input
             }
         }
 
+        public string Id { get; }
+
+        public string Label
+        {
+            get { return (string)GetValue(LabelProperty); }
+            set { SetValue(LabelProperty, value); }
+        }
+
+        public static readonly DependencyProperty LabelProperty =
+            DependencyProperty.Register("Label", typeof(string), typeof(HotKeyModel), new PropertyMetadata("", (s, a) =>
+            {
+                if (a.NewValue is null) throw new ArgumentException(null, nameof(Label));
+            }));
+
         public HotKeyModifiers Modifiers
         {
             get { return DispatcherQueue.HasThreadAccess ? (HotKeyModifiers)GetValue(ModifiersProperty) : ModifiersInternal; }
@@ -72,7 +85,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
         }
 
         public static readonly DependencyProperty ModifiersProperty =
-            DependencyProperty.Register("Modifiers", typeof(HotKeyModifiers), typeof(HotKeyModel), new PropertyMetadata(HotKeyModifiers.MOD_NONE, (s, a) =>
+            DependencyProperty.Register("Modifiers", typeof(HotKeyModifiers), typeof(HotKeyModel), new PropertyMetadata(DefaultModifiers, (s, a) =>
             {
                 lock (HotKeyManager.locker)
                 {
@@ -95,7 +108,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
         }
 
         public static readonly DependencyProperty VirtualKeyProperty =
-            DependencyProperty.Register("VirtualKey", typeof(VirtualKeys), typeof(HotKeyModel), new PropertyMetadata((VirtualKeys)0, (s, a) =>
+            DependencyProperty.Register("VirtualKey", typeof(VirtualKeys), typeof(HotKeyModel), new PropertyMetadata(DefaultVirtualKeys, (s, a) =>
             {
                 lock (HotKeyManager.locker)
                 {
@@ -118,7 +131,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
         }
 
         public static readonly DependencyProperty IsEnabledProperty =
-            DependencyProperty.Register("IsEnabled", typeof(bool), typeof(HotKeyModel), new PropertyMetadata(true, (s, a) =>
+            DependencyProperty.Register("IsEnabled", typeof(bool), typeof(HotKeyModel), new PropertyMetadata(DefaultIsEnabled, (s, a) =>
             {
                 lock (HotKeyManager.locker)
                 {
@@ -141,7 +154,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
         }
 
         public static readonly DependencyProperty StatusProperty =
-            DependencyProperty.Register("Status", typeof(HotKeyModelStatus), typeof(HotKeyModel), new PropertyMetadata(HotKeyModelStatus.Invalid, (s, a) =>
+            DependencyProperty.Register("Status", typeof(HotKeyModelStatus), typeof(HotKeyModel), new PropertyMetadata(DefaultStatus, (s, a) =>
             {
                 lock (HotKeyManager.locker)
                 {

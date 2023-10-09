@@ -20,8 +20,11 @@
         <Grid Background="Black" Padding="20" Margin="20" PointerPressed="Grid_PointerPressed">
             <canvas:CanvasControl x:Name="myCanvasControl" Draw="myCanvasControl_Draw" Width="150" Height="150" />
         </Grid>
-        <toolkitControls:AutoScrollView UseLayoutRounding="True" Width="200" IsPlaying="True">
+        <!--<toolkitControls:AutoScrollView UseLayoutRounding="True" Width="200" IsPlaying="True">
             <TextBlock>哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567</TextBlock>
-        </toolkitControls:AutoScrollView>
+        </toolkitControls:AutoScrollView>-->
+
+        <ToggleSwitch x:Name="enableHotKeySwitcher" IsOn="True" Toggled="enableHotKeySwitcher_Toggled" />
+        <toolkitControls:HotKeyInputBox x:Name="myHotKeyInputBox" />
     </StackPanel>
 </toolkit:WindowEx>

@@ -55,54 +55,40 @@ namespace BlueFire.Toolkit.WinUI3.Input
         }
 
 
-        public static HotKeyModel? RegisterKey(HotKeyModifiers modifiers, VirtualKeys key)
+        public static HotKeyModel? RegisterKey(string id, HotKeyModifiers modifiers, VirtualKeys key)
         {
             lock (locker)
             {
-                var model = new HotKeyModel(modifiers, key);
+                if (models.Any(c => c.Id == id)) return null;
+
+                var model = new HotKeyModel(id, modifiers, key);
+
+                models.Add(model);
 
                 if (model.StatusInternal != HotKeyModelStatus.Invalid)
                 {
-                    models.Add(model);
-
                     var listener = EnsureListener();
 
                     UpdateModelsRegistration();
 
-                    return model;
                 }
 
-                return null;
+                return model;
             }
         }
 
-        public static void RegisterKey(HotKeyModel model)
+        public static void Unregister(string id)
         {
             lock (locker)
             {
-                if (model.StatusInternal != HotKeyModelStatus.NotRegistered)
+                var model = models.FirstOrDefault(c => c.Id == id);
+                if (model != null)
                 {
-                    throw new ArgumentException("Already registered", nameof(model));
-                }
-
-                model.Registered = true;
-                models.Add(model);
-
-                if (model.StatusInternal == HotKeyModelStatus.RegisterFailed)
-                {
-                    UpdateModelsRegistration();
-                }
-            }
-        }
-
-        public static void Unregister(HotKeyModel model)
-        {
-            lock (locker)
-            {
-                if (model.Registered && models.Remove(model))
-                {
-                    model.Registered = false;
-                    UpdateModelsRegistration();
+                    if (model.Registered)
+                    {
+                        model.Registered = false;
+                        UpdateModelsRegistration();
+                    }
                 }
             }
         }
@@ -120,7 +106,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
 
                 if (!isEnabledInternal || !isEnabled) return;
 
-                var states = new Dictionary<(HotKeyModifiers, VirtualKeys), bool>();
+                var states = new HashSet<(HotKeyModifiers, VirtualKeys)>();
 
                 for (int i = 0; i < models.Count; i++)
                 {
@@ -128,20 +114,24 @@ namespace BlueFire.Toolkit.WinUI3.Input
 
                     if (model.StatusInternal == HotKeyModelStatus.Enabled || model.StatusInternal == HotKeyModelStatus.RegisterFailed)
                     {
-                        if (states.TryGetValue((model.ModifiersInternal, model.VirtualKeyInternal), out var state))
-                        {
-                            model.RegistrationSuccessful = state;
-                        }
-                        else
+                        if (!states.Contains((model.ModifiersInternal, model.VirtualKeyInternal)))
                         {
                             if (listener == null)
                             {
                                 listener = EnsureListener();
                             }
 
-                            state = listener.RegisterKey(model.ModifiersInternal, model.VirtualKeyInternal).GetAwaiter().GetResult();
+                            var state = listener.RegisterKey(model.ModifiersInternal, model.VirtualKeyInternal).GetAwaiter().GetResult();
                             model.RegistrationSuccessful = state;
-                            states[(model.ModifiersInternal, model.VirtualKeyInternal)] = state;
+
+                            if (state)
+                            {
+                                states.Add((model.ModifiersInternal, model.VirtualKeyInternal));
+                            }
+                        }
+                        else
+                        {
+                            model.RegistrationSuccessful = false;
                         }
                     }
                 }
@@ -228,10 +218,12 @@ namespace BlueFire.Toolkit.WinUI3.Input
             }
         }
 
-        private static void Listener_HotKeyInvoked(HotKeyListener sender, HotKeyInvokedEventArgs args)
+        private static void Listener_HotKeyInvoked(HotKeyListener sender, HotKeyListenerInvokedEventArgs args)
         {
             lock (locker)
             {
+                HotKeyInvokedEventArgs? args2 = null;
+
                 for (int i = 0; i < models.Count; i++)
                 {
                     var model = models[i];
@@ -241,17 +233,24 @@ namespace BlueFire.Toolkit.WinUI3.Input
                             && model.ModifiersInternal == args.Modifier
                             && model.VirtualKeyInternal == args.Key)
                         {
-                            model.RaiseInvoked(args);
+                            if (args2 == null) args2 = new HotKeyInvokedEventArgs(model);
+
+                            model.RaiseInvoked(args2);
+
+                            break;
                         }
                     }
                     catch { }
                 }
 
-                HotKeyInvoked?.Invoke(null, args);
+                if (args2 != null)
+                {
+                    HotKeyInvoked?.Invoke(args2);
+                }
             }
         }
 
-        public static event TypedEventHandler<object?, HotKeyInvokedEventArgs>? HotKeyInvoked;
+        public static event HotKeyInvokedEventHandler? HotKeyInvoked;
 
         private static HotKeyListener EnsureListener()
         {
@@ -270,4 +269,9 @@ namespace BlueFire.Toolkit.WinUI3.Input
             return listener;
         }
     }
+
+    public record HotKeyInvokedEventArgs(HotKeyModel Model);
+
+    public delegate void HotKeyInvokedEventHandler(HotKeyInvokedEventArgs args);
+
 }

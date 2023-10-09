@@ -69,6 +69,18 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
             this.Loaded += MainWindow_Loaded;
 
+            myHotKeyInputBox.HotKeyModel = HotKeyManager.RegisterKey("Test", HotKeyModifiers.MOD_CONTROL | HotKeyModifiers.MOD_ALT, VirtualKeys.VK_RIGHT);
+            HotKeyManager.HotKeyInvoked += HotKeyManager_HotKeyInvoked;
+        }
+
+        private void HotKeyManager_HotKeyInvoked(HotKeyInvokedEventArgs args)
+        {
+            Debug.WriteLine(args.Model.Id);
+        }
+
+        private void enableHotKeySwitcher_Toggled(object sender, RoutedEventArgs e)
+        {
+            HotKeyManager.IsEnabled = enableHotKeySwitcher.IsOn;
         }
 
         int threadId;
@@ -159,8 +171,8 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
                 CanvasTextFormatHelper.SetFontFamilySource(
                     format,
-                    "Custom Font, 方正舒体, Wide Latin", 
-                    "en", 
+                    "Custom Font, 方正舒体, Wide Latin",
+                    "en",
                     fontFileUri => new CanvasFontSet(fontFileUri));
 
                 using (var layout = new CanvasTextLayout(sender, "测试一下ABC", format, float.MaxValue, float.MaxValue))
@@ -187,5 +199,6 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
         [DllImport("user32.dll")]
         private extern static bool ReleaseCapture();
+
     }
 }

@@ -121,7 +121,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
                                 {
                                     try
                                     {
-                                        HotKeyInvoked?.Invoke(this, new HotKeyInvokedEventArgs(tmpModifier, tmpKey));
+                                        HotKeyInvoked?.Invoke(this, new HotKeyListenerInvokedEventArgs(tmpModifier, tmpKey));
                                     }
                                     catch { }
                                 });
@@ -247,7 +247,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
             }
         }
 
-        public event HotKeyInvokedEventHandler? HotKeyInvoked;
+        public event HotKeyListenerInvokedEventHandler? HotKeyInvoked;
 
         protected virtual void Dispose(bool disposing)
         {
@@ -316,8 +316,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
         }
     }
 
-    public record HotKeyInvokedEventArgs(HotKeyModifiers Modifier, VirtualKeys Key);
+    internal record HotKeyListenerInvokedEventArgs(HotKeyModifiers Modifier, VirtualKeys Key);
 
-
-    internal delegate void HotKeyInvokedEventHandler(HotKeyListener sender, HotKeyInvokedEventArgs args);
+    internal delegate void HotKeyListenerInvokedEventHandler(HotKeyListener sender, HotKeyListenerInvokedEventArgs args);
 }
