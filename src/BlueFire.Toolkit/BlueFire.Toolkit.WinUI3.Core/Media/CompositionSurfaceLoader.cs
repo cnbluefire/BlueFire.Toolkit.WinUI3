@@ -214,17 +214,20 @@ namespace BlueFire.Toolkit.WinUI3.Media
 
             ComPtr<Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop> interop = default;
 
-            try
+            if (surface != null)
             {
-                ComObjectHelper.QueryInterface(surface, Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop.IID_Guid, out interop);
+                try
+                {
+                    ComObjectHelper.QueryInterface(surface, Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop.IID_Guid, out interop);
 
-                interop.Value.Resize(new SIZE(image.PixelWidth, image.PixelHeight));
+                    interop.Value.Resize(new SIZE(image.PixelWidth, image.PixelHeight));
 
-                DrawImage(interop, image, cancellationToken);
-            }
-            finally
-            {
-                interop.Release();
+                    DrawImage(interop, image, cancellationToken);
+                }
+                finally
+                {
+                    interop.Release();
+                }
             }
 
             unsafe static void DrawImage(ComPtr<Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop> _interop, SoftwareBitmap _softwareBitmap, CancellationToken _cancellationToken)

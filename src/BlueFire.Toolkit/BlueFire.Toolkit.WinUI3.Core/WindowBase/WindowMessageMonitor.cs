@@ -272,9 +272,9 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
         [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
         private static unsafe LRESULT GlobalSubClassProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, nuint uIdSubclass, nuint dwRefData)
         {
-            return WindowManager.Get(Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd.Value))
+            return WindowManager.Get(Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd.Value))?
                 .GetMonitorInternal()
-                .SubClassProc(hWnd, uMsg, wParam, lParam, uIdSubclass, dwRefData);
+                .SubClassProc(hWnd, uMsg, wParam, lParam, uIdSubclass, dwRefData) ?? new LRESULT(0);
         }
 
     }

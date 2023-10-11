@@ -12,36 +12,38 @@
     <description>Package Description</description>
     <tags>winui3 winappsdk</tags>
     <dependencies>
-      <group targetFramework="net6.0-windows10.0.18362">
-        <dependency id="Microsoft.WindowsAppSDK" version="1.4.230822000" exclude="Build,Analyzers" />
+      <group targetFramework="net6.0-windows10.0.22621">
+        <dependency id="Microsoft.WindowsAppSDK" version="1.4.230913002" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Graphics.Win2D" version="1.1.0" />
+        <dependency id="BlueFire.Toolkit.WinUI3.Core" version="$version$" />
       </group>
     </dependencies>
   </metadata>
   <files>
     <file src="..\..\..\LICENSE" target="\LICENSE" />
 
-    <file src=".\build-files\x86\**\*.pri" target="runtimes\win10-x86\lib\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\x86\**\*.dll" target="runtimes\win10-x86\lib\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\x86\**\*.pdb" target="runtimes\win10-x86\lib\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\x86\**\*.xaml" target="runtimes\win10-x86\lib\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\x86\BlueFire.Toolkit.WinUI3.pri" target="runtimes\win10-x86\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x86\BlueFire.Toolkit.WinUI3.dll" target="runtimes\win10-x86\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x86\BlueFire.Toolkit.WinUI3.pdb" target="runtimes\win10-x86\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x86\BlueFire.Toolkit.WinUI3\**\*.xaml" target="runtimes\win10-x86\lib\net6.0-windows10.0.22621.0\" />
     
-    <file src=".\build-files\x64\**\*.pri" target="runtimes\win10-x64\lib\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\x64\**\*.dll" target="runtimes\win10-x64\lib\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\x64\**\*.pdb" target="runtimes\win10-x64\lib\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\x64\**\*.xaml" target="runtimes\win10-x64\lib\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\x64\BlueFire.Toolkit.WinUI3.pri" target="runtimes\win10-x64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x64\BlueFire.Toolkit.WinUI3.dll" target="runtimes\win10-x64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x64\BlueFire.Toolkit.WinUI3.pdb" target="runtimes\win10-x64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x64\BlueFire.Toolkit.WinUI3\**\*.xaml" target="runtimes\win10-x64\lib\net6.0-windows10.0.22621.0\" />
     
-    <file src=".\build-files\arm64\**\*.pri" target="runtimes\win10-arm64\lib\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\arm64\**\*.dll" target="runtimes\win10-arm64\lib\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\arm64\**\*.pdb" target="runtimes\win10-arm64\lib\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\arm64\**\*.xaml" target="runtimes\win10-arm64\lib\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\arm64\BlueFire.Toolkit.WinUI3.pri" target="runtimes\win10-arm64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\arm64\BlueFire.Toolkit.WinUI3.dll" target="runtimes\win10-arm64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\arm64\BlueFire.Toolkit.WinUI3.pdb" target="runtimes\win10-arm64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\arm64\BlueFire.Toolkit.WinUI3\**\*.xaml" target="runtimes\win10-arm64\lib\net6.0-windows10.0.22621.0\" />
     
-    <file src=".\build-files\AnyCPU\**\*.pri" target="ref\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\AnyCPU\**\*.dll" target="ref\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\AnyCPU\**\*.pdb" target="ref\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\AnyCPU\**\*.xaml" target="ref\net6.0-windows10.0.18362\" />
-    <file src=".\build-files\AnyCPU\**\*.xbf" target="ref\net6.0-windows10.0.18362\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.pri" target="ref\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.dll" target="ref\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.pdb" target="ref\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3\**\*.xaml" target="ref\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3\**\*.xbf" target="ref\net6.0-windows10.0.22621.0\" />
 
-    <file src=".\build-files\AnyCPU\**\*.pri" target="lib\uap10.0\" />
-    <file src=".\build-files\AnyCPU\**\*.xaml" target="lib\uap10.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.pri" target="lib\uap10.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3\**\*.xaml" target="lib\uap10.0\" />
   </files>
 </package>

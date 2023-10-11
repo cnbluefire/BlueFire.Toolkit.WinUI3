@@ -72,11 +72,7 @@ namespace BlueFire.Toolkit.WinUI3.Test
             {
                 format.FontFamily = null;
 
-                CanvasTextFormatHelper.SetFontFamilySource(
-                    format,
-                    "Custom Font, Wide Latin, 方正舒体",
-                    "en",
-                    fontFileUri => new CanvasFontSet(fontFileUri));
+                CanvasTextFormatHelper.SetFontFamilySource(format, "Custom Font, Wide Latin, 方正舒体", "en");
 
                 using (var layout = new CanvasTextLayout(CanvasDevice.GetSharedDevice(), "测试AB", format, float.MaxValue, float.MaxValue))
                 {
@@ -90,6 +86,22 @@ namespace BlueFire.Toolkit.WinUI3.Test
                     Assert.AreEqual(renderer.Fonts[3].FamilyNames["en-us"], "Wide Latin");
                 }
             }
+        }
+
+        [TestMethod]
+        public void CreateFormattedText()
+        {
+            var formattedText = new FormattedText(
+                "测试AB",
+                "en",
+                Microsoft.UI.Xaml.FlowDirection.LeftToRight,
+                new FormattedTextTypeface(),
+                12,
+                true,
+                true);
+
+            Assert.AreEqual(formattedText.LineGlyphRuns[0].GlyphRuns[0].TextString, "测");
+            Assert.AreEqual(formattedText.LineGlyphRuns[0].GlyphRuns[2].TextString, "A");
         }
 
         private class TextRenderer : ICanvasTextRenderer

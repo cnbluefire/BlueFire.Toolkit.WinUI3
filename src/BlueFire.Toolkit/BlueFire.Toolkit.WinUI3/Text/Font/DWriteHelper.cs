@@ -1,5 +1,6 @@
 ﻿using BlueFire.Toolkit.WinUI3.Extensions;
 using BlueFire.Toolkit.WinUI3.Graphics;
+using Microsoft.Graphics.Canvas.Text;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,6 +19,28 @@ namespace BlueFire.Toolkit.WinUI3.Text
     internal static class DWriteHelper
     {
         private static nint[] factories = new nint[2];
+
+        internal static unsafe bool IsColorFont(this CanvasFontFace canvasFontFace)
+        {
+            ComPtr<IDWriteFontFaceReference> dWriteFontFaceReference = default;
+            ComPtr<IDWriteFontFace3> dWriteFontFace = default;
+
+            try
+            {
+                dWriteFontFaceReference = Direct2DInterop.GetWrappedResourcePtr<IDWriteFontFaceReference>(canvasFontFace);
+                if (dWriteFontFaceReference.Value.CreateFontFace(dWriteFontFace.TypedPointerRef).Succeeded)
+                {
+                    return dWriteFontFace.Value.IsColorFont();
+                }
+
+                return false;
+            }
+            finally
+            {
+                dWriteFontFace.Release();
+                dWriteFontFaceReference.Release();
+            }
+        }
 
         internal static unsafe bool CreateFontFace(
             CanvasFallbackFont fontIdentifier,
@@ -112,7 +135,6 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
         internal static CanvasFontProperties? GetFontProperties(
             CanvasFontFamily fontFamily,
-            Func<Uri, IWinRTObject> createCanvasFontSetFunction,
             out ComPtr<IDWriteFontFace3> fontFace,
             out ComPtr<IDWriteFontCollection> fontCollection,
             out IWinRTObject? canvasFontSet)
@@ -130,7 +152,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
             {
                 try
                 {
-                    canvasFontSet = createCanvasFontSetFunction(fontFamily.LocationUri);
+                    canvasFontSet = new CanvasFontSet(fontFamily.LocationUri);
                 }
                 catch { }
 

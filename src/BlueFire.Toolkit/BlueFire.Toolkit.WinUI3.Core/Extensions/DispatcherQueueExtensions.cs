@@ -41,7 +41,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
 
             if (ex != null) throw new AggregateException(ex);
 
-            return result;
+            return result!;
         }
     }
 }

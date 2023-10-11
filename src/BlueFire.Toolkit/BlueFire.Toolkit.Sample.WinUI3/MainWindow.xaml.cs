@@ -165,20 +165,42 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
         private void myCanvasControl_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
         {
-            using (var format = new CanvasTextFormat())
+            using var formattedText = new FormattedText(
+                "测试一下ABC测试一下ABC测试一下ABC",
+                "en",
+                FlowDirection.LeftToRight,
+                new FormattedTextTypeface(
+                    new FontFamily("Custom Font, 方正舒体, Wide Latin"),
+                    Microsoft.UI.Text.FontWeights.Normal,
+                    Windows.UI.Text.FontStyle.Normal,
+                    Windows.UI.Text.FontStretch.Normal),
+                24,
+                true,
+                true);
+
+            formattedText.MaxTextWidth = sender.ActualWidth;
+            formattedText.TextWrapping = TextWrapping.Wrap;
+            formattedText.LineHeight = 40;
+
+            using var layout = formattedText.CreateCanvasTextLayout(sender);
+            args.DrawingSession.DrawTextLayout(layout, 0, 0, Windows.UI.Color.FromArgb(255, 255, 0, 0));
+
+            for (int i = 0; i < formattedText.LineGlyphRuns.Count; i++)
             {
-                format.FontFamily = null;
-
-                CanvasTextFormatHelper.SetFontFamilySource(
-                    format,
-                    "Custom Font, 方正舒体, Wide Latin",
-                    "en",
-                    fontFileUri => new CanvasFontSet(fontFileUri));
-
-                using (var layout = new CanvasTextLayout(sender, "测试一下ABC", format, float.MaxValue, float.MaxValue))
+                for (int j = 0; j < formattedText.LineGlyphRuns[i].GlyphRuns.Length; j++)
                 {
-                    args.DrawingSession.DrawTextLayout(layout, 0, 0, Windows.UI.Color.FromArgb(255, 255, 0, 0));
+                    var glyphRun = formattedText.LineGlyphRuns[i].GlyphRuns[j];
+                    args.DrawingSession.FillRectangle(glyphRun.LayoutBounds, RandomColor(0.5));
                 }
+            }
+
+            static Windows.UI.Color RandomColor(double opacity)
+            {
+                return Windows.UI.Color.FromArgb(
+                    (byte)Math.Clamp(opacity * 255, 0, 255),
+                    (byte)Random.Shared.Next(0, 256),
+                    (byte)Random.Shared.Next(0, 256),
+                    (byte)Random.Shared.Next(0, 256));
             }
         }
 

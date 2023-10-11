@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Globalization;
 using BlueFire.Toolkit.WinUI3.Graphics;
 using BlueFire.Toolkit.WinUI3.Extensions;
+using Microsoft.Graphics.Canvas.Text;
 
 namespace BlueFire.Toolkit.WinUI3.Text
 {
@@ -24,11 +25,10 @@ namespace BlueFire.Toolkit.WinUI3.Text
             "EMOJI"
         };
 
-        public static void SetFontFamilySource<T>(
-            T canvasTextFormat,
+        public static void SetFontFamilySource(
+            CanvasTextFormat canvasTextFormat,
             string fontFamilySource,
-            string? languageTag,
-            Func<Uri, IWinRTObject> createCanvasFontSetFunction) where T : IWinRTObject
+            string? languageTag) 
         {
             var collection = new CanvasFontFamilyCollection(fontFamilySource);
 
@@ -44,13 +44,11 @@ namespace BlueFire.Toolkit.WinUI3.Text
                     }
                 }
 
-                var mainFontFamily = GetActualFamilyName(collection[0], languageTag, out _);
-
-                SetFallbackFontFamilies(canvasTextFormat, collection, createCanvasFontSetFunction);
+                SetFallbackFontFamilies(canvasTextFormat, collection);
             }
         }
 
-        private static unsafe void SetFallbackFontFamilies(object canvasTextFormat, IReadOnlyList<CanvasFontFamily> fontFamilies, Func<Uri, IWinRTObject> createCanvasFontSetFunction)
+        private static unsafe void SetFallbackFontFamilies(CanvasTextFormat canvasTextFormat, IReadOnlyList<CanvasFontFamily> fontFamilies)
         {
             if (fontFamilies == null || fontFamilies.Count == 0) return;
 
@@ -65,7 +63,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
                     for (int i = 0; i < fontFamilies.Count; i++)
                     {
-                        AppendToFontFallback(builder, fontFamilies[i], createCanvasFontSetFunction);
+                        AppendToFontFallback(builder, fontFamilies[i]);
                     }
 
                     ComPtr<IDWriteFontFallback> systemFontFallback = default;
@@ -87,7 +85,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
             }
         }
 
-        private static unsafe void AppendToFontFallback(ComPtr<IDWriteFontFallbackBuilder> builder, CanvasFontFamily fontFamily, Func<Uri, IWinRTObject> createCanvasFontSetFunction)
+        private static unsafe void AppendToFontFallback(ComPtr<IDWriteFontFallbackBuilder> builder, CanvasFontFamily fontFamily)
         {
             CanvasFontProperties? fontProperties = null;
             IWinRTObject? canvasFontSet = null;
@@ -110,7 +108,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
                                 for (int j = 0; j < mapTargetFamilies.Count; j++)
                                 {
                                     var mapTargetFamily = mapTargetFamilies[j];
-                                    AppendToFontFallback(builder, mapTargetFamily, createCanvasFontSetFunction);
+                                    AppendToFontFallback(builder, mapTargetFamily);
                                 }
                             }
                         }
@@ -118,7 +116,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
                     }
                 }
 
-                fontProperties = DWriteHelper.GetFontProperties(fontFamily, createCanvasFontSetFunction, out fontFace, out fontCollection, out canvasFontSet);
+                fontProperties = DWriteHelper.GetFontProperties(fontFamily, out fontFace, out fontCollection, out canvasFontSet);
 
                 if (fontProperties != null && fontProperties.UnicodeRanges.Length > 0)
                 {

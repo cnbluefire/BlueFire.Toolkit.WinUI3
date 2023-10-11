@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>blue-fire</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="file">LICENSE</license>
+    <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
+    <projectUrl>https://github.com/cnbluefire/BlueFire.Toolkit.WinUI3</projectUrl>
+    <description>Package Description</description>
+    <tags>winui3 winappsdk</tags>
+    <dependencies>
+      <group targetFramework="net6.0-windows10.0.22621">
+        <dependency id="Microsoft.WindowsAppSDK" version="1.4.230913002" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\..\..\LICENSE" target="\LICENSE" />
+
+    <file src=".\build-files\x86\BlueFire.Toolkit.WinUI3.Core.pri" target="runtimes\win10-x86\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x86\BlueFire.Toolkit.WinUI3.Core.dll" target="runtimes\win10-x86\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x86\BlueFire.Toolkit.WinUI3.Core.pdb" target="runtimes\win10-x86\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x86\BlueFire.Toolkit.WinUI3.Core\**\*.xaml" target="runtimes\win10-x86\lib\net6.0-windows10.0.22621.0\" />
+    
+    <file src=".\build-files\x64\BlueFire.Toolkit.WinUI3.Core.pri" target="runtimes\win10-x64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x64\BlueFire.Toolkit.WinUI3.Core.dll" target="runtimes\win10-x64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x64\BlueFire.Toolkit.WinUI3.Core.pdb" target="runtimes\win10-x64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x64\BlueFire.Toolkit.WinUI3.Core\**\*.xaml" target="runtimes\win10-x64\lib\net6.0-windows10.0.22621.0\" />
+    
+    <file src=".\build-files\arm64\BlueFire.Toolkit.WinUI3.Core.pri" target="runtimes\win10-arm64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\arm64\BlueFire.Toolkit.WinUI3.Core.dll" target="runtimes\win10-arm64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\arm64\BlueFire.Toolkit.WinUI3.Core.pdb" target="runtimes\win10-arm64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\arm64\BlueFire.Toolkit.WinUI3.Core\**\*.xaml" target="runtimes\win10-arm64\lib\net6.0-windows10.0.22621.0\" />
+    
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.Core.pri" target="ref\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.Core.dll" target="ref\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.Core.pdb" target="ref\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.Core\**\*.xaml" target="ref\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.Core\**\*.xbf" target="ref\net6.0-windows10.0.22621.0\" />
+
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.Core.pri" target="lib\uap10.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.Core\**\*.xaml" target="lib\uap10.0\" />
+  </files>
+</package>

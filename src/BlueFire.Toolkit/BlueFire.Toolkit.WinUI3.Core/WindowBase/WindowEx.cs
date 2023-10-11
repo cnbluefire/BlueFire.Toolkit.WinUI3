@@ -30,7 +30,6 @@ namespace BlueFire.Toolkit.WinUI3
         private bool destroying;
         private bool hasShowed;
         private bool isActivated;
-        private bool needFlushCompTarget;
         private Windows.UI.Composition.Visual? rootVisual;
 
         private FrameworkElement? loadHelper;
@@ -270,7 +269,6 @@ namespace BlueFire.Toolkit.WinUI3
             else if (e.MessageId == PInvoke.WM_ACTIVATE)
             {
                 isActivated = unchecked((ushort)e.WParam) != 0;
-                if (!isActivated) needFlushCompTarget = true;
             }
             else if (e.MessageId == PInvoke.WM_DESTROY)
             {

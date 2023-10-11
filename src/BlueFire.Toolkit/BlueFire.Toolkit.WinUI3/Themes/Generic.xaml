@@ -4,9 +4,4 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:BlueFire.Toolkit.WinUI3.Themes">
 
-    <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="ms-appx:///BlueFire.Toolkit.WinUI3/Controls/HotKeyInputBox.xaml" />
-        <ResourceDictionary Source="ms-appx:///BlueFire.Toolkit.WinUI3/Controls/Primitives/RedirectVisualView.xaml" />
-    </ResourceDictionary.MergedDictionaries>
-    
 </ResourceDictionary>

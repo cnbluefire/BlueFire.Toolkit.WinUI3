@@ -1,4 +1,5 @@
 ﻿using BlueFire.Toolkit.WinUI3.Extensions;
+using Microsoft.Graphics.Canvas;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Graphics.DirectX.Direct3D11;
-using Windows.Win32.Foundation;
 using WinRT;
 
 namespace BlueFire.Toolkit.WinUI3.Graphics
@@ -28,12 +28,12 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             return GetWrappedResource<T>(null, wrapper, 0);
         }
 
-        public static T? GetWrappedResource<T>(IDirect3DDevice? canvasDevice, object wrapper) where T : class
+        public static T? GetWrappedResource<T>(CanvasDevice? canvasDevice, object wrapper) where T : class
         {
             return GetWrappedResource<T>(canvasDevice, wrapper, 0);
         }
 
-        public static unsafe T? GetWrappedResource<T>(IDirect3DDevice? canvasDevice, object wrapper, float dpi) where T : class
+        public static unsafe T? GetWrappedResource<T>(CanvasDevice? canvasDevice, object wrapper, float dpi) where T : class
         {
             if (wrapper == null) throw new ArgumentException(null, nameof(wrapper));
 
@@ -61,12 +61,12 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             return GetWrappedResourcePtr<T>(null, wrapper, 0);
         }
 
-        internal static ComPtr<T> GetWrappedResourcePtr<T>(IDirect3DDevice? canvasDevice, object wrapper) where T : unmanaged
+        internal static ComPtr<T> GetWrappedResourcePtr<T>(CanvasDevice? canvasDevice, object wrapper) where T : unmanaged
         {
             return GetWrappedResourcePtr<T>(canvasDevice, wrapper, 0);
         }
 
-        internal static unsafe ComPtr<T> GetWrappedResourcePtr<T>(IDirect3DDevice? canvasDevice, object wrapper, float dpi) where T : unmanaged
+        internal static unsafe ComPtr<T> GetWrappedResourcePtr<T>(CanvasDevice? canvasDevice, object wrapper, float dpi) where T : unmanaged
         {
             if (wrapper == null) throw new ArgumentException(null, nameof(wrapper));
 
@@ -80,7 +80,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             return comPtr;
         }
 
-        internal static unsafe HRESULT GetNativeResource(IDirect3DDevice? canvasDevice, object wrapper, float dpi, Guid* iid, void** resource)
+        internal static unsafe Windows.Win32.Foundation.HRESULT GetNativeResource(CanvasDevice? canvasDevice, object wrapper, float dpi, Guid* iid, void** resource)
         {
             if (wrapper == null) return ComObjectHelper.E_POINTER;
 
@@ -95,8 +95,6 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
 
                 if (hr.Failed) return hr;
 
-                nint device = 0;
-
                 using var objRef = GetCanvasDeviceReference(canvasDevice);
 
                 hr = pFactoryNative.Value.GetNativeResource((void*)(objRef?.ThisPtr ?? IntPtr.Zero), dpi, iid, resource);
@@ -107,7 +105,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
                 pFactoryNative.Release();
             }
         }
-        public static T? GetOrCreateFromPtr<T>(IDirect3DDevice? device, nint resource) where T : class, IWinRTObject
+        public static T? GetOrCreateFromPtr<T>(CanvasDevice? device, nint resource) where T : class, IWinRTObject
         {
             return GetOrCreateFromPtr<T>(device, resource, 0);
         }
@@ -117,7 +115,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             return GetOrCreateFromPtr<T>(null, resource, 0);
         }
 
-        public static unsafe T? GetOrCreateFromPtr<T>(IDirect3DDevice? device, nint resource, float dpi) where T : class, IWinRTObject
+        public static unsafe T? GetOrCreateFromPtr<T>(CanvasDevice? device, nint resource, float dpi) where T : class, IWinRTObject
         {
             using var objRef = GetCanvasDeviceReference(device);
 
@@ -137,7 +135,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             return null;
         }
 
-        public static T? GetOrCreate<T>(IDirect3DDevice? device, object resource) where T : class, IWinRTObject
+        public static T? GetOrCreate<T>(CanvasDevice? device, object resource) where T : class, IWinRTObject
         {
             return GetOrCreate<T>(device, resource, 0);
         }
@@ -147,7 +145,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             return GetOrCreate<T>(null, resource, 0);
         }
 
-        public static T? GetOrCreate<T>(IDirect3DDevice? device, object resource, float dpi) where T : class, IWinRTObject
+        public static T? GetOrCreate<T>(CanvasDevice? device, object resource, float dpi) where T : class, IWinRTObject
         {
             if (resource == null) return default;
 
@@ -195,12 +193,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         //    void UnregisterEffectFactory(ref Guid effectId);
         //}
 
-        public static void InitializeCanvasDeviceFactory<T>() where T : class, IDirect3DDevice
-        {
-            InitializeCanvasDeviceFactory(typeof(T));
-        }
-
-        private static void InitializeCanvasDeviceFactory(Type canvasDeviceType)
+        private static void InitializeCanvasDeviceFactory()
         {
             if (canvasFactoryNative == null)
             {
@@ -208,35 +201,35 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
                 {
                     if (canvasFactoryNative == null)
                     {
-                        var canvasFactoryNativeType = typeof(ICanvasFactoryNative);
-
-                        var methodInfo = canvasDeviceType.GetMethod(
-                            "As",
-                            1,
-                            BindingFlags.Static | BindingFlags.Public,
-                            null,
-                            Type.EmptyTypes,
-                            null);
-
-                        if (methodInfo != null)
+                        ICanvasFactoryNative.Interface? rcw = null;
+                        try
                         {
-                            var rcw = methodInfo.MakeGenericMethod(canvasFactoryNativeType).Invoke(null, null);
+                            rcw = CanvasDevice.As<ICanvasFactoryNative.Interface>();
 
                             if (rcw != null)
                             {
-                                try
+                                var hr = ComObjectHelper.QueryInterface<ICanvasFactoryNative>(rcw, ICanvasFactoryNative.IID_Guid, out var result);
+                                if (hr.Succeeded)
                                 {
-                                    var hr = ComObjectHelper.QueryInterface<ICanvasFactoryNative>(rcw, ICanvasFactoryNative.IID_Guid, out var result);
-                                    if (hr.Succeeded)
-                                    {
-                                        canvasFactoryNative = result;
-                                    }
+                                    canvasFactoryNative = result;
                                 }
-                                finally
+                                else
                                 {
-                                    Marshal.ReleaseComObject(rcw);
+                                    canvasDeviceFactoryNotSupported = true;
                                 }
                             }
+                            else
+                            {
+                                canvasDeviceFactoryNotSupported = false;
+                            }
+                        }
+                        catch
+                        {
+                            canvasDeviceFactoryNotSupported = false;
+                        }
+                        finally
+                        {
+                            if (rcw != null) Marshal.ReleaseComObject(rcw);
                         }
                     }
                 }
@@ -251,13 +244,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
                 {
                     if (!canvasFactoryNative.HasValue && !canvasDeviceFactoryNotSupported)
                     {
-                        var type = Type.GetType("Microsoft.Graphics.Canvas.CanvasDevice, Microsoft.Graphics.Canvas.Interop")
-                            ?? FindRcwTypeByNameCached("Microsoft.Graphics.Canvas.CanvasDevice");
-
-                        if (type != null)
-                        {
-                            InitializeCanvasDeviceFactory(type);
-                        }
+                        InitializeCanvasDeviceFactory();
                     }
 
                     if (!canvasFactoryNative.HasValue)
@@ -268,12 +255,6 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             }
 
             return canvasFactoryNative;
-
-
-            static Type? FindRcwTypeByNameCached(string runtimeClassName) =>
-                Type.GetType("WinRT.TypeNameSupport, WinRT.Runtime")?
-                    .GetMethod("FindRcwTypeByNameCached")?
-                    .Invoke(null, new object[] { runtimeClassName }) as Type;
         }
 
         private static IObjectReference? GetCanvasDeviceReference(IDirect3DDevice? device)
