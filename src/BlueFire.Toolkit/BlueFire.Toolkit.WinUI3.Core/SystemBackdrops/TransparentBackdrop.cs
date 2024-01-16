@@ -1,153 +1,76 @@
-﻿using BlueFire.Toolkit.WinUI3.Compositions;
-using BlueFire.Toolkit.WinUI3.WindowBase;
-using Microsoft.UI.Composition;
+﻿using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WinCompositionColorBrush = Windows.UI.Composition.CompositionColorBrush;
-using Windows.Win32.Foundation;
-using Windows.Win32;
-using Windows.Win32.Graphics.Gdi;
 using WinRT;
 using System.Runtime.InteropServices;
 using Microsoft.UI;
-using Microsoft.UI.Xaml.Markup;
-using BlueFire.Toolkit.WinUI3.Extensions;
-using System.Runtime.CompilerServices;
 
 namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 {
-    public class TransparentBackdrop : WindowBackdropBase
+    public class TransparentBackdrop : SystemBackdrop
     {
-        private WindowManager? windowManager;
-        private WinCompositionColorBrush? colorBrush;
-        private COLORREF defaultWindowBackground;
-        private DeleteObjectSafeHandle? backgroundBrush;
+        private Dictionary<WindowId, TransparentBackdropControllerEntry> entries = new Dictionary<WindowId, TransparentBackdropControllerEntry>();
 
-        protected override void OnTargetConnected(WindowId windowId, ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
+        protected override void OnTargetConnected(ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
         {
-            base.OnTargetConnected(windowId, connectedTarget, xamlRoot);
+            var windowId = xamlRoot.ContentIslandEnvironment.AppWindowId;
 
-            if (colorBrush == null)
+            var test = GetIUnknownPtr(connectedTarget);
+
+            lock (entries)
             {
-                colorBrush = WindowsCompositionHelper.Compositor.CreateColorBrush(BackgroundColor);
-            }
+                if (entries.ContainsKey(windowId)) return;
 
-            connectedTarget.SystemBackdrop = colorBrush;
-
-            windowManager = WindowManager.Get(windowId);
-
-            if (windowManager != null)
-            {
-                defaultWindowBackground = new COLORREF(PInvoke.GetSysColor(SYS_COLOR_INDEX.COLOR_WINDOW));
-                defaultWindowBackground = new COLORREF(0x00000000);
-
-                windowManager.GetMonitorInternal().WindowMessageBeforeReceived -= OnWindowMessageBeforeReceived;
-                windowManager.GetMonitorInternal().WindowMessageAfterReceived -= OnWindowMessageAfterReceived;
-
-                windowManager.GetMonitorInternal().WindowMessageBeforeReceived += OnWindowMessageBeforeReceived;
-                windowManager.GetMonitorInternal().WindowMessageAfterReceived += OnWindowMessageAfterReceived;
-
-                UpdateTransparentAttributes(true);
+                var entry = new TransparentBackdropControllerEntry(connectedTarget, windowId);
+                entry.OnClear += Entry_OnClear;
+                entries[windowId] = entry;
             }
         }
 
         protected override void OnTargetDisconnected(ICompositionSupportsSystemBackdrop disconnectedTarget)
         {
-            base.OnTargetDisconnected(disconnectedTarget);
-
-            disconnectedTarget.SystemBackdrop = null;
-
-            if (windowManager != null)
+            lock (entries)
             {
-                windowManager.GetMonitorInternal().WindowMessageBeforeReceived -= OnWindowMessageBeforeReceived;
-                windowManager.GetMonitorInternal().WindowMessageAfterReceived -= OnWindowMessageAfterReceived;
+                TransparentBackdropControllerEntry? entry = null;
 
-                UpdateTransparentAttributes(false);
-
-                windowManager = null;
-            }
-        }
-
-        private unsafe void OnWindowMessageBeforeReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
-        {
-            if (e.MessageId == PInvoke.WM_DWMCOMPOSITIONCHANGED)
-            {
-                UpdateTransparentAttributes(true);
-            }
-            else if (e.MessageId == PInvoke.WM_ERASEBKGND)
-            {
-                if (PInvoke.GetClientRect(new HWND((nint)e.WindowId.Value), out var rect))
+                foreach (var item in entries.Values)
                 {
-                    if (backgroundBrush == null)
+                    if (GetIUnknownPtr(item.ConnectedTarget) == GetIUnknownPtr(disconnectedTarget))
                     {
-                        backgroundBrush = PInvoke.CreateSolidBrush_SafeHandle(new COLORREF(0x00000000));
+                        entry = item;
+                        break;
                     }
+                }
 
-                    PInvoke.FillRect(new HDC((nint)e.WParam), rect, backgroundBrush);
-
-                    e.LResult = 1;
-                    e.Handled = true;
+                if (entry != null)
+                {
+                    entries.Remove(entry.WindowId);
+                    entry.OnClear -= Entry_OnClear;
+                    entry.Dispose();
                 }
             }
         }
 
-        private unsafe void OnWindowMessageAfterReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
+        private void Entry_OnClear(object? sender, EventArgs e)
         {
-            if (e.MessageId == PInvoke.WM_STYLECHANGING)
+            var entry = (TransparentBackdropControllerEntry)sender!;
+            lock (entries)
             {
-                if (e.WParam == unchecked((nuint)Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE))
-                {
-                    var styleStruct = Unsafe.AsRef<Windows.Win32.UI.WindowsAndMessaging.STYLESTRUCT>((void*)e.LParam);
-
-                    if ((styleStruct.styleNew & (uint)(Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_LAYERED)) == 0)
-                    {
-                        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.High, () =>
-                        {
-                            UpdateTransparentAttributes(true);
-                        });
-                    }
-                }
+                entries.Remove(entry.WindowId);
+                entry.OnClear -= Entry_OnClear;
+                entry.Dispose();
             }
         }
 
-        private unsafe void UpdateTransparentAttributes(bool enabled)
+        private static nint GetIUnknownPtr(ICompositionSupportsSystemBackdrop? target)
         {
-            if (windowManager != null)
-            {
-                PInvoke.DwmExtendFrameIntoClientArea(windowManager.HWND, new Windows.Win32.UI.Controls.MARGINS());
+            if (target is null) return 0;
 
-                using var hrgn = PInvoke.CreateRectRgn_SafeHandle(-2, -2, -1, -1);
-                PInvoke.DwmEnableBlurBehindWindow(windowManager.HWND, new Windows.Win32.Graphics.Dwm.DWM_BLURBEHIND()
-                {
-                    dwFlags = enabled ? (PInvoke.DWM_BB_ENABLE | PInvoke.DWM_BB_BLURREGION) : 0,
-                    fEnable = enabled,
-                    hRgnBlur = new HRGN(hrgn.DangerousGetHandle())
-                });
+            if (target is IWinRTObject winRtObj) return winRtObj.NativeObject.ThisPtr;
 
-                var exStyle = PInvoke.GetWindowLongAuto(windowManager.HWND, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
-                if (enabled)
-                {
-                    exStyle |= (nint)(Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_LAYERED);
-
-                    PInvoke.SetLayeredWindowAttributes(windowManager.HWND, defaultWindowBackground, 255, Windows.Win32.UI.WindowsAndMessaging.LAYERED_WINDOW_ATTRIBUTES_FLAGS.LWA_ALPHA);
-
-                    if ((defaultWindowBackground.Value & 0x00FFFFFF) != 0)
-                    {
-                        PInvoke.SetLayeredWindowAttributes(windowManager.HWND, defaultWindowBackground, 255, Windows.Win32.UI.WindowsAndMessaging.LAYERED_WINDOW_ATTRIBUTES_FLAGS.LWA_COLORKEY);
-                    }
-                }
-                else
-                {
-                    exStyle &= ~(nint)(Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_LAYERED);
-                }
-
-                PInvoke.InvalidateRect(windowManager.HWND, bErase: true);
-            }
+            var ptr = Marshal.GetIUnknownForObject(target);
+            Marshal.Release(ptr);
+            return ptr;
         }
 
         public Windows.UI.Color BackgroundColor
@@ -161,9 +84,14 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             {
                 if (s is TransparentBackdrop sender && !Equals(a.NewValue, a.OldValue))
                 {
-                    if (sender.colorBrush != null)
+                    var color = (Windows.UI.Color)a.NewValue;
+
+                    lock (sender.entries)
                     {
-                        sender.colorBrush.Color = (Windows.UI.Color)a.NewValue;
+                        foreach (var item in sender.entries.Values)
+                        {
+                            item.BackgroundColor = color;
+                        }
                     }
                 }
             }));

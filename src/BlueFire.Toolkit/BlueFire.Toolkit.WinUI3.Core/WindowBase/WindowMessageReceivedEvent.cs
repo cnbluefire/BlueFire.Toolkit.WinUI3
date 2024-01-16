@@ -36,13 +36,44 @@ namespace BlueFire.Toolkit.WinUI3
 #if DEBUG
         public override string ToString()
         {
-            var messageName = typeof(Windows.Win32.PInvoke).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
-                .FirstOrDefault(c => Convert.ToUInt32(c.GetValue(null)) == MessageId)?
-                .Name ?? $"MessageId: {MessageId}";
-
-            return messageName;
+            return GetMessageName(MessageId);
         }
 #endif
+
+#if DEBUG
+
+        private static IReadOnlyDictionary<uint, string>? messageNameMap;
+        private static object messageMapLocker = new object();
+
+        internal static string GetMessageName(uint messageId)
+        {
+            if (messageNameMap == null)
+            {
+                lock (messageMapLocker)
+                {
+                    if (messageNameMap == null)
+                    {
+                        messageNameMap = typeof(Windows.Win32.PInvoke).GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
+                            .Where(c => c.Name.StartsWith("WM_") && c.FieldType == typeof(uint))
+                            .Select(c => (id: (uint)c.GetValue(null)!, name: c.Name))
+                            .GroupBy(c => c.id)
+                            .ToDictionary(c => c.Key, c => c.FirstOrDefault().name);
+                    }
+                }
+            }
+
+            if (messageNameMap.TryGetValue(messageId, out var name)) return name;
+
+            return "UNKNOWN";
+        }
+
+#else
+        internal static string GetMessageName(uint messageId)
+        {
+            return "UNKNOWN";
+        }
+#endif
+
     }
 
     public delegate void WindowMessageReceivedEventHandler(WindowManager sender, WindowMessageReceivedEventArgs e);

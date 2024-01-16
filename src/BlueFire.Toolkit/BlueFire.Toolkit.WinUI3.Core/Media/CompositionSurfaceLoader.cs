@@ -21,6 +21,12 @@ namespace BlueFire.Toolkit.WinUI3.Media
 {
     public class CompositionSurfaceLoader : ICompositionSurface, IDisposable
     {
+        private const int MaxTextureSizeFallback = 2045;
+        private const int TileSize = 504;
+        private const int HardMaximumTileCount = 150;
+
+        private bool isVirtual;
+
         private static D2DDeviceHolder? softwareD2dDeviceHolder;
         private static CompositionGraphicsDevice? graphicsDevice;
 
@@ -54,14 +60,14 @@ namespace BlueFire.Toolkit.WinUI3.Media
 
         #endregion Static Create Methods
 
-        private CompositionSurfaceLoader()
+        private CompositionSurfaceLoader(Size desiredMaxSize)
         {
             CreateDevice();
-            CreateSurface();
+            CreateSurface(desiredMaxSize);
             cts = new CancellationTokenSource();
         }
 
-        private CompositionSurfaceLoader(IRandomAccessStream randomAccessStream, Size desiredMaxSize) : this()
+        private CompositionSurfaceLoader(IRandomAccessStream randomAccessStream, Size desiredMaxSize) : this(desiredMaxSize)
         {
             graphicsDevice!.DispatcherQueue.TryEnqueue(Windows.System.DispatcherQueuePriority.Low, async () =>
             {
@@ -77,7 +83,7 @@ namespace BlueFire.Toolkit.WinUI3.Media
             });
         }
 
-        private CompositionSurfaceLoader(Uri uri, Size desiredMaxSize) : this()
+        private CompositionSurfaceLoader(Uri uri, Size desiredMaxSize) : this(desiredMaxSize)
         {
             graphicsDevice!.DispatcherQueue.TryEnqueue(Windows.System.DispatcherQueuePriority.Low, async () =>
             {
@@ -129,12 +135,24 @@ namespace BlueFire.Toolkit.WinUI3.Media
             }
         }
 
-        private void CreateSurface()
+        private void CreateSurface(Size desiredMaxSize)
         {
-            surface = graphicsDevice!.CreateDrawingSurface2(
-                new(0, 0),
-                Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                Windows.Graphics.DirectX.DirectXAlphaMode.Premultiplied);
+            isVirtual = IsVirtualPossible(desiredMaxSize);
+
+            if (isVirtual)
+            {
+                surface = graphicsDevice!.CreateVirtualDrawingSurface(
+                    new(0, 0),
+                    Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                    Windows.Graphics.DirectX.DirectXAlphaMode.Premultiplied);
+            }
+            else
+            {
+                surface = graphicsDevice!.CreateDrawingSurface2(
+                    new(0, 0),
+                    Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                    Windows.Graphics.DirectX.DirectXAlphaMode.Premultiplied);
+            }
         }
 
         #endregion Create Resource
@@ -222,7 +240,7 @@ namespace BlueFire.Toolkit.WinUI3.Media
 
                     interop.Value.Resize(new SIZE(image.PixelWidth, image.PixelHeight));
 
-                    DrawImage(interop, image, cancellationToken);
+                    DrawImage(interop, image, isVirtual, cancellationToken);
                 }
                 finally
                 {
@@ -230,7 +248,7 @@ namespace BlueFire.Toolkit.WinUI3.Media
                 }
             }
 
-            unsafe static void DrawImage(ComPtr<Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop> _interop, SoftwareBitmap _softwareBitmap, CancellationToken _cancellationToken)
+            unsafe static void DrawImage(ComPtr<Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop> _interop, SoftwareBitmap _softwareBitmap, bool _isVirtual, CancellationToken _cancellationToken)
             {
                 lock (graphicsDevice!)
                 {
@@ -258,15 +276,49 @@ namespace BlueFire.Toolkit.WinUI3.Media
                         _cancellationToken.ThrowIfCancellationRequested();
 
                         bitmap = CreateBitmap(_softwareBitmap, deviceContext);
-
                         _cancellationToken.ThrowIfCancellationRequested();
 
-                        deviceContext.Value.DrawBitmap(
-                            bitmap.AsTypedPointer<Windows.Win32.Graphics.Direct2D.ID2D1Bitmap>(),
-                            (Windows.Win32.Graphics.Direct2D.Common.D2D_RECT_F*)0,
-                            1,
-                            Windows.Win32.Graphics.Direct2D.D2D1_BITMAP_INTERPOLATION_MODE.D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
-                            (Windows.Win32.Graphics.Direct2D.Common.D2D_RECT_F*)0);
+                        if (_isVirtual)
+                        {
+                            var imageWidth = _softwareBitmap.PixelWidth;
+                            var imageHeight = _softwareBitmap.PixelHeight;
+
+                            for (int tileY = 0; tileY < imageHeight; tileY += TileSize)
+                            {
+                                var tileHeight = Math.Min(imageHeight - tileY, TileSize);
+
+                                for (int tileX = 0; tileX < imageWidth; tileX += TileSize)
+                                {
+                                    var tileWidth = Math.Min(imageWidth - tileX, TileSize);
+
+                                    var rect = new Windows.Win32.Graphics.Direct2D.Common.D2D_RECT_F()
+                                    {
+                                        left = tileX,
+                                        top = tileY,
+                                        right = tileX + tileWidth,
+                                        bottom = tileY + tileHeight
+                                    };
+
+                                    deviceContext.Value.DrawBitmap(
+                                        bitmap.AsTypedPointer<Windows.Win32.Graphics.Direct2D.ID2D1Bitmap>(),
+                                        &rect,
+                                        1,
+                                        Windows.Win32.Graphics.Direct2D.D2D1_BITMAP_INTERPOLATION_MODE.D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+                                        &rect);
+
+                                    _cancellationToken.ThrowIfCancellationRequested();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            deviceContext.Value.DrawBitmap(
+                                bitmap.AsTypedPointer<Windows.Win32.Graphics.Direct2D.ID2D1Bitmap>(),
+                                (Windows.Win32.Graphics.Direct2D.Common.D2D_RECT_F*)0,
+                                1,
+                                Windows.Win32.Graphics.Direct2D.D2D1_BITMAP_INTERPOLATION_MODE.D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+                                (Windows.Win32.Graphics.Direct2D.Common.D2D_RECT_F*)0);
+                        }
                     }
                     finally
                     {
@@ -379,8 +431,23 @@ namespace BlueFire.Toolkit.WinUI3.Media
             return LoadedImageSourceLoadStatus.Other;
         }
 
+        private static bool IsVirtualPossible(Size maxKnownPixelSize)
+        {
+            bool assumeVirtual = true;
+
+            if (maxKnownPixelSize.Width > 0 && maxKnownPixelSize.Height > 0)
+            {
+                assumeVirtual = maxKnownPixelSize.Width > MaxTextureSizeFallback ||
+                    maxKnownPixelSize.Height > MaxTextureSizeFallback;
+            }
+
+            return assumeVirtual;
+        }
+
         #endregion Utilities
     }
+
+
     internal class D2DDeviceHolder
     {
         private ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1Factory2> d2D1Factory2;

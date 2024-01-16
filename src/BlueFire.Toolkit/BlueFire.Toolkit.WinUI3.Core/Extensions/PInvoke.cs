@@ -62,6 +62,26 @@ namespace Windows.Win32
             return null;
         }
 
+        internal static ushort LOWORD(uint value)
+        {
+            return (ushort)(value & 0xFFFF);
+        }
+
+        internal static ushort HIWORD(uint value)
+        {
+            return (ushort)(value >> 16);
+        }
+
+        internal static byte LOWBYTE(ushort value)
+        {
+            return (byte)(value & 0xFF);
+        }
+
+        internal static byte HIGHBYTE(ushort value)
+        {
+            return (byte)(value >> 8);
+        }
+
         private static nint SetWindowLongPtr(nint hWnd, UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX nIndex, nint dwNewLong)
         {
             return 0;

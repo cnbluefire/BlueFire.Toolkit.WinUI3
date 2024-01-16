@@ -47,6 +47,15 @@ Windows.Win32.UI.WindowsAndMessaging.EnumThreadWindows
 Windows.Win32.UI.WindowsAndMessaging.CreateWindowExW
 Windows.Win32.UI.WindowsAndMessaging.RegisterClassExW
 Windows.Win32.UI.WindowsAndMessaging.DefWindowProcW
+Windows.Win32.UI.WindowsAndMessaging.FindWindowW
+Windows.Win32.UI.WindowsAndMessaging.LoadCursorW
+Windows.Win32.UI.WindowsAndMessaging.IDC_*
+Windows.Win32.UI.WindowsAndMessaging.HT*
+Windows.Win32.UI.WindowsAndMessaging.GetMessage
+Windows.Win32.UI.WindowsAndMessaging.TranslateMessage
+Windows.Win32.UI.WindowsAndMessaging.DispatchMessage
+Windows.Win32.UI.WindowsAndMessaging.SetParent
+Windows.Win32.UI.WindowsAndMessaging.ShowWindow
 
 Windows.Win32.UI.HiDpi.GetDpiForWindow
 
@@ -57,6 +66,13 @@ Windows.Win32.UI.Input.KeyboardAndMouse.UnregisterHotKey
 Windows.Win32.UI.Input.KeyboardAndMouse.MapVirtualKeyW
 Windows.Win32.UI.Input.KeyboardAndMouse.GetKeyNameTextW
 Windows.Win32.UI.Input.KeyboardAndMouse.SendInput
+Windows.Win32.UI.Input.KeyboardAndMouse.GetAsyncKeyState
+Windows.Win32.UI.Input.KeyboardAndMouse.GetCapture
+Windows.Win32.UI.Input.KeyboardAndMouse.SetCapture
+Windows.Win32.UI.Input.KeyboardAndMouse.SetActiveWindow
+Windows.Win32.UI.Input.KeyboardAndMouse.SetFocus
+
+Windows.Win32.UI.Input.Pointer.GetPointerInfo
 
 Windows.Win32.System.LibraryLoader.GetModuleHandleW
 
@@ -76,12 +92,17 @@ Windows.Win32.Graphics.Gdi.SelectObject
 Windows.Win32.Graphics.Gdi.DeleteObject
 Windows.Win32.Graphics.Gdi.BITMAP
 Windows.Win32.Graphics.Gdi.CreateBitmap
+Windows.Win32.Graphics.Gdi.GetStockObject
+Windows.Win32.Graphics.Gdi.BeginPaint
 
 Windows.Win32.Graphics.Dwm.DwmExtendFrameIntoClientArea
 Windows.Win32.Graphics.Dwm.DwmEnableBlurBehindWindow
 Windows.Win32.Graphics.Dwm.DWM_BB_*
 Windows.Win32.Graphics.Dwm.DwmGetWindowAttribute
 Windows.Win32.Graphics.Dwm.DwmSetWindowAttribute
+Windows.Win32.Graphics.Dwm.DWM_THUMBNAIL_PROPERTIES
+Windows.Win32.Graphics.Dwm.DWM_TNP_*
+Windows.Win32.Graphics.Dwm.DwmUpdateThumbnailProperties
 
 Windows.Win32.Graphics.Direct2D.ID2D1Factory2
 Windows.Win32.Graphics.Direct2D.ID2D1Device1
@@ -115,3 +136,5 @@ Windows.Win32.Storage.Packaging.Appx.GetCurrentApplicationUserModelId
 Windows.Win32.Storage.Packaging.Appx.ParseApplicationUserModelId
 
 Windows.Win32.System.WinRT.Direct3D11.IDirect3DDxgiInterfaceAccess
+
+Windows.Win32.Graphics.DirectComposition.IDCompositionDesktopDevice

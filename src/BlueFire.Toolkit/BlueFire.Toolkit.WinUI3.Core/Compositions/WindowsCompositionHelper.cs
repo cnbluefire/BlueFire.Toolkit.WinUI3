@@ -1,19 +1,12 @@
-﻿using Microsoft.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using BlueFire.Toolkit.WinUI3.Extensions;
+using Microsoft.UI;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using Windows.UI.Composition;
 using Windows.UI.Composition.Desktop;
-using WinRT;
+using Windows.Win32.Foundation;
+using Windows.Win32.System.Com;
 using WinCompositor = Windows.UI.Composition.Compositor;
 using WinDispatcherQueueController = Windows.System.DispatcherQueueController;
 using WinDispatcherQueue = Windows.System.DispatcherQueue;
-using Windows.Win32.Foundation;
-using BlueFire.Toolkit.WinUI3.Extensions;
-using Windows.Win32.System.Com;
 
 namespace BlueFire.Toolkit.WinUI3.Compositions
 {
@@ -34,6 +27,15 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
             }
         }
 
+        public static Windows.UI.Composition.Visual? CreateVisualFromHwnd(nint hwndDestination, nint hwndSource, bool sourceClientAreaOnly, out nint hThumbnailId)
+        {
+            hThumbnailId = 0;
+
+            if (hwndDestination == 0 || hwndSource == 0) return null;
+
+            return InteropCompositor.CreateVisualFromHwnd(Compositor, new HWND(hwndDestination), new HWND(hwndSource), sourceClientAreaOnly, out hThumbnailId);
+        }
+
         private static WinCompositor EnsureCompositor()
         {
             if (compositor == null)
@@ -48,7 +50,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
                         dispatcherQueueController = CreateDispatcherQueueController(false);
                         dispatcherQueueController.DispatcherQueue.TryEnqueue(Windows.System.DispatcherQueuePriority.High, () =>
                         {
-                            compositor = new WinCompositor();
+                            compositor = InteropCompositor.CreateCompositor();
                             handle.Set();
                         });
 
@@ -60,7 +62,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
             return compositor!;
         }
 
-        public static unsafe DesktopWindowTarget CreateDesktopWindowTarget(WindowId windowId, bool topMost)
+        internal static unsafe DesktopWindowTarget CreateDesktopWindowTarget(WindowId windowId, bool topMost)
         {
             if (windowId.Value == 0) throw new ArgumentNullException(nameof(windowId));
 
@@ -71,8 +73,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
 
             try
             {
-                ComObjectHelper.QueryInterface(WindowsCompositionHelper.Compositor, Windows.Win32.System.WinRT.Composition.ICompositorDesktopInterop.IID_Guid, out interop);
-
+                ComObjectHelper.QueryInterface(Compositor, Windows.Win32.System.WinRT.Composition.ICompositorDesktopInterop.IID_Guid, out interop);
 
                 ((delegate* unmanaged[Stdcall]<Windows.Win32.System.WinRT.Composition.ICompositorDesktopInterop*, Windows.Win32.Foundation.HWND, Windows.Win32.Foundation.BOOL, void**, Windows.Win32.Foundation.HRESULT>)(*(void***)(interop.AsPointer()))[3])(
                     interop.AsTypedPointer(),

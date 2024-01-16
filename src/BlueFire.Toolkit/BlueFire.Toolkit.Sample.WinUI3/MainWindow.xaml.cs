@@ -31,6 +31,8 @@ using System.Globalization;
 using BlueFire.Toolkit.WinUI3.Text;
 using System.Threading;
 using Microsoft.UI.Input;
+using Microsoft.UI.Composition;
+using Microsoft.UI.Windowing;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -42,11 +44,14 @@ namespace BlueFire.Toolkit.Sample.WinUI3
     /// </summary>
     public sealed partial class MainWindow : WindowEx
     {
-        public MainWindow()
+        unsafe public MainWindow()
         {
             this.InitializeComponent();
 
-            backdrop = new TransparentBackdrop();
+            if (backdrop == null)
+            {
+                backdrop = new TransparentBackdrop();
+            }
 
             this.SystemBackdrop = backdrop;
 
@@ -71,6 +76,9 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
             myHotKeyInputBox.HotKeyModel = HotKeyManager.RegisterKey("Test", HotKeyModifiers.MOD_CONTROL | HotKeyModifiers.MOD_ALT, VirtualKeys.VK_RIGHT);
             HotKeyManager.HotKeyInvoked += HotKeyManager_HotKeyInvoked;
+
+            AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
+            AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
         }
 
         private void HotKeyManager_HotKeyInvoked(HotKeyInvokedEventArgs args)
@@ -123,7 +131,7 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
         CompositionSurfaceLoader surfaceLoader;
 
-        TransparentBackdrop backdrop;
+        static TransparentBackdrop backdrop;
 
         private void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
         {
@@ -137,10 +145,10 @@ namespace BlueFire.Toolkit.Sample.WinUI3
             var mainWindow = new MainWindow();
             var result = await mainWindow.AppWindow.ShowDialogAsync(AppWindow.Id);
 
-            Debug.WriteLine($"DialogResult: {result}");
+            //Debug.WriteLine($"DialogResult: {result}");
 
-            if (this.SystemBackdrop == null) this.SystemBackdrop = backdrop;
-            else this.SystemBackdrop = null;
+            //if (this.SystemBackdrop == null) this.SystemBackdrop = backdrop;
+            //else this.SystemBackdrop = null;
         }
 
 
@@ -148,79 +156,126 @@ namespace BlueFire.Toolkit.Sample.WinUI3
         {
             base.OnSizeChanged(args);
 
-            Debug.WriteLine($"NewSize: {args.NewSize}, PreviousSize: {args.PreviousSize}");
+            //Debug.WriteLine($"NewSize: {args.NewSize}, PreviousSize: {args.PreviousSize}");
         }
 
         protected override void OnDpiChanged(WindowExDpiChangedEventArgs args)
         {
             base.OnDpiChanged(args);
 
-            Debug.WriteLine($"NewDpi: {args.NewDpi}, PreviousDpi: {args.PreviousDpi}");
+            //Debug.WriteLine($"NewDpi: {args.NewDpi}, PreviousDpi: {args.PreviousDpi}");
         }
 
         protected override void OnWindowMessageReceived(WindowMessageReceivedEventArgs e)
         {
             base.OnWindowMessageReceived(e);
+
+            if(e.MessageId == 533U)
+            {
+                // WM_CAPTURECHANGED
+
+                Debug.WriteLine($"This: 0x{e.WindowId.Value:x8}, Captured: 0x{e.LParam:x8}");
+            }
+
+            //Debug.WriteLine(e.ToString());
         }
 
         private void myCanvasControl_Draw(Microsoft.Graphics.Canvas.UI.Xaml.CanvasControl sender, Microsoft.Graphics.Canvas.UI.Xaml.CanvasDrawEventArgs args)
         {
-            using var formattedText = new FormattedText(
-                "测试一下ABC测试一下ABC测试一下ABC",
-                "en",
-                FlowDirection.LeftToRight,
-                new FormattedTextTypeface(
-                    new FontFamily("Custom Font, 方正舒体, Wide Latin"),
-                    Microsoft.UI.Text.FontWeights.Normal,
-                    Windows.UI.Text.FontStyle.Normal,
-                    Windows.UI.Text.FontStretch.Normal),
-                24,
-                true,
-                true);
+            //using var formattedText = new FormattedText(
+            //    "测试一下ABC测试一下ABC测试一下ABC",
+            //    "en",
+            //    FlowDirection.LeftToRight,
+            //    new FormattedTextTypeface(
+            //        new FontFamily("Custom Font, 方正舒体, Wide Latin"),
+            //        Microsoft.UI.Text.FontWeights.Normal,
+            //        Windows.UI.Text.FontStyle.Normal,
+            //        Windows.UI.Text.FontStretch.Normal),
+            //    24,
+            //    true,
+            //    true);
 
-            formattedText.MaxTextWidth = sender.ActualWidth;
-            formattedText.TextWrapping = TextWrapping.Wrap;
-            formattedText.LineHeight = 40;
+            //formattedText.MaxTextWidth = sender.ActualWidth;
+            //formattedText.TextWrapping = TextWrapping.Wrap;
+            //formattedText.LineHeight = 40;
 
-            using var layout = formattedText.CreateCanvasTextLayout(sender);
-            args.DrawingSession.DrawTextLayout(layout, 0, 0, Windows.UI.Color.FromArgb(255, 255, 0, 0));
+            //using var layout = formattedText.CreateCanvasTextLayout(sender);
+            //args.DrawingSession.DrawTextLayout(layout, 0, 0, Windows.UI.Color.FromArgb(255, 255, 0, 0));
 
-            for (int i = 0; i < formattedText.LineGlyphRuns.Count; i++)
-            {
-                for (int j = 0; j < formattedText.LineGlyphRuns[i].GlyphRuns.Length; j++)
-                {
-                    var glyphRun = formattedText.LineGlyphRuns[i].GlyphRuns[j];
-                    args.DrawingSession.FillRectangle(glyphRun.LayoutBounds, RandomColor(0.5));
-                }
-            }
+            //for (int i = 0; i < formattedText.LineGlyphRuns.Count; i++)
+            //{
+            //    for (int j = 0; j < formattedText.LineGlyphRuns[i].GlyphRuns.Length; j++)
+            //    {
+            //        var glyphRun = formattedText.LineGlyphRuns[i].GlyphRuns[j];
+            //        args.DrawingSession.FillRectangle(glyphRun.LayoutBounds, RandomColor(0.5));
+            //    }
+            //}
 
-            static Windows.UI.Color RandomColor(double opacity)
-            {
-                return Windows.UI.Color.FromArgb(
-                    (byte)Math.Clamp(opacity * 255, 0, 255),
-                    (byte)Random.Shared.Next(0, 256),
-                    (byte)Random.Shared.Next(0, 256),
-                    (byte)Random.Shared.Next(0, 256));
-            }
+            //static Windows.UI.Color RandomColor(double opacity)
+            //{
+            //    return Windows.UI.Color.FromArgb(
+            //        (byte)Math.Clamp(opacity * 255, 0, 255),
+            //        (byte)Random.Shared.Next(0, 256),
+            //        (byte)Random.Shared.Next(0, 256),
+            //        (byte)Random.Shared.Next(0, 256));
+            //}
         }
 
         private void Grid_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            var p = e.GetCurrentPoint((UIElement)sender);
-            if (p.Properties.IsPrimary)
-            {
-                e.Handled = true;
+            //((UIElement)sender).CancelDirectManipulations();
 
-                SendMessage(this.GetWindowHandle(), 0x0202, 0, 0);
-                SendMessage(this.GetWindowHandle(), 0x0112, 0xF010 + 2, 0);
-            }
+            //Debug.WriteLine($"PointerId: {e.Pointer.PointerId}");
+
+
+            //var p = e.GetCurrentPoint((UIElement)sender);
+            //if (p.Properties.IsPrimary)
+            //{
+            //    e.Handled = true;
+
+            //    SendMessage(this.GetWindowHandle(), 0x0202, 0, 0);
+            //    SendMessage(this.GetWindowHandle(), 0x0112, 0xF010 + 2, 0);
+            //}
         }
+
+        private void Grid_PointerMoved(object sender, PointerRoutedEventArgs e)
+        {
+            //WindowDragExtensions.Test(e);
+        }
+
+        
 
         [DllImport("user32.dll")]
         private extern static int SendMessage(nint hWnd, int msg, nint wParam, nint lParam);
 
         [DllImport("user32.dll")]
         private extern static bool ReleaseCapture();
+
+        [DllImport("user32.dll")]
+        private extern static nint GetSystemMenu(nint hWnd, bool bRevert);
+
+        [DllImport("user32.dll")]
+        private extern static bool RemoveMenu(nint hWnd, uint uPosition, uint uFlags);
+
+        [DllImport("user32.dll")]
+        private extern static bool DrawMenuBar(nint hWnd);
+
+        [DllImport("user32.dll")]
+        private extern static nint FindWindowEx(nint hWndParent, nint hWndChildAfter, string lpszClass, string lpszWindow);
+
+        [DllImport("user32.dll")]
+        private extern static nint GetWindowLongPtr(nint hWnd, int nIndex);
+
+        [DllImport("user32.dll")]
+        private extern static nint SetWindowLongPtr(nint hWnd, int nIndex, nint dwNewLong);
+
+        [DllImport("comctl32.dll")]
+        private extern static bool SetWindowSubclass(nint hWnd, SUBCLASSPROC pfnSubclass, nuint uIdSubclass, nint dwRefData);
+
+        [DllImport("comctl32.dll")]
+        private extern static nint DefSubclassProc(nint hWnd, int msg, nint wParam, nint lParam);
+
+        private delegate nint SUBCLASSPROC(nint hWnd, int msg, nint wParam, nint lParam, nuint uIdSubclass, nint dwRefData);
 
     }
 }

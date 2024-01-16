@@ -61,7 +61,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
                 var d3dDevice = direct3DDevice;
                 if (d3dDevice == null) return;
 
-                var device = GraphicsHelper.GetInterfacePtr<ID3D11Device4>(d3dDevice);
+                using var device = GraphicsHelper.GetInterfacePtr<ID3D11Device4>(d3dDevice);
                 if (!device.HasValue) return;
 
                 threadPoolWait = PInvoke.CreateThreadpoolWait(waitEventCallback.Func, (void*)id, (Windows.Win32.System.Threading.TP_CALLBACK_ENVIRON_V3*)0);
@@ -94,7 +94,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
                     var d3dDevice = direct3DDevice;
                     if (d3dDevice != null)
                     {
-                        var device = GraphicsHelper.GetInterfacePtr<ID3D11Device4>(d3dDevice);
+                        using var device = GraphicsHelper.GetInterfacePtr<ID3D11Device4>(d3dDevice);
                         if (device.HasValue)
                         {
                             device.Value.UnregisterDeviceRemoved(cookie);

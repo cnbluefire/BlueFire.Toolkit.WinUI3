@@ -17,12 +17,15 @@
 
     <StackPanel x:Name="LayoutRoot" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
         <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
-        <Grid Background="Black" Padding="20" Margin="20" PointerPressed="Grid_PointerPressed">
+        <Grid Background="Black" Padding="20" Margin="20" PointerPressed="Grid_PointerPressed" PointerMoved="Grid_PointerMoved">
             <canvas:CanvasControl x:Name="myCanvasControl" Draw="myCanvasControl_Draw" Width="150" Height="150" />
         </Grid>
         <!--<toolkitControls:AutoScrollView UseLayoutRounding="True" Width="200" IsPlaying="True">
             <TextBlock>哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567</TextBlock>
         </toolkitControls:AutoScrollView>-->
+
+        <!--<toolkitControls:TextView Text="哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567"
+                                  TextWrapping="Wrap" StrokeThickness="1" Stroke="Red" SecondaryStroke="#9900FF00" FontSize="24" />-->
 
         <ToggleSwitch x:Name="enableHotKeySwitcher" IsOn="True" Toggled="enableHotKeySwitcher_Toggled" />
         <toolkitControls:HotKeyInputBox x:Name="myHotKeyInputBox" />
