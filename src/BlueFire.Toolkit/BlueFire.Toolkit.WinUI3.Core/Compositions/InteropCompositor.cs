@@ -123,6 +123,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
             }
         }
 
+#pragma warning disable CS1591,CS1573,CS0465,CS0649,CS8019,CS1570,CS1584,CS1658,CS0436,CS8981
 
         [Guid("E7894C70-AF56-4F52-B382-4B3CD263DC6F")]
         internal unsafe partial struct IInteropCompositorPartner
@@ -233,4 +234,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
         private static extern HRESULT DwmpQueryWindowThumbnailSourceSize(HWND hwndSource, bool fSourceClientAreaOnly, SIZE* pSize);
 
     }
+
+#pragma warning restore CS1591,CS1573,CS0465,CS0649,CS8019,CS1570,CS1584,CS1658,CS0436,CS8981
+
 }
