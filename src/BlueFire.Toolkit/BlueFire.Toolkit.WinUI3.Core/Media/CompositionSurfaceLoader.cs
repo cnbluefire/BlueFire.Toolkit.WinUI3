@@ -255,75 +255,86 @@ namespace BlueFire.Toolkit.WinUI3.Media
                     var iid = typeof(Windows.Win32.Graphics.Direct2D.ID2D1DeviceContext).GUID;
                     System.Drawing.Point updateOffset = default;
 
-                    ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1DeviceContext> deviceContext = default;
                     ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1Bitmap1> bitmap = default;
                     try
                     {
-                        _interop.Value.BeginDraw((RECT*)0, &iid, deviceContext.PointerRef, &updateOffset);
+                        var imageWidth = _softwareBitmap.PixelWidth;
+                        var imageHeight = _softwareBitmap.PixelHeight;
 
-                        var offsetX = updateOffset.X * 96 / (float)_softwareBitmap.DpiX;
-                        var offsetY = updateOffset.Y * 96 / (float)_softwareBitmap.DpiY;
-
-                        Windows.Win32.Graphics.Direct2D.Common.D2D_MATRIX_3X2_F transform = default;
-                        transform.Anonymous.Anonymous1.m11 = 1f;
-                        transform.Anonymous.Anonymous1.m22 = 1f;
-                        transform.Anonymous.Anonymous1.dx = offsetX;
-                        transform.Anonymous.Anonymous1.dy = offsetY;
-
-                        deviceContext.Value.SetTransform(&transform);
-                        deviceContext.Value.SetDpi((float)_softwareBitmap.DpiX, (float)_softwareBitmap.DpiY);
-
-                        _cancellationToken.ThrowIfCancellationRequested();
-
-                        bitmap = CreateBitmap(_softwareBitmap, deviceContext);
-                        _cancellationToken.ThrowIfCancellationRequested();
-
-                        if (_isVirtual)
+                        var maxTileSize = TileSize;
+                        if (!_isVirtual)
                         {
-                            var imageWidth = _softwareBitmap.PixelWidth;
-                            var imageHeight = _softwareBitmap.PixelHeight;
+                            maxTileSize = MaxTextureSizeFallback;
+                        }
 
-                            for (int tileY = 0; tileY < imageHeight; tileY += TileSize)
+                        for (int tileY = 0; tileY < imageHeight; tileY += maxTileSize)
+                        {
+                            var tileHeight = Math.Min(imageHeight - tileY, maxTileSize);
+
+                            for (int tileX = 0; tileX < imageWidth; tileX += maxTileSize)
                             {
-                                var tileHeight = Math.Min(imageHeight - tileY, TileSize);
+                                var tileWidth = Math.Min(imageWidth - tileX, maxTileSize);
 
-                                for (int tileX = 0; tileX < imageWidth; tileX += TileSize)
+                                var rect = new Windows.Win32.Graphics.Direct2D.Common.D2D_RECT_F()
                                 {
-                                    var tileWidth = Math.Min(imageWidth - tileX, TileSize);
+                                    left = tileX,
+                                    top = tileY,
+                                    right = tileX + tileWidth,
+                                    bottom = tileY + tileHeight
+                                };
 
-                                    var rect = new Windows.Win32.Graphics.Direct2D.Common.D2D_RECT_F()
+                                var updateRect = new Windows.Win32.Foundation.RECT(tileX, tileY, tileX + tileWidth, tileY + tileHeight);
+
+                                ComPtr<Windows.Win32.Graphics.Direct2D.ID2D1DeviceContext> deviceContext = default;
+                                try
+                                {
+                                    _interop.Value.BeginDraw(&updateRect, &iid, deviceContext.PointerRef, &updateOffset)
+                                        .ThrowOnFailure();
+
+                                    var offsetX = updateOffset.X * 96 / (float)_softwareBitmap.DpiX;
+                                    var offsetY = updateOffset.Y * 96 / (float)_softwareBitmap.DpiY;
+
+                                    Windows.Win32.Graphics.Direct2D.Common.D2D_MATRIX_3X2_F transform = default;
+                                    transform.Anonymous.Anonymous1.m11 = 1f;
+                                    transform.Anonymous.Anonymous1.m22 = 1f;
+                                    transform.Anonymous.Anonymous1.dx = offsetX;
+                                    transform.Anonymous.Anonymous1.dy = offsetY;
+
+                                    deviceContext.Value.SetTransform(&transform);
+                                    deviceContext.Value.SetDpi((float)_softwareBitmap.DpiX, (float)_softwareBitmap.DpiY);
+
+                                    if (!bitmap.HasValue)
                                     {
-                                        left = tileX,
-                                        top = tileY,
-                                        right = tileX + tileWidth,
-                                        bottom = tileY + tileHeight
-                                    };
+                                        bitmap = CreateBitmap(_softwareBitmap, deviceContext);
+                                    }
+
+                                    _cancellationToken.ThrowIfCancellationRequested();
+
+                                    var destRect = rect;
+                                    destRect.right -= destRect.left;
+                                    destRect.bottom -= destRect.top;
+                                    destRect.left = 0;
+                                    destRect.top = 0;
 
                                     deviceContext.Value.DrawBitmap(
                                         bitmap.AsTypedPointer<Windows.Win32.Graphics.Direct2D.ID2D1Bitmap>(),
-                                        &rect,
+                                        &destRect,
                                         1,
                                         Windows.Win32.Graphics.Direct2D.D2D1_BITMAP_INTERPOLATION_MODE.D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
                                         &rect);
+                                }
+                                finally
+                                {
+                                    deviceContext.Release();
+                                    deviceContext = default;
 
-                                    _cancellationToken.ThrowIfCancellationRequested();
+                                    _interop.Value.EndDraw();
                                 }
                             }
-                        }
-                        else
-                        {
-                            deviceContext.Value.DrawBitmap(
-                                bitmap.AsTypedPointer<Windows.Win32.Graphics.Direct2D.ID2D1Bitmap>(),
-                                (Windows.Win32.Graphics.Direct2D.Common.D2D_RECT_F*)0,
-                                1,
-                                Windows.Win32.Graphics.Direct2D.D2D1_BITMAP_INTERPOLATION_MODE.D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
-                                (Windows.Win32.Graphics.Direct2D.Common.D2D_RECT_F*)0);
                         }
                     }
                     finally
                     {
-                        _interop.Value.EndDraw();
-                        deviceContext.Release();
                         bitmap.Release();
                     }
                 }
