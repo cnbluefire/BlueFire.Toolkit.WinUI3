@@ -6,13 +6,12 @@
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Platforms>x86;x64;ARM64;AnyCPU</Platforms>
-		<CsWin32Enabled>true</CsWin32Enabled>
 	</PropertyGroup>
 
 	<Import Project="$([MSBuild]::GetPathOfFileAbove('Common.props', '$(MSBuildThisFileDirectory)../'))" />
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="$(Microsoft_WindowsAppSDK_Version)" />
+	  <ProjectReference Include="..\BlueFire.Toolkit.WinUI3\BlueFire.Toolkit.WinUI3.csproj" />
 	</ItemGroup>
 
 </Project>

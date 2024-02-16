@@ -13,7 +13,7 @@
     <tags>winui3 winappsdk</tags>
     <dependencies>
       <group targetFramework="net6.0-windows10.0.22621">
-        <dependency id="Microsoft.WindowsAppSDK" version="1.4.230913002" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.WindowsAppSDK" version="1.4.231219000" exclude="Build,Analyzers" />
       </group>
     </dependencies>
   </metadata>

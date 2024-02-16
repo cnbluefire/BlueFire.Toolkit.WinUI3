@@ -18,6 +18,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlueFire.Toolkit.WinUI3.Cor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlueFire.Toolkit.WinUI3.NativeMethods", "BlueFire.Toolkit.WinUI3.NativeMethods\BlueFire.Toolkit.WinUI3.NativeMethods.csproj", "{56CF4C80-8094-4968-B1E7-321F353CC9FE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{7F1EB409-B79B-4F74-A030-FCC199429DDC}"
+	ProjectSection(SolutionItems) = preProject
+		Common.props = Common.props
+		PackageVersions.props = PackageVersions.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{4E6CD6CA-0AE4-44D3-BEA5-23FE8DB3FAE6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlueFire.Toolkit.WinUI3.TextView", "BlueFire.Toolkit.WinUI3.TextView\BlueFire.Toolkit.WinUI3.TextView.csproj", "{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -118,9 +128,31 @@ Global
 		{56CF4C80-8094-4968-B1E7-321F353CC9FE}.Release|x64.Build.0 = Release|x64
 		{56CF4C80-8094-4968-B1E7-321F353CC9FE}.Release|x86.ActiveCfg = Release|x86
 		{56CF4C80-8094-4968-B1E7-321F353CC9FE}.Release|x86.Build.0 = Release|x86
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Debug|ARM64.Build.0 = Debug|ARM64
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Debug|x64.ActiveCfg = Debug|x64
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Debug|x64.Build.0 = Debug|x64
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Debug|x86.ActiveCfg = Debug|x86
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Debug|x86.Build.0 = Debug|x86
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Release|ARM64.ActiveCfg = Release|ARM64
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Release|ARM64.Build.0 = Release|ARM64
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Release|x64.ActiveCfg = Release|x64
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Release|x64.Build.0 = Release|x64
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Release|x86.ActiveCfg = Release|x86
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9BEC4C83-3B79-4632-AC48-6A5D4AEA8060} = {4E6CD6CA-0AE4-44D3-BEA5-23FE8DB3FAE6}
+		{C60653AE-92C5-40FA-9A3F-A20A3397E937} = {4E6CD6CA-0AE4-44D3-BEA5-23FE8DB3FAE6}
+		{56CF4C80-8094-4968-B1E7-321F353CC9FE} = {4E6CD6CA-0AE4-44D3-BEA5-23FE8DB3FAE6}
+		{1144ADB0-3E44-4DA6-B81F-0A1E9B05E045} = {4E6CD6CA-0AE4-44D3-BEA5-23FE8DB3FAE6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C1434811-78B4-4771-9170-359EE623D132}

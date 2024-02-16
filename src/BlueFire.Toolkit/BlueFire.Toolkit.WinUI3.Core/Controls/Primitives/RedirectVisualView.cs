@@ -20,6 +20,7 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
         public RedirectVisualView()
         {
             this.DefaultStyleKey = typeof(RedirectVisualView);
+            this.DefaultStyleResourceUri = new Uri("ms-appx:///BlueFire.Toolkit.WinUI3.Core/Themes/Generic.xaml");
 
             childVisualBrushOffsetEnabled = ChildVisualBrushOffsetEnabled;
 

@@ -5,8 +5,8 @@
     xmlns:local="using:BlueFire.Toolkit.WinUI3.Themes">
 
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="ms-appx:///BlueFire.Toolkit.WinUI3/Controls/HotKeyInputBox.xaml" />
-        <ResourceDictionary Source="ms-appx:///BlueFire.Toolkit.WinUI3/Controls/Primitives/RedirectVisualView.xaml" />
+        <ResourceDictionary Source="ms-appx:///BlueFire.Toolkit.WinUI3.Core/Controls/HotKeyInputBox.xaml" />
+        <ResourceDictionary Source="ms-appx:///BlueFire.Toolkit.WinUI3.Core/Controls/Primitives/RedirectVisualView.xaml" />
     </ResourceDictionary.MergedDictionaries>
     
 </ResourceDictionary>

@@ -1,0 +1,65 @@
+<Project>
+	<Import Project="$([MSBuild]::GetPathOfFileAbove('PackageVersions.props', '$(MSBuildThisFileDirectory)'))" />
+
+	<PropertyGroup>
+		<UseNativeMethodsProject>false</UseNativeMethodsProject>
+		<VersionPrefix>0.0.1</VersionPrefix>
+		<VersionSuffix></VersionSuffix>
+
+		<PackageId>$(MSBuildProjectName)</PackageId>
+		<PackRelease>true</PackRelease>
+		<Title>$(MSBuildProjectName)</Title>
+		<PackageDescription></PackageDescription>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageProjectUrl>https://github.com/cnbluefire/BlueFire.Toolkit.WinUI3</PackageProjectUrl>
+		<PackageTags>winui3;winappsdk</PackageTags>
+		<Authors>blue-fire</Authors>
+		<IncludeSymbols>true</IncludeSymbols>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(CsWin32Enabled)' == ''">
+		<CsWin32Enabled>false</CsWin32Enabled>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)' == 'Release' or $(NugetPacking) == true">
+		<UseNativeMethodsProject>true</UseNativeMethodsProject>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<VersionPrefix Condition="'$(Configuration)' != 'Release'">$(VersionPrefix).1</VersionPrefix>
+		<VersionSuffix Condition="'$(Configuration)' != 'Release'">$(VersionSuffix)-debug</VersionSuffix>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PackageVersion>$(VersionPrefix)-$(VersionSuffix)</PackageVersion>
+		<IsPackable>true</IsPackable>
+		<PackageOutputPath>$(MSBuildThisFileDirectory)\build\nupkgs</PackageOutputPath>
+		<NuspecFile>$(MSBuildThisFileDirectory)\build\$(MSBuildProjectName).nuspec</NuspecFile>
+		<NuspecBasePath>$(MSBuildThisFileDirectory)\build</NuspecBasePath>
+		<NuspecProperties>id=$(PackageId);version=$(PackageVersion);title=$(Title);</NuspecProperties>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="$(MSBuildThisFileDirectory)\..\..\LICENSE" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup Condition="($(UseNativeMethodsProject) == true) and ($(CsWin32Enabled) == true)">
+		<PackageReference Include="Microsoft.Windows.CsWin32" Version="$(Microsoft_Windows_CsWin32_Version)">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+
+		<AdditionalFiles Include="..\BlueFire.Toolkit.WinUI3.NativeMethods\NativeMethods.json" Link="NativeMethods.json">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</AdditionalFiles>
+		<AdditionalFiles Include="..\BlueFire.Toolkit.WinUI3.NativeMethods\NativeMethods.txt" Link="NativeMethods.txt">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</AdditionalFiles>
+		<Compile Include="..\BlueFire.Toolkit.WinUI3.NativeMethods\PInvoke.cs" Link="Extensions\PInvoke.cs" />
+	</ItemGroup>
+
+	<ItemGroup Condition="($(UseNativeMethodsProject) != true) and ($(CsWin32Enabled) == true)">
+		<ProjectReference Include="..\BlueFire.Toolkit.WinUI3.NativeMethods\BlueFire.Toolkit.WinUI3.NativeMethods.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,6 +1,7 @@
 ﻿using BlueFire.Toolkit.WinUI3.Extensions;
 using BlueFire.Toolkit.WinUI3.Graphics;
 using Microsoft.Graphics.Canvas.Text;
+using Microsoft.UI.Text;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,6 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.UI.Text;
 using Windows.Win32.Graphics.DirectWrite;
 using WinRT;
 using PInvoke = Windows.Win32.PInvoke;
@@ -19,26 +21,63 @@ namespace BlueFire.Toolkit.WinUI3.Text
     internal static class DWriteHelper
     {
         private static nint[] factories = new nint[2];
+        private static Dictionary<(string? fontFamilyName, FontStretch fontStretch, FontStyle fontStyle, FontWeight fontWeight), bool> colorFontMap = new Dictionary<(string? fontFamilyName, FontStretch fontStretch, FontStyle fontStyle, FontWeight fontWeight), bool>();
 
         internal static unsafe bool IsColorFont(this CanvasFontFace canvasFontFace)
         {
+            var props = GetFontFaceProperties(canvasFontFace);
+            lock (colorFontMap)
+            {
+                if (colorFontMap.TryGetValue(props, out var value)) return value;
+            }
+
             ComPtr<IDWriteFontFaceReference> dWriteFontFaceReference = default;
             ComPtr<IDWriteFontFace3> dWriteFontFace = default;
 
             try
             {
+                bool value = false;
                 dWriteFontFaceReference = Direct2DInterop.GetWrappedResourcePtr<IDWriteFontFaceReference>(canvasFontFace);
                 if (dWriteFontFaceReference.Value.CreateFontFace(dWriteFontFace.TypedPointerRef).Succeeded)
                 {
-                    return dWriteFontFace.Value.IsColorFont();
+                    value = dWriteFontFace.Value.IsColorFont();
                 }
 
-                return false;
+                lock (colorFontMap)
+                {
+                    colorFontMap[props] = value;
+                }
+                return value;
             }
             finally
             {
                 dWriteFontFace.Release();
                 dWriteFontFaceReference.Release();
+            }
+
+            static (string? fontFamilyName, FontStretch fontStretch, FontStyle fontStyle, FontWeight fontWeight) GetFontFaceProperties(CanvasFontFace? canvasFontFace)
+            {
+                string? fontFamilyName = null;
+
+                if (canvasFontFace != null)
+                {
+                    var familyNames = canvasFontFace.FamilyNames;
+
+                    if (familyNames.Count > 0)
+                    {
+                        if (familyNames.TryGetValue("en-us", out var name))
+                        {
+                            fontFamilyName = name;
+                        }
+                        else
+                        {
+                            fontFamilyName = familyNames.Values.FirstOrDefault();
+                        }
+                    }
+                    return (fontFamilyName, canvasFontFace.Stretch, canvasFontFace.Style, canvasFontFace.Weight);
+                }
+
+                return (null, FontStretch.Normal, FontStyle.Normal, FontWeights.Normal);
             }
         }
 

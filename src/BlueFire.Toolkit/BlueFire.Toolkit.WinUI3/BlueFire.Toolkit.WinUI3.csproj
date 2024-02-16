@@ -8,38 +8,19 @@
 		<Platforms>x86;x64;ARM64;AnyCPU</Platforms>
 	</PropertyGroup>
 	
-	<PropertyGroup>
-		<PackageId>BlueFire.Toolkit.WinUI3</PackageId>
-		<PackRelease>true</PackRelease>
-		<Title>BlueFire.Toolkit.WinUI3</Title>
-		<PackRelease>true</PackRelease>
-		<PackageDescription></PackageDescription>
-		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		<PackageLicenseFile>LICENSE</PackageLicenseFile>
-		<PackageProjectUrl>https://github.com/cnbluefire/BlueFire.Toolkit.WinUI3</PackageProjectUrl>
-		<PackageTags>winui3;winappsdk</PackageTags>
-		<Authors>blue-fire</Authors>
-		<IncludeSymbols>true</IncludeSymbols>
-		<VersionPrefix>0.0.1</VersionPrefix>
-		<VersionSuffix>preview</VersionSuffix>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<VersionPrefix Condition="'$(Configuration)' != 'Release'">$(VersionPrefix).1</VersionPrefix>
-		<VersionSuffix Condition="'$(Configuration)' != 'Release'">$(VersionSuffix)-debug</VersionSuffix>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<PackageVersion>$(VersionPrefix)-$(VersionSuffix)</PackageVersion>
-		<IsPackable>true</IsPackable>
-		<PackageOutputPath>$(MSBuildProjectDirectory)\..\build\nupkgs</PackageOutputPath>
-		<NuspecFile>$(MSBuildProjectDirectory)\..\build\BlueFire.Toolkit.WinUI3.nuspec</NuspecFile>
-		<NuspecBasePath>$(MSBuildProjectDirectory)\..\build</NuspecBasePath>
-		<NuspecProperties>id=$(PackageId);version=$(PackageVersion);title=$(Title);</NuspecProperties>
-	</PropertyGroup>
+	<Import Project="$([MSBuild]::GetPathOfFileAbove('Common.props', '$(MSBuildThisFileDirectory)../'))" />
+	
+	<ItemGroup>
+	  <Compile Remove="Controls\**" />
+	  <Content Remove="Controls\**" />
+	  <EmbeddedResource Remove="Controls\**" />
+	  <None Remove="Controls\**" />
+	  <Page Remove="Controls\**" />
+	  <PRIResource Remove="Controls\**" />
+	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.1.0" />
+		<PackageReference Include="Microsoft.Graphics.Win2D" Version="$(Microsoft_Graphics_Win2D_Version)" />
 	</ItemGroup>
 
 	<ItemGroup>

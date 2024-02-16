@@ -24,8 +24,8 @@
             <TextBlock>哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567</TextBlock>
         </toolkitControls:AutoScrollView>-->
 
-        <!--<toolkitControls:TextView Text="哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567"
-                                  TextWrapping="Wrap" StrokeThickness="1" Stroke="Red" SecondaryStroke="#9900FF00" FontSize="24" />-->
+        <toolkitControls:TextView Text="哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦 哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦 哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦 哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦"
+                                  FontSize="24" TextWrapping="Wrap" StrokeThickness="1" Stroke="Red" SecondaryStroke="#9900FF00" />
 
         <ToggleSwitch x:Name="enableHotKeySwitcher" IsOn="True" Toggled="enableHotKeySwitcher_Toggled" />
         <toolkitControls:HotKeyInputBox x:Name="myHotKeyInputBox" />

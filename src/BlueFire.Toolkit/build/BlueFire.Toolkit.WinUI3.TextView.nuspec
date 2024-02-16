@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>blue-fire</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="file">LICENSE</license>
+    <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
+    <projectUrl>https://github.com/cnbluefire/BlueFire.Toolkit.WinUI3</projectUrl>
+    <description>Package Description</description>
+    <tags>winui3 winappsdk</tags>
+    <dependencies>
+      <group targetFramework="net6.0-windows10.0.22621">
+        <dependency id="BlueFire.Toolkit.WinUI3" version="$version$" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\..\..\LICENSE" target="\LICENSE" />
+
+    <!--<file src=".\build-files\x86\BlueFire.Toolkit.WinUI3.TextView.pri" target="runtimes\win10-x86\lib\net6.0-windows10.0.22621.0\" />-->
+    <file src=".\build-files\x86\BlueFire.Toolkit.WinUI3.TextView.dll" target="runtimes\win10-x86\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x86\BlueFire.Toolkit.WinUI3.TextView.pdb" target="runtimes\win10-x86\lib\net6.0-windows10.0.22621.0\" />
+    <!--<file src=".\build-files\x86\BlueFire.Toolkit.WinUI3.TextView\**\*.xaml" target="runtimes\win10-x86\lib\net6.0-windows10.0.22621.0\" />-->
+    
+    <!--<file src=".\build-files\x64\BlueFire.Toolkit.WinUI3.TextView.pri" target="runtimes\win10-x64\lib\net6.0-windows10.0.22621.0\" />-->
+    <file src=".\build-files\x64\BlueFire.Toolkit.WinUI3.TextView.dll" target="runtimes\win10-x64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\x64\BlueFire.Toolkit.WinUI3.TextView.pdb" target="runtimes\win10-x64\lib\net6.0-windows10.0.22621.0\" />
+    <!--<file src=".\build-files\x64\BlueFire.Toolkit.WinUI3.TextView\**\*.xaml" target="runtimes\win10-x64\lib\net6.0-windows10.0.22621.0\" />-->
+    
+    <!--<file src=".\build-files\arm64\BlueFire.Toolkit.WinUI3.TextView.pri" target="runtimes\win10-arm64\lib\net6.0-windows10.0.22621.0\" />-->
+    <file src=".\build-files\arm64\BlueFire.Toolkit.WinUI3.TextView.dll" target="runtimes\win10-arm64\lib\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\arm64\BlueFire.Toolkit.WinUI3.TextView.pdb" target="runtimes\win10-arm64\lib\net6.0-windows10.0.22621.0\" />
+    <!--<file src=".\build-files\arm64\BlueFire.Toolkit.WinUI3.TextView\**\*.xaml" target="runtimes\win10-arm64\lib\net6.0-windows10.0.22621.0\" />-->
+    
+    <!--<file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.TextView.pri" target="ref\net6.0-windows10.0.22621.0\" />-->
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.TextView.dll" target="ref\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.TextView.pdb" target="ref\net6.0-windows10.0.22621.0\" />
+    <!--<file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.TextView\**\*.xaml" target="ref\net6.0-windows10.0.22621.0\" />
+    <file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.TextView\**\*.xbf" target="ref\net6.0-windows10.0.22621.0\" />-->
+
+    <!--<file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.TextView.pri" target="lib\uap10.0\" />-->
+    <!--<file src=".\build-files\AnyCPU\BlueFire.Toolkit.WinUI3.TextView\**\*.xaml" target="lib\uap10.0\" />-->
+  </files>
+</package>

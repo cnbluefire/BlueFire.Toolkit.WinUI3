@@ -156,7 +156,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
                         if (isTrimmingDelimiter)
                         {
                             using var geometry = CanvasGeometry.CreateGlyphRun(
-                                CanvasDevice.GetSharedDevice(true),
+                                null,
                                 new Vector2(x, y),
                                 fontFace,
                                 fontSize,

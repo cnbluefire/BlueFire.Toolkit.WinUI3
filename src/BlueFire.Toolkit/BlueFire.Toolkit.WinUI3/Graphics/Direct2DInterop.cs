@@ -213,20 +213,9 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
                                 {
                                     canvasFactoryNative = result;
                                 }
-                                else
-                                {
-                                    canvasDeviceFactoryNotSupported = true;
-                                }
-                            }
-                            else
-                            {
-                                canvasDeviceFactoryNotSupported = false;
                             }
                         }
-                        catch
-                        {
-                            canvasDeviceFactoryNotSupported = false;
-                        }
+                        catch { }
                         finally
                         {
                             if (rcw != null) Marshal.ReleaseComObject(rcw);

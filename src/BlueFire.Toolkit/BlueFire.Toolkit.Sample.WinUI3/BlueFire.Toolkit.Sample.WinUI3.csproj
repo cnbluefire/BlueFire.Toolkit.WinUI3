@@ -34,6 +34,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="BlueFire.Toolkit.WinUI3" Version="*-*" Condition="$(UseLocalNugetLibrary)" />
+		<PackageReference Include="BlueFire.Toolkit.WinUI3.TextView" Version="*-*" Condition="$(UseLocalNugetLibrary)" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.231219000" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.2428" />
 		<Manifest Include="$(ApplicationManifest)" />
@@ -41,8 +42,9 @@
 	
 	<ItemGroup Condition="!($(UseLocalNugetLibrary))">
 		<ProjectReference Include="..\BlueFire.Toolkit.WinUI3\BlueFire.Toolkit.WinUI3.csproj" />
+		<ProjectReference Include="..\BlueFire.Toolkit.WinUI3.TextView\BlueFire.Toolkit.WinUI3.TextView.csproj" />
 	</ItemGroup>
-	
+
 	<!-- 
     Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
     Tools extension to be activated for this project even if the Windows App SDK Nuget
