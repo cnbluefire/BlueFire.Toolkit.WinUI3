@@ -1,4 +1,5 @@
-﻿using Microsoft.Graphics.Canvas.Text;
+﻿using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Text;
 using Microsoft.UI.Xaml;
 using System;
 using System.Collections.Generic;
@@ -13,10 +14,10 @@ namespace BlueFire.Toolkit.WinUI3.Text
     {
         private bool disposedValue;
 
+        private readonly Func<ICanvasResourceCreator>? canvasResourceCreator;
         private readonly string? localeName;
         private readonly FormattedTextTypeface typeface;
         private readonly double fontSize;
-
         private CanvasTextLayout? textLayout;
         private FlowDirection flowDirection;
         private double lineHeight;
@@ -34,8 +35,11 @@ namespace BlueFire.Toolkit.WinUI3.Text
             FormattedTextTypeface typeface,
             double fontSize,
             bool isPixelSnappingEnabled,
-            bool isColorFontEnabled)
+            bool isColorFontEnabled,
+            Func<ICanvasResourceCreator>? canvasResourceCreator = null)
         {
+            this.canvasResourceCreator = canvasResourceCreator;
+
             Text = text;
             this.localeName = localeName;
             this.flowDirection = flowDirection;
@@ -44,7 +48,6 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
             IsPixelSnappingEnabled = isPixelSnappingEnabled;
             IsColorFontEnabled = isColorFontEnabled;
-
             textAlignment = TextAlignment.Start;
             textTrimming = TextTrimming.WordEllipsis;
             textWrapping = TextWrapping.NoWrap;

@@ -200,7 +200,13 @@ namespace BlueFire.Toolkit.WinUI3.Text
                 {
                     if (textLayout == null)
                     {
-                        textLayout = CreateCanvasTextLayout(CanvasDevice.GetSharedDevice(true));
+                        ICanvasResourceCreator creator;
+                        if (canvasResourceCreator != null)
+                            creator = canvasResourceCreator.Invoke();
+                        else
+                            creator = CanvasDevice.GetSharedDevice(true);
+
+                        textLayout = CreateCanvasTextLayout(creator);
 
                         drawBounds = textLayout.DrawBounds;
                         layoutBounds = textLayout.LayoutBounds;
@@ -217,6 +223,20 @@ namespace BlueFire.Toolkit.WinUI3.Text
             ThrowIfDisposed();
 
             return EnsureTextLayout();
+        }
+
+        public CanvasTextLayout DetachInternalCanvasTextLayout()
+        {
+            ThrowIfDisposed();
+
+            lock (locker)
+            {
+                var textLayout = EnsureTextLayout();
+                this.textLayout = null;
+                InvalidateMetrics();
+
+                return textLayout;
+            }
         }
 
         public CanvasTextLayout CreateCanvasTextLayout(ICanvasResourceCreator canvasResourceCreator)
