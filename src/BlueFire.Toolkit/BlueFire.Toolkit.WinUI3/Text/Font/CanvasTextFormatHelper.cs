@@ -28,7 +28,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
         public static void SetFontFamilySource(
             CanvasTextFormat canvasTextFormat,
             string fontFamilySource,
-            string? languageTag) 
+            string? languageTag)
         {
             var collection = new CanvasFontFamilyCollection(fontFamilySource);
 
@@ -87,6 +87,11 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
         private static unsafe void AppendToFontFallback(ComPtr<IDWriteFontFallbackBuilder> builder, CanvasFontFamily fontFamily)
         {
+            AppendToFontFallbackCore(builder, fontFamily, new HashSet<string>());
+        }
+
+        private static unsafe void AppendToFontFallbackCore(ComPtr<IDWriteFontFallbackBuilder> builder, CanvasFontFamily fontFamily, HashSet<string> usedFontName)
+        {
             CanvasFontProperties? fontProperties = null;
             IWinRTObject? canvasFontSet = null;
             ComPtr<IDWriteFontCollection> fontCollection = default;
@@ -97,7 +102,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
                 if (!fontFamily.IsGenericFamilyName && fontFamily.LocationUri == null)
                 {
                     var compositeFont = CompositeFontManager.Find(fontFamily.FontFamilyName);
-                    if (compositeFont != null)
+                    if (compositeFont != null && usedFontName.Add(fontFamily.FontFamilyName))
                     {
                         if (compositeFont.FamilyMaps != null)
                         {
@@ -108,7 +113,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
                                 for (int j = 0; j < mapTargetFamilies.Count; j++)
                                 {
                                     var mapTargetFamily = mapTargetFamilies[j];
-                                    AppendToFontFallback(builder, mapTargetFamily);
+                                    AppendToFontFallbackCore(builder, mapTargetFamily, usedFontName);
                                 }
                             }
                         }
