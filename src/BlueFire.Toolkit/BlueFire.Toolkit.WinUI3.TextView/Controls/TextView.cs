@@ -1,4 +1,5 @@
 ﻿using BlueFire.Toolkit.WinUI3.Controls.FormattedTextRenderers;
+using BlueFire.Toolkit.WinUI3.Core.Extensions;
 using BlueFire.Toolkit.WinUI3.Graphics;
 using BlueFire.Toolkit.WinUI3.Text;
 using Microsoft.Graphics.Canvas.Brushes;
@@ -59,6 +60,13 @@ namespace BlueFire.Toolkit.WinUI3.Controls
 
             RegisterPropertyChangedCallback(FlowDirectionProperty, OnTextPropertyChanged);
             RegisterPropertyChangedCallback(UseLayoutRoundingProperty, OnTextPropertyChanged);
+
+            CompositeFontManager.CompositeFontsChanged +=
+                (new WeakEventListener<TextView, object, EventArgs>(
+                    this,
+                    (that, _sender, _args) => that.CompositeFontManager_CompositeFontsChanged(_sender, _args),
+                    (weakEvent) => CompositeFontManager.CompositeFontsChanged -= weakEvent.OnEvent))
+                .OnEvent;
         }
 
         private void TextView_Loading(FrameworkElement sender, object args)
@@ -320,9 +328,18 @@ namespace BlueFire.Toolkit.WinUI3.Controls
             MakeDirty();
         }
 
+        private void CompositeFontManager_CompositeFontsChanged(object? sender, EventArgs e)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                MakeDirty();
+            });
+        }
+
         private void MakeDirty()
         {
             currentTextProps = null;
+            contentRenderer?.MakeDirty();
 
             // TODO: 合并多次调用
             InvalidateMeasure();

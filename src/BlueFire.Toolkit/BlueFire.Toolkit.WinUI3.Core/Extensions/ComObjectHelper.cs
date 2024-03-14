@@ -82,7 +82,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
     }
 
 
-    internal struct ComPtr<T> : IDisposable where T : unmanaged
+    internal unsafe struct ComPtr<T> : IDisposable where T : unmanaged
     {
         private nint _ptr;
 
@@ -91,7 +91,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             _ptr = ptr;
         }
 
-        internal readonly unsafe ref T Value
+        internal readonly ref T Value
         {
             get
             {
@@ -105,44 +105,64 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
 
         internal readonly nint Pointer => _ptr;
 
-        internal unsafe void** PointerRef => (void**)Unsafe.AsPointer(ref _ptr);
+        internal void** PointerRef => (void**)Unsafe.AsPointer(ref _ptr);
 
-        internal unsafe T** TypedPointerRef => (T**)Unsafe.AsPointer(ref _ptr);
+        internal T** TypedPointerRef => (T**)Unsafe.AsPointer(ref _ptr);
 
-        internal unsafe void* AsPointer()
+        internal void* AsPointer()
         {
             return (void*)Pointer;
         }
 
-        internal unsafe T* AsTypedPointer()
+        internal T* AsTypedPointer()
         {
             return (T*)Pointer;
         }
 
-        internal unsafe U* AsTypedPointer<U>() where U : unmanaged
+        internal U* AsTypedPointer<U>() where U : unmanaged
         {
             return (U*)Pointer;
         }
 
-        internal unsafe HRESULT QueryInterface(Guid* riid, void** ppvObject)
+        internal HRESULT QueryInterface(Guid* riid, void** ppvObject)
         {
             if (_ptr == 0) return ComObjectHelper.E_POINTER;
 
             return AsTypedPointer<IUnknown>()->QueryInterface(riid, ppvObject);
         }
 
-        internal unsafe uint AddRef()
+        internal uint AddRef()
         {
             if (_ptr == 0) return 0;
 
             return AsTypedPointer<IUnknown>()->AddRef();
         }
 
-        internal unsafe uint Release()
+        internal uint Release()
         {
             if (_ptr == 0) return 0;
 
             return AsTypedPointer<IUnknown>()->Release();
+        }
+
+        internal T* Detach()
+        {
+            T* ptr = null;
+            Detach((void**)&ptr);
+            return ptr;
+        }
+
+        internal void Detach(void** ptr)
+        {
+            *ptr = (void*)Interlocked.Exchange(ref _ptr, IntPtr.Zero);
+        }
+
+        internal void Detach(out void* ptr)
+        {
+            fixed (void** fixedPtr = &ptr)
+            {
+                Detach(fixedPtr);
+            }
         }
 
         internal static ComPtr<T> FromAbi(nint ptr)
@@ -166,9 +186,11 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             return new ComPtr<T>(ptr);
         }
 
-        internal static unsafe ComPtr<T> Attach(void* ptr)
+        internal static unsafe ComPtr<T> Attach(void** ptr)
         {
-            return new ComPtr<T>((nint)ptr);
+            var p = *ptr;
+            *ptr = null;
+            return new ComPtr<T>((nint)p);
         }
 
         void IDisposable.Dispose()

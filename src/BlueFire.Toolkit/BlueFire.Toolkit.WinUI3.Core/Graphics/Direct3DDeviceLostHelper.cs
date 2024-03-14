@@ -14,7 +14,7 @@ using IDXGIFactory7 = Windows.Win32.Graphics.Dxgi.IDXGIFactory7;
 
 namespace BlueFire.Toolkit.WinUI3.Graphics
 {
-    public unsafe class Direct3DDeviceLostHelper : IDisposable
+    internal unsafe class Direct3DDeviceLostHelper : IDisposable
     {
         private static int globalId = 0;
         private static Dictionary<int, Direct3DDeviceLostHelper> instances = new Dictionary<int, Direct3DDeviceLostHelper>();

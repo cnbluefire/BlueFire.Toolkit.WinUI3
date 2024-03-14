@@ -103,11 +103,11 @@ namespace BlueFire.Toolkit.WinUI3.Text
                 ComPtr<IDWriteFactory3> factory;
                 if (createIsolatedFont)
                 {
-                    factory = GetSharedFactory<IDWriteFactory3>();
+                    factory = GetIsolatedFactory<IDWriteFactory3>();
                 }
                 else
                 {
-                    factory = GetIsolatedFactory<IDWriteFactory3>();
+                    factory = GetSharedFactory<IDWriteFactory3>();
                 }
 
                 if (fontIdentifier.CanvasFontSet != null)
@@ -176,7 +176,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
             CanvasFontFamily fontFamily,
             out ComPtr<IDWriteFontFace3> fontFace,
             out ComPtr<IDWriteFontCollection> fontCollection,
-            out IWinRTObject? canvasFontSet)
+            out CanvasFontSet? canvasFontSet)
         {
             CanvasFontProperties? fontProperties = null;
             fontCollection = default;
@@ -198,9 +198,9 @@ namespace BlueFire.Toolkit.WinUI3.Text
                 if (canvasFontSet != null)
                 {
                     var fallbackFont = new CanvasFallbackFont(fontFamily.FontFamilyName, canvasFontSet);
-                    if (DWriteHelper.CreateFontFace(fallbackFont, false, out fontFace, out fontCollection))
+                    if (CreateFontFace(fallbackFont, false, out fontFace, out fontCollection))
                     {
-                        fontProperties = DWriteHelper.GetFontProperties(fontFace);
+                        fontProperties = GetFontProperties(fontFace);
                     }
                 }
             }

@@ -266,7 +266,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
                 LineSpacing = (float)actualLineHeight
             })
             {
-                CanvasTextFormatHelper.SetFontFamilySource(textFormat, typeface.ActualFontFamilyName, localeName);
+                CanvasTextFormatHelper.SetFontFamilySource(textFormat, typeface.ActualFontFamilyName);
 
                 var requestedSize = GetRequestedSize();
 

@@ -27,23 +27,12 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
         public static void SetFontFamilySource(
             CanvasTextFormat canvasTextFormat,
-            string fontFamilySource,
-            string? languageTag)
+            string fontFamilySource)
         {
             var collection = new CanvasFontFamilyCollection(fontFamilySource);
 
             if (collection.Count > 0)
             {
-                if (string.IsNullOrEmpty(languageTag))
-                {
-                    languageTag = CultureInfo.CurrentUICulture.Name;
-
-                    if (string.IsNullOrEmpty(languageTag))
-                    {
-                        languageTag = "en";
-                    }
-                }
-
                 SetFallbackFontFamilies(canvasTextFormat, collection);
             }
         }
@@ -93,7 +82,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
         private static unsafe void AppendToFontFallbackCore(ComPtr<IDWriteFontFallbackBuilder> builder, CanvasFontFamily fontFamily, HashSet<string> usedFontName)
         {
             CanvasFontProperties? fontProperties = null;
-            IWinRTObject? canvasFontSet = null;
+            CanvasFontSet? canvasFontSet = null;
             ComPtr<IDWriteFontCollection> fontCollection = default;
             ComPtr<IDWriteFontFace3> fontFace = default;
 
@@ -125,30 +114,35 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
                 if (fontProperties != null && fontProperties.UnicodeRanges.Length > 0)
                 {
-                    DWRITE_UNICODE_RANGE[]? unicodeRanges = default;
-
-                    if (fontFamily.UnicodeRanges != null)
+                    static ref DWRITE_UNICODE_RANGE GetRefUnicodeRange(UnicodeRange[]? range1, DWRITE_UNICODE_RANGE[]? range2)
                     {
-                        unicodeRanges = MemoryMarshal.Cast<UnicodeRange, DWRITE_UNICODE_RANGE>(fontFamily.UnicodeRanges)
-                            .ToArray();
+                        if (range1 != null && range1.Length > 0) return ref MemoryMarshal.GetReference(MemoryMarshal.Cast<UnicodeRange, DWRITE_UNICODE_RANGE>(range1));
+                        else return ref MemoryMarshal.GetReference(range2.AsSpan());
                     }
-                    else
+                    var length = 0;
+                    if (fontFamily.UnicodeRanges != null && fontFamily.UnicodeRanges.Length > 0)
                     {
-                        unicodeRanges = fontProperties.unicodeRanges;
+                        length = fontFamily.UnicodeRanges.Length;
+                    }
+                    else if (fontProperties.unicodeRanges != null && fontProperties.unicodeRanges.Length > 0)
+                    {
+                        length = fontProperties.unicodeRanges.Length;
                     }
 
-                    if (unicodeRanges != null && unicodeRanges.Length > 0)
+                    if (length > 0)
                     {
+                        ref DWRITE_UNICODE_RANGE unicodeRangeRef = ref GetRefUnicodeRange(fontFamily.UnicodeRanges, fontProperties.unicodeRanges);
+
                         var scaleFactor = fontFamily.ScaleFactor;
 
                         var actualName = fontFamily.FontFamilyName;
 
-                        fixed (DWRITE_UNICODE_RANGE* ptr = unicodeRanges)
+                        fixed (DWRITE_UNICODE_RANGE* ptr = &unicodeRangeRef)
                         fixed (char* pActualName = actualName)
                         {
                             builder.Value.AddMapping(
                                 ptr,
-                                (uint)unicodeRanges.Length,
+                                (uint)length,
                                 (ushort**)(&pActualName),
                                 1,
                                 fontCollection.AsTypedPointer(),

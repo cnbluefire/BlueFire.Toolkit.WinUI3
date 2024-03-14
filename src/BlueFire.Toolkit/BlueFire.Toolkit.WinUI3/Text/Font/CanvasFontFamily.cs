@@ -46,6 +46,6 @@ namespace BlueFire.Toolkit.WinUI3.Text
         }
     }
 
-    public record class CanvasFallbackFont(string FontFamilyName, IWinRTObject? CanvasFontSet, float ScaleFactor = 1);
+    public record class CanvasFallbackFont(string FontFamilyName, Microsoft.Graphics.Canvas.Text.CanvasFontSet? CanvasFontSet, float ScaleFactor = 1);
 
 }

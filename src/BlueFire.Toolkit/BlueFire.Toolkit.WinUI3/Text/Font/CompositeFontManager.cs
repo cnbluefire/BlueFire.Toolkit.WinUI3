@@ -20,6 +20,13 @@ namespace BlueFire.Toolkit.WinUI3.Text
                 if (compositeFonts.ContainsKey(key)) return false;
 
                 compositeFonts[key] = compositeFont.Clone();
+
+                try
+                {
+                    CompositeFontsChanged?.Invoke(null, EventArgs.Empty);
+                }
+                catch { }
+
                 return true;
             }
         }
@@ -31,7 +38,19 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
             lock (compositeFonts)
             {
-                return compositeFonts.Remove(key);
+                if (compositeFonts.Remove(key, out var value))
+                {
+                    value?.Dispose();
+
+                    try
+                    {
+                        CompositeFontsChanged?.Invoke(null, EventArgs.Empty);
+                    }
+                    catch { }
+
+                    return true;
+                }
+                return false;
             }
         }
 
@@ -46,5 +65,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
                 return null;
             }
         }
+
+        internal static event EventHandler? CompositeFontsChanged;
     }
 }

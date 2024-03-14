@@ -16,14 +16,17 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
 {
     public unsafe static class GraphicsHelper
     {
+        private const int E_POINTER = unchecked((int)0x80004003);
+
         public static unsafe T? GetInterface<T>(IDirect3DDevice? device) where T : class
         {
             var iid = typeof(T).GetGuidType().GUID;
-            var result = GetInterface(device, ref iid);
+            nint pvObject = 0;
+            var hr = (Windows.Win32.Foundation.HRESULT)GetInterface(device, ref iid, (void**)(&pvObject));
 
-            if (result != 0)
+            if (hr.Succeeded)
             {
-                using var objRef = ObjectReference<IUnknownVftbl>.Attach(ref result);
+                using var objRef = ObjectReference<IUnknownVftbl>.Attach(ref pvObject);
                 return objRef.AsInterface<T>();
             }
 
@@ -33,35 +36,37 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         internal static unsafe ComPtr<T> GetInterfacePtr<T>(IDirect3DDevice? device) where T : unmanaged
         {
             var iid = typeof(T).GetGuidType().GUID;
-            var result = GetInterface(device, ref iid);
+            void* pvObject = null;
+            var hr = (Windows.Win32.Foundation.HRESULT)GetInterface(device, ref iid, &pvObject);
 
-            return ComPtr<T>.Attach(ref result);
+            if (hr.Failed) return new ComPtr<T>();
+
+            return ComPtr<T>.Attach(&pvObject);
         }
 
-        internal static unsafe nint GetInterface(IDirect3DDevice? device, ref Guid iid)
+        public static unsafe int GetInterface(IDirect3DDevice? device, ref Guid iid, void** ppvObject)
         {
-            if (device == null) return default;
+            if (device == null) return E_POINTER;
 
             var hr = ComObjectHelper.QueryInterface<IDirect3DDxgiInterfaceAccess>(
                 device,
                 IDirect3DDxgiInterfaceAccess.IID_Guid,
                 out var access);
 
-            if (hr.Failed) return default;
+            if (hr.Failed) return hr;
 
             using (access)
             {
                 fixed (Guid* riid = &iid)
                 {
-                    nint result = 0;
-                    hr = access.Value.GetInterface(riid, (void**)(&result));
+                    hr = access.Value.GetInterface(riid, ppvObject);
 
                     if (hr.Failed)
                     {
-                        result = 0;
+                        return hr;
                     };
 
-                    return result;
+                    return 0;
                 }
             }
         }
@@ -69,11 +74,12 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         public static T? GetDXGIFactory<T>(IDirect3DDevice? device) where T : class
         {
             var iid = typeof(T).GetGuidType().GUID;
-            var result = GetDXGIFactory(device, ref iid);
+            nint pvObject = 0;
+            var hr = (Windows.Win32.Foundation.HRESULT)GetDXGIFactory(device, ref iid, (void**)(&pvObject));
 
-            if (result != 0)
+            if (hr.Succeeded)
             {
-                using var objRef = ObjectReference<IUnknownVftbl>.Attach(ref result);
+                using var objRef = ObjectReference<IUnknownVftbl>.Attach(ref pvObject);
                 return objRef.AsInterface<T>();
             }
 
@@ -83,40 +89,42 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         internal static ComPtr<T> GetDXGIFactoryPtr<T>(IDirect3DDevice? device) where T : unmanaged
         {
             var iid = typeof(T).GetGuidType().GUID;
-            var result = GetDXGIFactory(device, ref iid);
+            void* pvObject = null;
+            var hr = (Windows.Win32.Foundation.HRESULT)GetDXGIFactory(device, ref iid, &pvObject);
 
-            return ComPtr<T>.Attach(ref result);
+            if (hr.Failed) return new ComPtr<T>();
+
+            return ComPtr<T>.Attach((void**)&pvObject);
         }
 
-        private static nint GetDXGIFactory(IDirect3DDevice? device, ref Guid iid)
+        public static int GetDXGIFactory(IDirect3DDevice? device, ref Guid iid, void** ppvObject)
         {
-            if (device == null) return 0;
+            if (device == null) return E_POINTER;
 
-            using var dxgiDevice = GetInterfacePtr<IDXGIDevice>(device);
+            var IID_DXGIDevice = IDXGIDevice.IID_Guid;
+            IDXGIDevice* pDXGIDevice = null;
 
-            if (dxgiDevice.HasValue)
+            var hr = (Windows.Win32.Foundation.HRESULT)GetInterface(device, ref IID_DXGIDevice, (void**)(&pDXGIDevice));
+            if (hr.Failed) return hr;
+
+            using (var dxgiDevice = ComPtr<IDXGIDevice>.Attach((void**)(&pDXGIDevice)))
+            using (ComPtr<IDXGIAdapter> adapter = default)
             {
-                using (ComPtr<IDXGIAdapter> adapter = default)
+                fixed (Guid* riid = &iid)
                 {
-                    fixed (Guid* riid = &iid)
+                    try
                     {
-                        try
-                        {
-                            var hr = dxgiDevice.Value.GetAdapter(adapter.TypedPointerRef);
-                            if (hr.Succeeded)
-                            {
-                                nint result = 0;
+                        hr = dxgiDevice.Value.GetAdapter(adapter.TypedPointerRef);
+                        if (hr.Failed) return hr;
 
-                                adapter.Value.GetParent(riid, (void**)(&result));
-
-                                return result;
-                            }
-                        }
-                        catch { }
+                        return adapter.Value.GetParent(riid, ppvObject).Value;
+                    }
+                    catch (Exception ex)
+                    {
+                        return ex.HResult;
                     }
                 }
             }
-            return 0;
         }
     }
 }

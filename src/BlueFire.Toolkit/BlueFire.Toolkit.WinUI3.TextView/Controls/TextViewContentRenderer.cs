@@ -87,20 +87,23 @@ namespace BlueFire.Toolkit.WinUI3.Controls
 
             if (oldProp != properties || oldSize != newSize)
             {
-                MakeDirty();
+                drawingContext.MakeDirty();
+
+                // TODO: 判断是否需要渲染
+                if (true)
+                {
+                    CompositionTarget.Rendering -= CompositionTarget_Rendering;
+                    CompositionTarget.Rendering += CompositionTarget_Rendering;
+                }
             }
         }
 
-        private void MakeDirty()
+        internal void MakeDirty()
         {
-            drawingContext.MakeDirty();
+            CompositionTarget.Rendering -= CompositionTarget_Rendering;
 
-            // TODO: 判断是否需要渲染
-            if (true)
-            {
-                CompositionTarget.Rendering -= CompositionTarget_Rendering;
-                CompositionTarget.Rendering += CompositionTarget_Rendering;
-            }
+            textProperties = default;
+            layoutSize = default;
         }
 
         private void CompositionTarget_Rendering(object? sender, object e)

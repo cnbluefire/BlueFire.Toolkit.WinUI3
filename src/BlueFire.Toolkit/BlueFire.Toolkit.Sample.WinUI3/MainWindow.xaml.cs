@@ -33,6 +33,7 @@ using System.Threading;
 using Microsoft.UI.Input;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Windowing;
+using Microsoft.Graphics.Canvas;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -93,7 +94,7 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
         int threadId;
 
-        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private unsafe void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             var compositeFont = new CompositeFontFamily()
             {
@@ -170,7 +171,7 @@ namespace BlueFire.Toolkit.Sample.WinUI3
         {
             base.OnWindowMessageReceived(e);
 
-            if(e.MessageId == 533U)
+            if (e.MessageId == 533U)
             {
                 // WM_CAPTURECHANGED
 
@@ -243,7 +244,7 @@ namespace BlueFire.Toolkit.Sample.WinUI3
             //WindowDragExtensions.Test(e);
         }
 
-        
+
 
         [DllImport("user32.dll")]
         private extern static int SendMessage(nint hWnd, int msg, nint wParam, nint lParam);

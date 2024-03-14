@@ -72,7 +72,7 @@ namespace BlueFire.Toolkit.WinUI3.Test
             {
                 format.FontFamily = null;
 
-                CanvasTextFormatHelper.SetFontFamilySource(format, "Custom Font, Wide Latin, 方正舒体", "en");
+                CanvasTextFormatHelper.SetFontFamilySource(format, "Custom Font, Wide Latin, 方正舒体");
 
                 using (var layout = new CanvasTextLayout(CanvasDevice.GetSharedDevice(), "测试AB", format, float.MaxValue, float.MaxValue))
                 {
