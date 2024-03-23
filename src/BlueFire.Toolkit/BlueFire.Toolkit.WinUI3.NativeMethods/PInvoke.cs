@@ -48,7 +48,7 @@ namespace Windows.Win32
             {
                 try
                 {
-                    if (predicate(_hWnd, _lParam.Value)) list.Add(_hWnd);
+                    if (predicate((HWND)_hWnd, _lParam)) list.Add((HWND)_hWnd);
                 }
                 catch { }
 
@@ -59,7 +59,7 @@ namespace Windows.Win32
             {
                 return list.Distinct().ToArray();
             }
-            return null;
+            return Array.Empty<HWND>();
         }
 
         internal static ushort LOWORD(uint value)
@@ -93,9 +93,9 @@ namespace Windows.Win32
         }
 
         [DllImport("USER32.dll", ExactSpelling = true, PreserveSig = false)]
-        internal static extern BOOL EnumThreadWindows([In] uint dwThreadId, [In] WNDENUMPROC lpfn, [In] LPARAM lParam);
+        internal static extern bool EnumThreadWindows([In] uint dwThreadId, [In] WNDENUMPROC lpfn, [In] nint lParam);
 
         [UnmanagedFunctionPointer(CallingConvention.Winapi)]
-        internal delegate BOOL WNDENUMPROC([In] HWND param0, [In] LPARAM param1);
+        internal delegate bool WNDENUMPROC([In] nint param0, [In] nint param1);
     }
 }

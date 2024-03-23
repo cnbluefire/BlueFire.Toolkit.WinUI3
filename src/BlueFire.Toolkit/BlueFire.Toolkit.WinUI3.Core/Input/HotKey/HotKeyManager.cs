@@ -101,7 +101,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
 
                 if (listener != null)
                 {
-                    listener.UnregisterAllKeys().GetAwaiter().GetResult();
+                    listener.UnregisterAllKeys();
                 }
 
                 if (!isEnabledInternal || !isEnabled) return;
@@ -121,7 +121,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
                                 listener = EnsureListener();
                             }
 
-                            var state = listener.RegisterKey(model.ModifiersInternal, model.VirtualKeyInternal).GetAwaiter().GetResult();
+                            var state = listener.RegisterKey(model.ModifiersInternal, model.VirtualKeyInternal);
                             model.RegistrationSuccessful = state;
 
                             if (state)

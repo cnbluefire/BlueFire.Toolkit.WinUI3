@@ -131,6 +131,8 @@ Windows.Win32.System.WinRT.Composition.ICompositorDesktopInterop
 Windows.Win32.System.WinRT.IMemoryBufferByteAccess
 Windows.Win32.System.WinRT.CreateDispatcherQueueController
 Windows.Win32.System.WinRT.RoGetActivationFactory
+Windows.Win32.System.WinRT.RoInitialize
+Windows.Win32.System.WinRT.RoUninitialize
 
 Windows.Win32.Storage.Packaging.Appx.GetCurrentApplicationUserModelId
 Windows.Win32.Storage.Packaging.Appx.ParseApplicationUserModelId

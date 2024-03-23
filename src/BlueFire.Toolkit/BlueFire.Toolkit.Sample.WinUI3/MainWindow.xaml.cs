@@ -34,6 +34,8 @@ using Microsoft.UI.Input;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Windowing;
 using Microsoft.Graphics.Canvas;
+using BlueFire.Toolkit.WinUI3.Core.Dispatching;
+using BlueFire.Toolkit.WinUI3.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -45,6 +47,8 @@ namespace BlueFire.Toolkit.Sample.WinUI3
     /// </summary>
     public sealed partial class MainWindow : WindowEx
     {
+        private WindowMessageListener windowMessageListener;
+
         unsafe public MainWindow()
         {
             this.InitializeComponent();
@@ -75,8 +79,9 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
             this.Loaded += MainWindow_Loaded;
 
-            myHotKeyInputBox.HotKeyModel = HotKeyManager.RegisterKey("Test", HotKeyModifiers.MOD_CONTROL | HotKeyModifiers.MOD_ALT, VirtualKeys.VK_RIGHT);
+            myHotKeyInputBox.HotKeyModel = HotKeyManager.RegisterKey("Test", HotKeyModifiers.MOD_CONTROL | HotKeyModifiers.MOD_ALT, VirtualKeys.VK_LEFT);
             HotKeyManager.HotKeyInvoked += HotKeyManager_HotKeyInvoked;
+            myHotKeyInputBox.HotKeyModel.VirtualKey = VirtualKeys.VK_RIGHT;
 
             AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
             AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
