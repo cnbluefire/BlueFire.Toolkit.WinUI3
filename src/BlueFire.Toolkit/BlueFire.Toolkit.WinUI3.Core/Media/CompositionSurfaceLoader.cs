@@ -19,7 +19,13 @@ using Windows.Win32.System.Com;
 
 namespace BlueFire.Toolkit.WinUI3.Media
 {
-    public class CompositionSurfaceLoader : ICompositionSurface, IDisposable
+    /// <summary>
+    /// Represents a <see cref="Windows.UI.Composition.ICompositionSurface"/> that an image can be downloaded, decoded and loaded onto. You can load an image using a Uniform Resource Identifier (URI) that references an image source file, or supplying a IRandomAccessStream.
+    /// <para>
+    /// see also <seealso cref="Microsoft.UI.Xaml.Media.LoadedImageSurface"/>
+    /// </para>
+    /// </summary>
+    public class CompositionSurfaceLoader : IDisposable
     {
         private const int MaxTextureSizeFallback = 2045;
         private const int TileSize = 504;

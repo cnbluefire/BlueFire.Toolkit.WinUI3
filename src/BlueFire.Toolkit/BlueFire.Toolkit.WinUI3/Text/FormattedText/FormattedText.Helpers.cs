@@ -225,6 +225,10 @@ namespace BlueFire.Toolkit.WinUI3.Text
             return EnsureTextLayout();
         }
 
+        /// <summary>
+        /// Get the internal CanvasTextLayout of FormattedText, and detach from FormattedText.
+        /// </summary>
+        /// <returns></returns>
         public CanvasTextLayout DetachInternalCanvasTextLayout()
         {
             ThrowIfDisposed();
@@ -239,6 +243,11 @@ namespace BlueFire.Toolkit.WinUI3.Text
             }
         }
 
+        /// <summary>
+        /// Create a CanvasTextLayout from this FormattedText.
+        /// </summary>
+        /// <param name="canvasResourceCreator"></param>
+        /// <returns></returns>
         public CanvasTextLayout CreateCanvasTextLayout(ICanvasResourceCreator canvasResourceCreator)
         {
             var actualLineHeight = GetActualLineHeight();

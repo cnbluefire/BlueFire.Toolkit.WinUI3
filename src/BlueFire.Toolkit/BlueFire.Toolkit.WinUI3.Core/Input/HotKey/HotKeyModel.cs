@@ -64,8 +64,14 @@ namespace BlueFire.Toolkit.WinUI3.Input
             }
         }
 
+        /// <summary>
+        /// Hotkey unique id.
+        /// </summary>
         public string Id { get; }
 
+        /// <summary>
+        /// Hotkey label. Can be used in the UI.
+        /// </summary>
         public string Label
         {
             get { return (string)GetValue(LabelProperty); }
@@ -146,7 +152,9 @@ namespace BlueFire.Toolkit.WinUI3.Input
             }));
 
 
-
+        /// <summary>
+        /// The registration status of the hotkey.
+        /// </summary>
         public HotKeyModelStatus Status
         {
             get { return DispatcherQueue.HasThreadAccess ? (HotKeyModelStatus)GetValue(StatusProperty) : StatusInternal; }
@@ -166,6 +174,9 @@ namespace BlueFire.Toolkit.WinUI3.Input
                 }
             }));
 
+        /// <summary>
+        /// Hotkey invoked event.
+        /// </summary>
         public event TypedEventHandler<HotKeyModel, HotKeyInvokedEventArgs>? Invoked;
 
         internal void RaiseInvoked(HotKeyInvokedEventArgs args)
@@ -239,10 +250,29 @@ namespace BlueFire.Toolkit.WinUI3.Input
 
     public enum HotKeyModelStatus
     {
+        /// <summary>
+        /// Hotkey is enabled.
+        /// </summary>
         Enabled,
+
+        /// <summary>
+        /// Hotkey is disabled.
+        /// </summary>
         Disabled,
+
+        /// <summary>
+        /// Hotkey is invalid.
+        /// </summary>
         Invalid,
+
+        /// <summary>
+        /// Hotkey has not been registered.
+        /// </summary>
         NotRegistered,
+
+        /// <summary>
+        /// Hotkey registration failed.
+        /// </summary>
         RegisterFailed,
     }
 }

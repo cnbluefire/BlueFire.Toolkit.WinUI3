@@ -10,6 +10,9 @@ using Windows.Foundation;
 
 namespace BlueFire.Toolkit.WinUI3.Text
 {
+    /// <summary>
+    /// Provides low-level control for drawing text.
+    /// </summary>
     public partial class FormattedText : IDisposable
     {
         private bool disposedValue;
@@ -28,6 +31,17 @@ namespace BlueFire.Toolkit.WinUI3.Text
         private TextWrapping textWrapping;
         private object locker = new object();
 
+        /// <summary>
+        /// Initializes a new instance of the FormattedText class.
+        /// </summary>
+        /// <param name="text">The text to be displayed.</param>
+        /// <param name="localeName">The specific locale name of the text.</param>
+        /// <param name="flowDirection">The direction the text is read.</param>
+        /// <param name="typeface">The font family, weight, style and stretch the text should be formatted with.</param>
+        /// <param name="fontSize">The font size the text should be formatted at.</param>
+        /// <param name="isPixelSnappingEnabled"></param>
+        /// <param name="isColorFontEnabled"></param>
+        /// <param name="canvasResourceCreator">The win2d canvas resource creator factory.</param>
         public FormattedText(
             string text,
             string? localeName,
@@ -53,10 +67,19 @@ namespace BlueFire.Toolkit.WinUI3.Text
             textWrapping = TextWrapping.NoWrap;
         }
 
+        /// <summary>
+        /// Gets the distance from the top of the first line to the baseline of the first line of a FormattedText object.
+        /// </summary>
         public double Baseline => TryGetFirstLineMetrics()?.Baseline ?? 0;
 
+        /// <summary>
+        /// Gets the distance from the topmost drawn pixel of the first line to the bottommost drawn pixel of the last line.
+        /// </summary>
         public double Extent => GetDrawBounds().Height;
 
+        /// <summary>
+        /// Gets or sets the FlowDirection of a FormattedText object.
+        /// </summary>
         public FlowDirection FlowDirection
         {
             get => flowDirection;
@@ -82,12 +105,24 @@ namespace BlueFire.Toolkit.WinUI3.Text
             }
         }
 
+        /// <summary>
+        /// Gets the width between the leading and trailing alignment points of a line, excluding any trailing white-space characters.
+        /// </summary>
         public double Width => EnsureTextLayout().LayoutBounds.Right;
 
+        /// <summary>
+        /// Gets the distance from the top of the first line to the bottom of the last line of the FormattedText object.
+        /// </summary>
         public double Height => EnsureTextLayout().LayoutBounds.Bottom;
 
+        /// <summary>
+        /// Gets the width between the leading and trailing alignment points of a line, including any trailing white-space characters.
+        /// </summary>
         public double WidthIncludingTrailingWhitespace => EnsureTextLayout().LayoutBoundsIncludingTrailingWhitespace.Right;
 
+        /// <summary>
+        /// Gets or sets the line height, or line spacing, between lines of text.
+        /// </summary>
         public double LineHeight
         {
             get => lineHeight;
@@ -114,6 +149,9 @@ namespace BlueFire.Toolkit.WinUI3.Text
             }
         }
 
+        /// <summary>
+        /// Gets or sets the maximum text width (length) for a line of text.
+        /// </summary>
         public double MaxTextWidth
         {
             get => maxTextWidth;
@@ -140,6 +178,9 @@ namespace BlueFire.Toolkit.WinUI3.Text
             }
         }
 
+        /// <summary>
+        /// Gets or sets the maximum height of a text column.
+        /// </summary>
         public double MaxTextHeight
         {
             get => maxTextHeight;
@@ -166,20 +207,38 @@ namespace BlueFire.Toolkit.WinUI3.Text
             }
         }
 
+        /// <summary>
+        /// Gets the smallest possible text width that can fully contain the specified text content.
+        /// </summary>
         public double MinWidth => GetMinWidth();
 
+        /// <summary>
+        /// Gets the distance from the bottom of the last line of text to the bottommost drawn pixel.
+        /// </summary>
         public double OverhangAfter => GetOverhangAfter();
 
+        /// <summary>
+        /// Gets the maximum distance from the leading alignment point to the leading drawn pixel of a line.
+        /// </summary>
         public double OverhangLeading => GetOverhangLeadingAndTrailing().overhangLeading;
 
+        /// <summary>
+        /// Gets the maximum distance from the trailing inked pixel to the trailing alignment point of a line.
+        /// </summary>
         public double OverhangTrailing => GetOverhangLeadingAndTrailing().overhangTrailing;
 
+        /// <summary>
+        /// Gets the string of text to be displayed.
+        /// </summary>
         public string Text { get; }
 
         public bool IsPixelSnappingEnabled { get; }
 
         public bool IsColorFontEnabled { get; }
 
+        /// <summary>
+        /// Gets or sets the alignment of text within a FormattedText object.
+        /// </summary>
         public TextAlignment TextAlignment
         {
             get => textAlignment;
@@ -203,6 +262,9 @@ namespace BlueFire.Toolkit.WinUI3.Text
             }
         }
 
+        /// <summary>
+        /// Gets or sets the means by which the omission of text is indicated.
+        /// </summary>
         public TextTrimming TextTrimming
         {
             get => textTrimming;
@@ -226,6 +288,9 @@ namespace BlueFire.Toolkit.WinUI3.Text
             }
         }
 
+        /// <summary>
+        /// Gets or sets how the FormattedText should wrap text.
+        /// </summary>
         public TextWrapping TextWrapping
         {
             get => textWrapping;
@@ -249,6 +314,9 @@ namespace BlueFire.Toolkit.WinUI3.Text
             }
         }
 
+        /// <summary>
+        /// Get the glyph runs for each line.
+        /// </summary>
         public IReadOnlyList<FormattedTextLineGlyphRuns> LineGlyphRuns => GetLineGlyphRuns();
 
         protected virtual void Dispose(bool disposing)

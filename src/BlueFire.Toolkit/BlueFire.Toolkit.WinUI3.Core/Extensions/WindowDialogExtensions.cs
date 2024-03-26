@@ -11,8 +11,16 @@ using PInvoke = Windows.Win32.PInvoke;
 
 namespace BlueFire.Toolkit.WinUI3.Extensions
 {
+    /// <summary>
+    /// Modal window extensions.
+    /// </summary>
     public static class WindowDialogExtensions
     {
+        /// <summary>
+        /// Set dialog window result and close window.
+        /// </summary>
+        /// <param name="windowId"></param>
+        /// <param name="result"></param>
         public static void SetDialogResult(WindowId windowId, bool? result)
         {
             if (windowId.Value == 0) return;
@@ -23,6 +31,11 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             }
         }
 
+        /// <summary>
+        /// Get dialog window result.
+        /// </summary>
+        /// <param name="windowId"></param>
+        /// <returns></returns>
         public static bool? GetDialogResult(WindowId windowId)
         {
             if (windowId.Value == 0) return default;
@@ -35,10 +48,26 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             return default;
         }
 
+        /// <summary>
+        /// Set dialog window result and close window.
+        /// </summary>
+        /// <param name="window"></param>
+        /// <param name="result"></param>
         public static void SetDialogResult(this AppWindow window, bool? result) => SetDialogResult(window?.Id ?? default, result);
 
+        /// <summary>
+        /// Get dialog window result.
+        /// </summary>
+        /// <param name="window"></param>
+        /// <returns></returns>
         public static bool? GetDialogResult(this AppWindow window) => GetDialogResult(window?.Id ?? default);
 
+        /// <summary>
+        /// Shows the window as a modal dialog box.
+        /// </summary>
+        /// <param name="window"></param>
+        /// <param name="owner">Sets the window that owns this Window.</param>
+        /// <returns></returns>
         public static async Task<bool?> ShowDialogAsync(this AppWindow window, WindowId owner)
         {
             var hwnd = new Windows.Win32.Foundation.HWND((nint)window.Id.Value);

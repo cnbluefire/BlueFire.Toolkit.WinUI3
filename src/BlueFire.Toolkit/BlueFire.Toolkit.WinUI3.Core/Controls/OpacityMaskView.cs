@@ -16,6 +16,9 @@ using Windows.UI;
 
 namespace BlueFire.Toolkit.WinUI3.Controls
 {
+    /// <summary>
+    /// Apply OpacityMask effect to UIElements like wpf.
+    /// </summary>
     public class OpacityMaskView : RedirectVisualView
     {
         public OpacityMaskView()
@@ -45,6 +48,9 @@ namespace BlueFire.Toolkit.WinUI3.Controls
         private CompositionSurfaceBrush opacityMaskVisualBrush;
         private CompositionMaskBrush maskBrush;
 
+        /// <summary>
+        /// OpacityMask brush property.
+        /// </summary>
         public Brush? OpacityMask
         {
             get { return (Brush?)GetValue(OpacityMaskProperty); }

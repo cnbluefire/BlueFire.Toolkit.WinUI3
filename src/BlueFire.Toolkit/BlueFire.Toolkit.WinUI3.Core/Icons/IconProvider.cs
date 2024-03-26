@@ -11,6 +11,9 @@ using PInvoke = Windows.Win32.PInvoke;
 
 namespace BlueFire.Toolkit.WinUI3.Icons
 {
+    /// <summary>
+    /// Win32 icons provider.
+    /// </summary>
     public class IconProvider : IDisposable
     {
         private bool disposedValue;
@@ -42,6 +45,14 @@ namespace BlueFire.Toolkit.WinUI3.Icons
             return GetSharedIcon(width, height, requestedTheme, highContrast);
         }
 
+        /// <summary>
+        /// Gets an icon of the specified size and theme.
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="requestedTheme"></param>
+        /// <param name="highContrast"></param>
+        /// <returns></returns>
         public SafeHIconHandle GetIcon(int width, int height, ApplicationTheme requestedTheme, bool highContrast)
         {
             var icon = GetComposedIcon(requestedTheme, highContrast);
@@ -49,6 +60,13 @@ namespace BlueFire.Toolkit.WinUI3.Icons
             return icon.GetIcon(width, height);
         }
 
+        /// <summary>
+        /// Get an icon of the large size.
+        /// </summary>
+        /// <param name="dpi"></param>
+        /// <param name="requestedTheme"></param>
+        /// <param name="highContrast"></param>
+        /// <returns></returns>
         public SafeHIconHandle GetLargeIcon(uint dpi, ApplicationTheme requestedTheme, bool highContrast)
         {
             var width = (int)(PInvoke.GetSystemMetrics(Windows.Win32.UI.WindowsAndMessaging.SYSTEM_METRICS_INDEX.SM_CXICON) * dpi / 96);
@@ -57,6 +75,13 @@ namespace BlueFire.Toolkit.WinUI3.Icons
             return GetIcon(width, height, requestedTheme, highContrast);
         }
 
+        /// <summary>
+        /// Get an icon of the small size.
+        /// </summary>
+        /// <param name="dpi"></param>
+        /// <param name="requestedTheme"></param>
+        /// <param name="highContrast"></param>
+        /// <returns></returns>
         public SafeHIconHandle GetSmallIcon(uint dpi, ApplicationTheme requestedTheme, bool highContrast)
         {
             var width = (int)(PInvoke.GetSystemMetrics(Windows.Win32.UI.WindowsAndMessaging.SYSTEM_METRICS_INDEX.SM_CXSMICON) * dpi / 96);

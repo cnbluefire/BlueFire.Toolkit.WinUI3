@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace BlueFire.Toolkit.WinUI3.Controls
 {
+    /// <summary>
+    /// UI input box for <see cref="BlueFire.Toolkit.WinUI3.Input.HotKeyManager"/>.
+    /// </summary>
     public class HotKeyInputBox : Control
     {
         public HotKeyInputBox()
@@ -53,6 +56,9 @@ namespace BlueFire.Toolkit.WinUI3.Controls
             UpdatePreviewText();
         }
 
+        /// <summary>
+        /// <see cref="BlueFire.Toolkit.WinUI3.Input.HotKeyModel"/> property.
+        /// </summary>
         public HotKeyModel HotKeyModel
         {
             get { return (HotKeyModel)GetValue(HotKeyModelProperty); }
@@ -87,6 +93,9 @@ namespace BlueFire.Toolkit.WinUI3.Controls
                 }
             }));
 
+        /// <summary>
+        /// Text displayed when the keys are invalid. Default value is "None"
+        /// </summary>
         public string InvalidKeyDisplayText
         {
             get { return (string)GetValue(InvalidKeyDisplayTextProperty); }
@@ -94,7 +103,7 @@ namespace BlueFire.Toolkit.WinUI3.Controls
         }
 
         public static readonly DependencyProperty InvalidKeyDisplayTextProperty =
-            DependencyProperty.Register("InvalidKeyDisplayText", typeof(string), typeof(HotKeyInputBox), new PropertyMetadata("空", (s, a) =>
+            DependencyProperty.Register("InvalidKeyDisplayText", typeof(string), typeof(HotKeyInputBox), new PropertyMetadata("None", (s, a) =>
             {
                 if (s is HotKeyInputBox sender) sender.UpdatePreviewText();
             }));

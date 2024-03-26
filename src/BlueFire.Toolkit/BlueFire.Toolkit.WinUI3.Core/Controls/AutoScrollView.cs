@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace BlueFire.Toolkit.WinUI3.Controls
 {
+    /// <summary>
+    /// Marquee effect for UIElement
+    /// </summary>
     public class AutoScrollView : RedirectVisualView
     {
         public AutoScrollView()
@@ -69,18 +72,27 @@ namespace BlueFire.Toolkit.WinUI3.Controls
 
         protected override bool ChildVisualBrushOffsetEnabled => false;
 
+        /// <summary>
+        /// Space between each element. Default value is 20.
+        /// </summary>
         public double Spacing
         {
             get { return (double)GetValue(SpacingProperty); }
             set { SetValue(SpacingProperty, value); }
         }
 
+        /// <summary>
+        /// Play the animation when IsPlaying is true. Default value is true.
+        /// </summary>
         public bool IsPlaying
         {
             get { return (bool)GetValue(IsPlayingProperty); }
             set { SetValue(IsPlayingProperty, value); }
         }
 
+        /// <summary>
+        /// The pixels of the animation scroll per second. Default value is 30.
+        /// </summary>
         public double ScrollingPixelsPreSecond
         {
             get { return (double)GetValue(ScrollingPixelsPreSecondProperty); }

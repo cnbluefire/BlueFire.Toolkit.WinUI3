@@ -12,6 +12,9 @@ using PInvoke = Windows.Win32.PInvoke;
 
 namespace BlueFire.Toolkit.WinUI3.Extensions
 {
+    /// <summary>
+    /// Application package information.
+    /// </summary>
     public static class PackageInfo
     {
         private static bool initialized;

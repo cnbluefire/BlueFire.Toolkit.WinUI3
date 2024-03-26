@@ -12,6 +12,9 @@ using WinRT;
 
 namespace BlueFire.Toolkit.WinUI3.Graphics
 {
+    /// <summary>
+    /// <see href="https://microsoft.github.io/Win2D/WinUI3/html/Interop.htm"/>
+    /// </summary>
     public static class Direct2DInterop
     {
         private const string IID_ICanvasDeviceString = "A27F0B5D-EC2C-4D4F-948F-0AA1E95E33E6";

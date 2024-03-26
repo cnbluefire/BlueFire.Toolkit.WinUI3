@@ -10,6 +10,9 @@ using WinDispatcherQueue = Windows.System.DispatcherQueue;
 
 namespace BlueFire.Toolkit.WinUI3.Compositions
 {
+    /// <summary>
+    /// Interop with Windows.UI.Composition.Compositor.
+    /// </summary>
     public static class WindowsCompositionHelper
     {
         private static WinCompositor? compositor;
@@ -27,6 +30,14 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
             }
         }
 
+        /// <summary>
+        /// Create a thumbnail visual for the window.
+        /// </summary>
+        /// <param name="hwndDestination">The handle to the window that will use the DWM thumbnail. Must be a top-level window.</param>
+        /// <param name="hwndSource">The handle to the window to use as the thumbnail source. Must be a top-level window.</param>
+        /// <param name="sourceClientAreaOnly">True to use only the thumbnail source's client area; otherwise, false.</param>
+        /// <param name="hThumbnailId">A pointer to a handle that, when this function returns successfully, represents the registration of the DWM thumbnail.</param>
+        /// <returns></returns>
         public static Windows.UI.Composition.Visual? CreateVisualFromHwnd(nint hwndDestination, nint hwndSource, bool sourceClientAreaOnly, out nint hThumbnailId)
         {
             hThumbnailId = 0;

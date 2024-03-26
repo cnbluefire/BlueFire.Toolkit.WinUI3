@@ -78,6 +78,9 @@ namespace BlueFire.Toolkit.WinUI3
 
         public nint WindowHandle => HWND.Value;
 
+        /// <summary>
+        /// Set window icon to application default icon.
+        /// </summary>
         public bool UseDefaultIcon
         {
             get => useDefaultIcon;

@@ -8,8 +8,16 @@ using Windows.Foundation;
 
 namespace BlueFire.Toolkit.WinUI3.Extensions
 {
+    /// <summary>
+    /// <see cref="Microsoft.UI.Xaml.Media.Geometry"/> Extensions.
+    /// </summary>
     public static class GeometryExtensions
     {
+        /// <summary>
+        /// Deep clone a geometry.
+        /// </summary>
+        /// <param name="geometry"></param>
+        /// <returns></returns>
         public static Geometry? CloneGeometry(this Geometry? geometry) => geometry switch
         {
             EllipseGeometry ellipse => new EllipseGeometry()

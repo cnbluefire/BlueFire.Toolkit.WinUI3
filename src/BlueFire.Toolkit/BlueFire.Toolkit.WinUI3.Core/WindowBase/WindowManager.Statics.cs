@@ -19,6 +19,11 @@ namespace BlueFire.Toolkit.WinUI3
     {
         private static Dictionary<WindowId, WindowManager> windowManagers = new Dictionary<WindowId, WindowManager>();
 
+        /// <summary>
+        /// Get window manager for windowId.
+        /// </summary>
+        /// <param name="windowId"></param>
+        /// <returns></returns>
         public static WindowManager? Get(WindowId windowId)
         {
             if (windowId.Value == 0) return null;
@@ -37,12 +42,31 @@ namespace BlueFire.Toolkit.WinUI3
             }
         }
 
+        /// <summary>
+        /// Get window manager for appWindow.
+        /// </summary>
+        /// <param name="appWindow"></param>
+        /// <returns></returns>
         public static WindowManager? Get(AppWindow appWindow) => Get(appWindow.Id);
 
+        /// <summary>
+        /// Get window manager for window.
+        /// </summary>
+        /// <param name="window"></param>
+        /// <returns></returns>
         public static WindowManager? Get(Window window) => Get(window.AppWindow.Id);
 
+        /// <summary>
+        /// Get window manager for xamlRoot.
+        /// </summary>
+        /// <param name="xamlRoot"></param>
+        /// <returns></returns>
         public static WindowManager? Get(XamlRoot xamlRoot) => Get(xamlRoot.ContentIslandEnvironment.AppWindowId);
 
+        /// <summary>
+        /// Try get all top-level visible window ids.
+        /// </summary>
+        /// <returns></returns>
         public static unsafe IReadOnlyList<WindowId> TryGetAllWindowIds()
         {
             var charArray = ArrayPool<char>.Shared.Rent(256);
@@ -61,8 +85,8 @@ namespace BlueFire.Toolkit.WinUI3
                         if (length > 0)
                         {
                             var className = new string(pChar, 0, length);
-                            
-                            return className == "Microsoft.UI.Windowing.Window" 
+
+                            return className == "Microsoft.UI.Windowing.Window"
                                 || className == "WinUIDesktopWin32WindowClass";
                         }
 

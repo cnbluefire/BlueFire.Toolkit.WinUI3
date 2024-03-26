@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
 {
+    /// <summary>
+    /// Create a background thread with a message loop.
+    /// </summary>
     public class WorkerQueueObject : IDisposable
     {
         private bool disposedValue;
@@ -28,6 +31,9 @@ namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
 
         protected WorkerQueueObject() : this(ApartmentState.MTA) { }
 
+        /// <summary>
+        /// DispatcherQueue created on the background thread.
+        /// </summary>
         protected internal DispatcherQueue DispatcherQueue
         {
             get

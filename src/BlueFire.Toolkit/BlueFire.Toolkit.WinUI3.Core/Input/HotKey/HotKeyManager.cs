@@ -10,6 +10,9 @@ using PInvoke = Windows.Win32.PInvoke;
 
 namespace BlueFire.Toolkit.WinUI3.Input
 {
+    /// <summary>
+    /// Hotkey manager.
+    /// </summary>
     public static class HotKeyManager
     {
         private static HotKeyListener? listener;
@@ -37,6 +40,9 @@ namespace BlueFire.Toolkit.WinUI3.Input
             }
         }
 
+        /// <summary>
+        /// Is hotkey manager enabled. Default value is true.
+        /// </summary>
         public static bool IsEnabled
         {
             get => isEnabled;
@@ -54,7 +60,13 @@ namespace BlueFire.Toolkit.WinUI3.Input
             }
         }
 
-
+        /// <summary>
+        /// Register a hotkey to system.
+        /// </summary>
+        /// <param name="id">Hotkey unique id.</param>
+        /// <param name="modifiers"></param>
+        /// <param name="key"></param>
+        /// <returns></returns>
         public static HotKeyModel? RegisterKey(string id, HotKeyModifiers modifiers, VirtualKeys key)
         {
             lock (locker)
@@ -77,6 +89,10 @@ namespace BlueFire.Toolkit.WinUI3.Input
             }
         }
 
+        /// <summary>
+        /// Unregister hotkey from system.
+        /// </summary>
+        /// <param name="id">Hotkey unique id.</param>
         public static void Unregister(string id)
         {
             lock (locker)
@@ -250,6 +266,9 @@ namespace BlueFire.Toolkit.WinUI3.Input
             }
         }
 
+        /// <summary>
+        /// Hotkey invoked event.
+        /// </summary>
         public static event HotKeyInvokedEventHandler? HotKeyInvoked;
 
         private static HotKeyListener EnsureListener()

@@ -10,6 +10,9 @@ using Windows.Win32.Foundation;
 
 namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
 {
+    /// <summary>
+    /// Create a invisible window receiving messages.
+    /// </summary>
     public class WindowMessageListener : WorkerQueueObject
     {
         private const string BroadcastMessageWindowName = "BlueFire.Toolkit.BroadcastMessageListener";

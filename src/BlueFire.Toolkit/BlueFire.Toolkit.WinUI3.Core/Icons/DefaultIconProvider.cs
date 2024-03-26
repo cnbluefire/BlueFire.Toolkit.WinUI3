@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace BlueFire.Toolkit.WinUI3.Icons
 {
+    /// <summary>
+    /// Icon provider for packaged and unpackaged app.
+    /// </summary>
     public sealed class DefaultIconProvider : IconProvider
     {
         private static ProcessDefaultIcon? processDefaultIcon;

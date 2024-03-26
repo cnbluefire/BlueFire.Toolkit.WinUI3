@@ -7,6 +7,9 @@ using Microsoft.UI;
 
 namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 {
+    /// <summary>
+    /// Transparent backdrop for window.
+    /// </summary>
     public class TransparentBackdrop : SystemBackdrop
     {
         private Dictionary<WindowId, TransparentBackdropControllerEntry> entries = new Dictionary<WindowId, TransparentBackdropControllerEntry>();
@@ -73,6 +76,9 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             return ptr;
         }
 
+        /// <summary>
+        /// Window background color. Can be a translucent color.
+        /// </summary>
         public Windows.UI.Color BackgroundColor
         {
             get { return (Windows.UI.Color)GetValue(BackgroundColorProperty); }

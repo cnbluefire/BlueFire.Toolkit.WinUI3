@@ -19,6 +19,9 @@ using System.Numerics;
 
 namespace BlueFire.Toolkit.WinUI3
 {
+    /// <summary>
+    /// WindowEx object extends FrameworkElement.
+    /// </summary>
     [ContentProperty(Name = nameof(Content))]
     public class WindowEx : FrameworkElement
     {
