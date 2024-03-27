@@ -16,6 +16,8 @@
 		<PackageTags>winui3;winappsdk</PackageTags>
 		<Authors>blue-fire</Authors>
 		<IncludeSymbols>true</IncludeSymbols>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);CS1591</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(CsWin32Enabled)' == ''">
@@ -34,7 +36,7 @@
 	<PropertyGroup>
 		<PackageVersion>$(VersionPrefix)-$(VersionSuffix)</PackageVersion>
 		<IsPackable>true</IsPackable>
-		<PackageOutputPath>$(MSBuildThisFileDirectory)\build\nupkgs</PackageOutputPath>
+		<PackageOutputPath>$(MSBuildThisFileDirectory)\build\nupkgs\$(MSBuildProjectName)</PackageOutputPath>
 		<NuspecFile>$(MSBuildThisFileDirectory)\build\$(MSBuildProjectName).nuspec</NuspecFile>
 		<NuspecBasePath>$(MSBuildThisFileDirectory)\build</NuspecBasePath>
 		<NuspecProperties>id=$(PackageId);version=$(PackageVersion);title=$(Title);</NuspecProperties>

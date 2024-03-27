@@ -15,10 +15,12 @@
 
 	<PropertyGroup>
 		<UseLocalNugetLibrary>false</UseLocalNugetLibrary>
-		<RestoreSources Condition="$(UseLocalNugetLibrary)">
-			$(RestoreSources);
-			$(MSBuildProjectDirectory)\..\build\nupkgs
-		</RestoreSources>
+		<RestoreAdditionalProjectSources Condition="$(UseLocalNugetLibrary)">
+			$(RestoreAdditionalProjectSources);
+			$(MSBuildProjectDirectory)\..\build\nupkgs\BlueFire.Toolkit.WinUI3.Core;
+			$(MSBuildProjectDirectory)\..\build\nupkgs\BlueFire.Toolkit.WinUI3;
+			$(MSBuildProjectDirectory)\..\build\nupkgs\BlueFire.Toolkit.WinUI3.TextView;
+		</RestoreAdditionalProjectSources>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
@@ -35,6 +37,7 @@
 	<ItemGroup>
 		<PackageReference Include="BlueFire.Toolkit.WinUI3" Version="*-*" Condition="$(UseLocalNugetLibrary)" />
 		<PackageReference Include="BlueFire.Toolkit.WinUI3.TextView" Version="*-*" Condition="$(UseLocalNugetLibrary)" />
+		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.1.1" Condition="$(UseLocalNugetLibrary)" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.231219000" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.2428" />
 		<Manifest Include="$(ApplicationManifest)" />
