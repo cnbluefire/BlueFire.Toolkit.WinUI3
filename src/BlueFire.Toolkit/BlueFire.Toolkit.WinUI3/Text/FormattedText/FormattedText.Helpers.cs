@@ -1,4 +1,5 @@
-﻿using Microsoft.Graphics.Canvas;
+﻿using BlueFire.Toolkit.WinUI3.Graphics;
+using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.UI.Xaml;
 using System;
@@ -14,35 +15,16 @@ namespace BlueFire.Toolkit.WinUI3.Text
 {
     partial class FormattedText
     {
+        private const float MaxRequestedWidth = 100000f;
+        private const float MaxRequestedHeight = 100000f;
+
         private CanvasLineMetrics[]? metrics;
-        private Rect? drawBounds;
         private Rect layoutBounds;
-        private Rect layoutBoundsIncludingTrailingWhitespace;
         private double? minWidth;
-        private double? overhangAfter;
-        private double? overhangLeading;
-        private double? overhangTrailing;
         private IReadOnlyList<FormattedTextLineGlyphRuns>? lineGlyphRuns;
+        private Windows.Win32.Graphics.DirectWrite.DWRITE_OVERHANG_METRICS? overhangMetrics;
 
         private CanvasLineMetrics? TryGetFirstLineMetrics() => GetLineMetrics()?.FirstOrDefault();
-
-        private Rect GetDrawBounds()
-        {
-            ThrowIfDisposed();
-
-            if (!drawBounds.HasValue)
-            {
-                lock (locker)
-                {
-                    if (!drawBounds.HasValue)
-                    {
-                        drawBounds = EnsureTextLayout().DrawBounds;
-                    }
-                }
-            }
-
-            return drawBounds.Value;
-        }
 
         private CanvasLineMetrics[] GetLineMetrics()
         {
@@ -64,10 +46,10 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
         private Size GetRequestedSize()
         {
-            var width = maxTextWidth == 0 ? float.MaxValue : maxTextWidth;
-            var height = maxTextHeight == 0 ? float.MaxValue : maxTextHeight;
+            var width = maxTextWidth == 0 ? MaxRequestedWidth : maxTextWidth;
+            var height = maxTextHeight == 0 ? MaxRequestedHeight : maxTextHeight;
 
-            return new Size(width, height);
+            return new Size(Math.Min(width, MaxRequestedWidth), Math.Min(height, MaxRequestedHeight));
         }
 
         private double GetMinWidth()
@@ -93,87 +75,107 @@ namespace BlueFire.Toolkit.WinUI3.Text
             return minWidth.Value;
         }
 
-        private double GetOverhangAfter()
+        //private double GetOverhangAfter()
+        //{
+        //    ThrowIfDisposed();
+
+        //    var overhangAfter = this.overhangAfter;
+
+        //    if (!overhangAfter.HasValue)
+        //    {
+        //        lock (locker)
+        //        {
+        //            overhangAfter = this.overhangAfter;
+
+        //            if (!overhangAfter.HasValue)
+        //            {
+        //                var lineMetrics = GetLineMetrics();
+
+        //                if (lineMetrics != null && lineMetrics.Length > 0)
+        //                {
+        //                    var lastLineBottom = lineMetrics.Max(c => c.Height);
+        //                    this.overhangAfter = GetDrawBounds().Bottom - lastLineBottom;
+        //                }
+        //                else
+        //                {
+        //                    this.overhangAfter = 0;
+        //                }
+        //                overhangAfter = this.overhangAfter;
+        //            }
+        //        }
+        //    }
+
+        //    return overhangAfter.Value;
+        //}
+
+        private unsafe Windows.Win32.Graphics.DirectWrite.DWRITE_OVERHANG_METRICS GetOverhangMetrics()
         {
             ThrowIfDisposed();
 
-            var overhangAfter = this.overhangAfter;
+            var overhangMetrics = this.overhangMetrics;
 
-            if (!overhangAfter.HasValue)
+            if (!overhangMetrics.HasValue)
             {
-                lock (locker)
-                {
-                    overhangAfter = this.overhangAfter;
 
-                    if (!overhangAfter.HasValue)
-                    {
-                        var lineMetrics = GetLineMetrics();
+                var textLayout = EnsureTextLayout();
+                using var dWriteTextLayout = Direct2DInterop.GetWrappedResourcePtr<Windows.Win32.Graphics.DirectWrite.IDWriteTextLayout>(textLayout);
 
-                        if (lineMetrics != null && lineMetrics.Length > 0)
-                        {
-                            var lastLineBottom = lineMetrics.Max(c => c.Height);
-                            this.overhangAfter = GetDrawBounds().Bottom - lastLineBottom;
-                        }
-                        else
-                        {
-                            this.overhangAfter = 0;
-                        }
-                        overhangAfter = this.overhangAfter;
-                    }
-                }
+                dWriteTextLayout.Value.GetOverhangMetrics(out var overhangs).ThrowOnFailure();
+
+                overhangMetrics = overhangs;
+                this.overhangMetrics = overhangMetrics;
             }
-
-            return overhangAfter.Value;
+            return overhangMetrics.Value;
         }
 
-        private (double overhangLeading, double overhangTrailing) GetOverhangLeadingAndTrailing()
-        {
-            ThrowIfDisposed();
+        //private (double overhangLeading, double overhangTrailing) GetOverhangLeadingAndTrailing()
+        //{
+        //    ThrowIfDisposed();
 
-            var overhangLeading = this.overhangLeading;
-            var overhangTrailing = this.overhangTrailing;
+        //    var overhangLeading = this.overhangLeading;
+        //    var overhangTrailing = this.overhangTrailing;
 
-            if (!overhangLeading.HasValue)
-            {
-                lock (locker)
-                {
-                    overhangLeading = this.overhangLeading;
-                    overhangTrailing = this.overhangTrailing;
+        //    if (!overhangLeading.HasValue)
+        //    {
+        //        lock (locker)
+        //        {
+        //            overhangLeading = this.overhangLeading;
+        //            overhangTrailing = this.overhangTrailing;
 
-                    if (!overhangLeading.HasValue)
-                    {
-                        var lineMetrics = GetLineMetrics();
-                        if (lineMetrics != null && lineMetrics.Length > 0)
-                        {
-                            var drawBounds = GetDrawBounds();
+        //            if (!overhangLeading.HasValue)
+        //            {
+        //                var lineMetrics = GetLineMetrics();
+        //                if (lineMetrics != null && lineMetrics.Length > 0)
+        //                {
+        //                    var drawBounds = GetDrawBounds();
 
-                            var leading = double.MaxValue;
-                            var trailing = double.MaxValue;
+        //                    var leading = double.MaxValue;
+        //                    var trailing = double.MaxValue;
 
-                            for (int i = 0; i < lineMetrics.Length; i++)
-                            {
-                                var m = lineMetrics[i];
-                                leading = Math.Min(leading, m.LeadingWhitespaceBefore);
-                                trailing = Math.Min(trailing, m.LeadingWhitespaceAfter);
-                            }
+        //                    for (int i = 0; i < lineMetrics.Length; i++)
+        //                    {
+        //                        var m = lineMetrics[i];
+        //                        leading = Math.Min(leading, m.LeadingWhitespaceBefore);
+        //                        trailing = Math.Min(trailing, m.LeadingWhitespaceAfter);
+        //                    }
 
-                            this.overhangLeading = leading;
-                            this.overhangTrailing = trailing;
-                        }
-                        else
-                        {
-                            this.overhangLeading = 0;
-                            this.overhangTrailing = 0;
-                        }
+        //                    this.overhangLeading = leading;
+        //                    this.overhangTrailing = trailing;
+        //                }
+        //                else
+        //                {
+        //                    this.overhangLeading = 0;
+        //                    this.overhangTrailing = 0;
+        //                }
 
-                        overhangLeading = this.overhangLeading;
-                        overhangTrailing = this.overhangTrailing;
-                    }
-                }
-            }
+        //                overhangLeading = this.overhangLeading;
+        //                overhangTrailing = this.overhangTrailing;
+        //            }
+        //        }
+        //    }
 
-            return (overhangLeading.Value, overhangTrailing!.Value);
-        }
+        //    return (overhangLeading.Value, overhangTrailing!.Value);
+        //}
 
         private IReadOnlyList<FormattedTextLineGlyphRuns> GetLineGlyphRuns()
         {
@@ -208,9 +210,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
                         textLayout = CreateCanvasTextLayout(creator);
 
-                        drawBounds = textLayout.DrawBounds;
                         layoutBounds = textLayout.LayoutBounds;
-                        layoutBoundsIncludingTrailingWhitespace = textLayout.LayoutBoundsIncludingTrailingWhitespace;
                     }
                 }
             }
@@ -305,19 +305,14 @@ namespace BlueFire.Toolkit.WinUI3.Text
             lock (locker)
             {
                 metrics = null;
-                drawBounds = null;
                 minWidth = null;
-                overhangAfter = null;
-                overhangLeading = null;
-                overhangTrailing = null;
+                overhangMetrics = null;
 
                 if (textLayout != null)
                 {
                     var oldLayoutBounds = layoutBounds;
 
-                    drawBounds = textLayout.DrawBounds;
                     layoutBounds = textLayout.LayoutBounds;
-                    layoutBoundsIncludingTrailingWhitespace = textLayout.LayoutBoundsIncludingTrailingWhitespace;
 
                     if (oldLayoutBounds != layoutBounds)
                     {
@@ -326,9 +321,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
                 }
                 else
                 {
-                    drawBounds = default;
                     layoutBounds = default;
-                    layoutBoundsIncludingTrailingWhitespace = default;
                     lineGlyphRuns = null;
                 }
             }

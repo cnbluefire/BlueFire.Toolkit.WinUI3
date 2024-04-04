@@ -79,8 +79,13 @@ namespace BlueFire.Toolkit.WinUI3.Text
         {
             get
             {
-                var drawBounds = GetDrawBounds();
-                return drawBounds.IsEmpty ? 0 : drawBounds.Height;
+                var overhangMetrics = GetOverhangMetrics();
+                var requestedSize = EnsureTextLayout().RequestedSize;
+
+                var top = -overhangMetrics.top;
+                var bottom = requestedSize.Height + overhangMetrics.bottom;
+
+                return Math.Max(0, bottom - top);
             }
         }
 
@@ -182,11 +187,13 @@ namespace BlueFire.Toolkit.WinUI3.Text
                 {
                     lock (locker)
                     {
-                        if (maxTextWidth != value)
-                        {
-                            if (value < 0) throw new ArgumentException(nameof(MaxTextWidth));
+                        if (value < 0) throw new ArgumentException(nameof(MaxTextWidth));
 
-                            maxTextWidth = value;
+                        var v = Math.Min(value, MaxRequestedWidth);
+
+                        if (maxTextWidth != v)
+                        {
+                            maxTextWidth = v;
 
                             if (textLayout != null)
                             {
@@ -211,11 +218,13 @@ namespace BlueFire.Toolkit.WinUI3.Text
                 {
                     lock (locker)
                     {
-                        if (maxTextHeight != value)
-                        {
-                            if (value < 0) throw new ArgumentException(nameof(MaxTextHeight));
+                        if (value < 0) throw new ArgumentException(nameof(MaxTextHeight));
 
-                            maxTextHeight = value;
+                        var v = Math.Min(value, MaxRequestedHeight);
+
+                        if (maxTextHeight != v)
+                        {
+                            maxTextHeight = v;
 
                             if (textLayout != null)
                             {
@@ -235,18 +244,29 @@ namespace BlueFire.Toolkit.WinUI3.Text
 
         /// <summary>
         /// Gets the distance from the bottom of the last line of text to the bottommost drawn pixel.
+        /// <para>
+        /// The value is positive if the bottommost drawn pixel goes below the line bottom, and is negative if it is within (on or above) the line.
+        /// </para>
         /// </summary>
-        public double OverhangAfter => GetOverhangAfter();
+        public double OverhangAfter =>
+            GetOverhangMetrics().bottom + EnsureTextLayout().RequestedSize.Height - EnsureTextLayout().LayoutBounds.Bottom;
 
         /// <summary>
         /// Gets the maximum distance from the leading alignment point to the leading drawn pixel of a line.
+        /// <para>
+        /// When the leading alignment point comes before the leading drawn pixel, the value is negative.
+        /// </para>
         /// </summary>
-        public double OverhangLeading => GetOverhangLeadingAndTrailing().overhangLeading;
+        public double OverhangLeading => GetOverhangMetrics().left;
 
         /// <summary>
         /// Gets the maximum distance from the trailing inked pixel to the trailing alignment point of a line.
+        /// <para>
+        /// The OverhangTrailing value will be positive when the trailing drawn pixel comes before the trailing alignment point.
+        /// </para>
         /// </summary>
-        public double OverhangTrailing => GetOverhangLeadingAndTrailing().overhangTrailing;
+        public double OverhangTrailing =>
+            EnsureTextLayout().LayoutBounds.Right - (GetOverhangMetrics().right + EnsureTextLayout().RequestedSize.Width);
 
         /// <summary>
         /// Gets the string of text to be displayed.

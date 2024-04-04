@@ -201,6 +201,10 @@ namespace BlueFire.Toolkit.WinUI3.Text
                     if (CreateFontFace(fallbackFont, false, out fontFace, out fontCollection))
                     {
                         fontProperties = GetFontProperties(fontFace);
+                        if (fontProperties != null && string.IsNullOrEmpty(fontProperties.FontFamilyName))
+                        {
+                            fontProperties.FontFamilyName = fontFamily.FontFamilyName;
+                        }
                     }
                 }
             }
@@ -231,7 +235,45 @@ namespace BlueFire.Toolkit.WinUI3.Text
             DWRITE_FONT_METRICS metrics = default;
             fontFace.Value.GetMetrics(&metrics);
 
-            return new CanvasFontProperties(unicodeRanges ?? Array.Empty<DWRITE_UNICODE_RANGE>(), metrics);
+            string actualFamilyName = "";
+
+            using ComPtr<IDWriteLocalizedStrings> familyNames = default;
+            hr = fontFace.Value.GetFamilyNames(familyNames.TypedPointerRef);
+
+            if (hr.Succeeded && GetLocalizedName(familyNames, "en-us", out var _name))
+            {
+                actualFamilyName = _name;
+            }
+
+            return new CanvasFontProperties(unicodeRanges ?? Array.Empty<DWRITE_UNICODE_RANGE>(), metrics)
+            {
+                FontFamilyName = actualFamilyName
+            };
+
+            static bool GetLocalizedName(ComPtr<IDWriteLocalizedStrings> _familyNames, string _localeName, out string _name)
+            {
+                _name = string.Empty;
+
+                fixed (char* _pLocaleName = _localeName)
+                {
+                    uint index = 0;
+                    Windows.Win32.Foundation.BOOL exist = default;
+                    var hr = _familyNames.Value.FindLocaleName(_pLocaleName, &index, &exist);
+
+                    if (hr.Failed || !exist) return false;
+
+                    uint length = 0;
+                    hr = _familyNames.Value.GetStringLength(index, &length);
+                    if (hr.Failed) return false;
+
+                    var buffer = stackalloc char[(int)length + 1];
+                    hr = _familyNames.Value.GetString(index, buffer, length + 1);
+                    if (hr.Failed) return false;
+
+                    _name = new string(buffer, 0, (int)length);
+                    return true;
+                }
+            }
         }
 
         private static unsafe nint GetFactoryCore(DWRITE_FACTORY_TYPE type)

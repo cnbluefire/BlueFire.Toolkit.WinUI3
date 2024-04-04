@@ -193,7 +193,7 @@ namespace BlueFire.Toolkit.Sample.WinUI3
             //    "en",
             //    FlowDirection.LeftToRight,
             //    new FormattedTextTypeface(
-            //        new FontFamily("Custom Font, 方正舒体, Wide Latin"),
+            //        "Custom Font, 方正舒体, Wide Latin",
             //        Microsoft.UI.Text.FontWeights.Normal,
             //        Windows.UI.Text.FontStyle.Normal,
             //        Windows.UI.Text.FontStretch.Normal),

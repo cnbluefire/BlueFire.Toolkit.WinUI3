@@ -68,7 +68,12 @@ namespace BlueFire.Toolkit.WinUI3.Text
                         {
                             fontFaceReference.Value.CreateFontFace(fontFace.TypedPointerRef);
 
-                            return DWriteHelper.GetFontProperties(fontFace);
+                            var properties = DWriteHelper.GetFontProperties(fontFace);
+                            if (properties != null && string.IsNullOrEmpty(properties.FontFamilyName))
+                            {
+                                properties.FontFamilyName = fontFamily;
+                            }
+                            return properties;
                         }
                     }
                 }
