@@ -14,32 +14,33 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
     {
         internal unsafe static ComPtr<IInteropCompositorFactoryPartner> CreateInteropCompositorFactoryPartner()
         {
-            var activatableClassId = MarshalString.FromManaged("Windows.UI.Composition.Compositor");
-
-            ComPtr<IInteropCompositorFactoryPartner> result = default;
-            fixed (Guid* guid = &IInteropCompositorFactoryPartner.IID_Guid)
+            var hr = (Windows.Win32.Foundation.HRESULT)Windows.UI.Composition.Compositor.As<IWinRTObject>().NativeObject.TryAs(IInteropCompositorFactoryPartner.IID_Guid, out var ppv);
+            if (hr.Succeeded)
             {
-                PInvoke.RoGetActivationFactory(new HSTRING(activatableClassId), guid, result.PointerRef);
+                return ComPtr<IInteropCompositorFactoryPartner>.Attach(ref ppv);
             }
 
-            return result;
+            return default;
         }
 
         internal unsafe static WinCompositor? CreateCompositor()
         {
+            if (RuntimeInformation.ProcessArchitecture != Architecture.X64
+                && RuntimeInformation.ProcessArchitecture != Architecture.Arm64) return null;
+
             using var factory = CreateInteropCompositorFactoryPartner();
 
             if (factory.HasValue)
             {
                 using (ComPtr<IInteropCompositorPartner> result = default)
                 {
-                    factory.Value.CreateInteropCompositor(
+                    var hr = factory.Value.CreateInteropCompositor(
                         (void*)0,
                         (void*)0,
                         IInteropCompositorPartner.IID_Guid,
-                        result.PointerRef).ThrowOnFailure();
+                        result.PointerRef);
 
-                    if (result.HasValue)
+                    if (hr.Succeeded && result.HasValue)
                     {
                         return WinCompositor.FromAbi(result.Pointer);
                     }

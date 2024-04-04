@@ -7,6 +7,7 @@ using Windows.Win32.System.Com;
 using WinCompositor = Windows.UI.Composition.Compositor;
 using WinDispatcherQueueController = Windows.System.DispatcherQueueController;
 using WinDispatcherQueue = Windows.System.DispatcherQueue;
+using System.Runtime.Versioning;
 
 namespace BlueFire.Toolkit.WinUI3.Compositions
 {
@@ -18,6 +19,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
         private static WinCompositor? compositor;
         private static WinDispatcherQueueController? dispatcherQueueController;
         private static object locker = new object();
+        private static bool hasInteropCompositor = false;
 
         public static WinCompositor Compositor => EnsureCompositor();
 
@@ -38,10 +40,14 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
         /// <param name="sourceClientAreaOnly">True to use only the thumbnail source's client area; otherwise, false.</param>
         /// <param name="hThumbnailId">A pointer to a handle that, when this function returns successfully, represents the registration of the DWM thumbnail.</param>
         /// <returns></returns>
+        /// <remarks>
+        /// Only supported on x64 and arm64
+        /// </remarks>
         public static Windows.UI.Composition.Visual? CreateVisualFromHwnd(nint hwndDestination, nint hwndSource, bool sourceClientAreaOnly, out nint hThumbnailId)
         {
             hThumbnailId = 0;
 
+            if (!hasInteropCompositor) throw new PlatformNotSupportedException();
             if (hwndDestination == 0 || hwndSource == 0) return null;
 
             return InteropCompositor.CreateVisualFromHwnd(Compositor, new HWND(hwndDestination), new HWND(hwndSource), sourceClientAreaOnly, out hThumbnailId);
@@ -62,6 +68,16 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
                         dispatcherQueueController.DispatcherQueue.TryEnqueue(Windows.System.DispatcherQueuePriority.High, () =>
                         {
                             compositor = InteropCompositor.CreateCompositor();
+
+                            if (compositor != null)
+                            {
+                                hasInteropCompositor = true;
+                            }
+                            else
+                            {
+                                compositor = new WinCompositor();
+                            }
+
                             handle.Set();
                         });
 
