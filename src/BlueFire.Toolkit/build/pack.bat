@@ -2,4 +2,4 @@
 
 set PACK_CONFIGURATION=Release
 
-build-core.bat
+start /wait /b build-core.bat

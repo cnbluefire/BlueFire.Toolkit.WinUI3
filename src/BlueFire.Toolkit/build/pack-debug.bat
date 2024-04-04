@@ -2,4 +2,4 @@
 
 set PACK_CONFIGURATION=Debug
 
-build-core.bat
+start /wait /b build-core.bat

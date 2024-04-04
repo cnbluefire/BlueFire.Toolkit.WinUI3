@@ -48,7 +48,7 @@ namespace BlueFire.Toolkit.WinUI3.Controls
                 new FormattedTextImmutableProperties(
                     Text,
                     null,
-                    new FormattedTextTypeface(fontFamily,
+                    new FormattedTextTypeface(fontFamily.Source,
                         FontWeight,
                         FontStyle,
                         FontStretch),

@@ -9,9 +9,9 @@ using Windows.UI.Text;
 
 namespace BlueFire.Toolkit.WinUI3.Text
 {
-    public record struct FormattedTextTypeface(FontFamily? FontFamily, FontWeight FontWeight, FontStyle FontStyle, FontStretch FontStretch)
+    public record struct FormattedTextTypeface(string? FontFamily, FontWeight FontWeight, FontStyle FontStyle, FontStretch FontStretch)
     {
-        public FormattedTextTypeface(FontFamily? fontFamily) : this(fontFamily, new FontWeight(400), FontStyle.Normal, FontStretch.Normal) { }
+        public FormattedTextTypeface(string? fontFamily) : this(fontFamily, new FontWeight(400), FontStyle.Normal, FontStretch.Normal) { }
 
         public FormattedTextTypeface() : this(null, new FontWeight(400), FontStyle.Normal, FontStretch.Normal) { }
 
@@ -24,8 +24,8 @@ namespace BlueFire.Toolkit.WinUI3.Text
             {
                 try
                 {
-                    return !string.IsNullOrEmpty(FontFamily?.Source) ?
-                        FontFamily.Source : FontFamily.XamlAutoFontFamily.Source;
+                    return !string.IsNullOrEmpty(FontFamily) ?
+                        FontFamily : Microsoft.UI.Xaml.Media.FontFamily.XamlAutoFontFamily.Source;
                 }
                 catch { }
                 return "SYSTEM-UI";

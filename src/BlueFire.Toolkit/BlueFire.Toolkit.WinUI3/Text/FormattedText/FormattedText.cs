@@ -75,7 +75,14 @@ namespace BlueFire.Toolkit.WinUI3.Text
         /// <summary>
         /// Gets the distance from the topmost drawn pixel of the first line to the bottommost drawn pixel of the last line.
         /// </summary>
-        public double Extent => GetDrawBounds().Height;
+        public double Extent
+        {
+            get
+            {
+                var drawBounds = GetDrawBounds();
+                return drawBounds.IsEmpty ? 0 : drawBounds.Height;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the FlowDirection of a FormattedText object.
@@ -108,12 +115,26 @@ namespace BlueFire.Toolkit.WinUI3.Text
         /// <summary>
         /// Gets the width between the leading and trailing alignment points of a line, excluding any trailing white-space characters.
         /// </summary>
-        public double Width => EnsureTextLayout().LayoutBounds.Right;
+        public double Width
+        {
+            get
+            {
+                var layoutBounds = EnsureTextLayout().LayoutBounds;
+                return layoutBounds.IsEmpty ? 0 : layoutBounds.Width;
+            }
+        }
 
         /// <summary>
         /// Gets the distance from the top of the first line to the bottom of the last line of the FormattedText object.
         /// </summary>
-        public double Height => EnsureTextLayout().LayoutBounds.Bottom;
+        public double Height
+        {
+            get
+            {
+                var layoutBounds = EnsureTextLayout().LayoutBounds;
+                return layoutBounds.IsEmpty ? 0 : layoutBounds.Height;
+            }
+        }
 
         /// <summary>
         /// Gets the width between the leading and trailing alignment points of a line, including any trailing white-space characters.
