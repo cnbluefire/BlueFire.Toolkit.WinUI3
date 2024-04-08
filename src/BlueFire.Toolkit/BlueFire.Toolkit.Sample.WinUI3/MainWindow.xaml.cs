@@ -148,6 +148,9 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
         private async void myButton_Click(object sender, RoutedEventArgs e)
         {
+            var test = WindowManager.TryGetAllWindowIds();
+            return;
+
             var mainWindow = new MainWindow();
             var result = await mainWindow.AppWindow.ShowDialogAsync(AppWindow.Id);
 

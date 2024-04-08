@@ -55,11 +55,8 @@ namespace Windows.Win32
                 return true;
             });
 
-            if (EnumThreadWindows(PInvoke.GetCurrentThreadId(), handler, new LPARAM(lParam)))
-            {
-                return list.Distinct().ToArray();
-            }
-            return Array.Empty<HWND>();
+            EnumThreadWindows(PInvoke.GetCurrentThreadId(), handler, new LPARAM(lParam));
+            return list.Count != 0 ? list.Distinct().ToArray() : Array.Empty<HWND>();
         }
 
         internal static ushort LOWORD(uint value)

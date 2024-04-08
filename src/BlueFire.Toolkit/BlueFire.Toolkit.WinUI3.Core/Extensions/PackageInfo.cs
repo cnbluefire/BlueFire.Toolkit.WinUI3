@@ -150,22 +150,20 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             uint pfnLength = 0;
             uint appIdLength = 0;
 
-            var err = PInvoke.ParseApplicationUserModelId(applicationUserModelId, ref pfnLength, new PWSTR((char*)0), ref appIdLength, new PWSTR((char*)0));
+            var err = PInvoke.ParseApplicationUserModelId(applicationUserModelId, ref pfnLength, (char*)0, ref appIdLength, (char*)0);
 
             if (err == WIN32_ERROR.ERROR_INSUFFICIENT_BUFFER)
             {
                 var pfnBuffer = stackalloc char[(int)pfnLength];
-                var pfnStr = new PWSTR(pfnBuffer);
 
                 var appIdBuffer = stackalloc char[(int)appIdLength];
-                var appIdStr = new PWSTR(appIdBuffer);
 
-                err = PInvoke.ParseApplicationUserModelId(applicationUserModelId, ref pfnLength, pfnBuffer, ref appIdLength, appIdStr);
+                err = PInvoke.ParseApplicationUserModelId(applicationUserModelId, ref pfnLength, pfnBuffer, ref appIdLength, appIdBuffer);
 
                 if (err == WIN32_ERROR.ERROR_SUCCESS)
                 {
-                    packageFamilyName = pfnStr.ToString();
-                    packageRelativeApplicationId = appIdStr.ToString();
+                    packageFamilyName = new string(pfnBuffer, 0, (int)pfnLength - 1);
+                    packageRelativeApplicationId = new string(appIdBuffer, 0, (int)appIdLength - 1);
 
                     return true;
                 }
@@ -180,18 +178,17 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
 
             uint length = 0;
 
-            var err = PInvoke.GetCurrentApplicationUserModelId(ref length, new PWSTR((char*)0));
+            var err = PInvoke.GetCurrentApplicationUserModelId(ref length, (char*)0);
 
             if (err == WIN32_ERROR.ERROR_INSUFFICIENT_BUFFER)
             {
                 var amuidBuffer = stackalloc char[(int)length];
-                var amuidStr = new PWSTR(amuidBuffer);
 
-                err = PInvoke.GetCurrentApplicationUserModelId(ref length, amuidStr);
+                err = PInvoke.GetCurrentApplicationUserModelId(ref length, amuidBuffer);
 
                 if (err == WIN32_ERROR.ERROR_SUCCESS)
                 {
-                    applicationUserModelId = amuidStr.ToString();
+                    applicationUserModelId = new string(amuidBuffer, 0, (int)length - 1);
                 }
             }
 

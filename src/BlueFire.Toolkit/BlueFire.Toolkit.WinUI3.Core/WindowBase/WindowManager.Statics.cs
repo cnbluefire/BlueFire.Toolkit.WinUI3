@@ -73,18 +73,16 @@ namespace BlueFire.Toolkit.WinUI3
 
             try
             {
-                fixed (char* _pChar = &charArray[0])
+                fixed (char* ptr = &charArray[0])
                 {
-                    var pChar = _pChar;
-                    var str = new PWSTR(pChar);
-
+                    nint ptr2 = (nint)ptr;
                     var hWndArray = PInvoke.EnumThreadWindows((_hWnd, _) =>
                     {
-                        var length = PInvoke.GetClassName(_hWnd, str, 255);
+                        var length = PInvoke.GetClassName(_hWnd, (char*)ptr2, 255);
 
                         if (length > 0)
                         {
-                            var className = new string(pChar, 0, length);
+                            var className = new string((char*)ptr2, 0, length);
 
                             return className == "Microsoft.UI.Windowing.Window"
                                 || className == "WinUIDesktopWin32WindowClass";
