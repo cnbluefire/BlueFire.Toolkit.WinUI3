@@ -32,6 +32,13 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
             }
         }
 
+        public enum CompositorInitializeResult
+        {
+            Success,
+            Failed,
+            AlreadyInitialized,
+        }
+
         /// <summary>
         /// Create a thumbnail visual for the window.
         /// </summary>
@@ -40,14 +47,11 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
         /// <param name="sourceClientAreaOnly">True to use only the thumbnail source's client area; otherwise, false.</param>
         /// <param name="hThumbnailId">A pointer to a handle that, when this function returns successfully, represents the registration of the DWM thumbnail.</param>
         /// <returns></returns>
-        /// <remarks>
-        /// Only supported on x64 and arm64
-        /// </remarks>
         public static Windows.UI.Composition.Visual? CreateVisualFromHwnd(nint hwndDestination, nint hwndSource, bool sourceClientAreaOnly, out nint hThumbnailId)
         {
             hThumbnailId = 0;
 
-            if (!hasInteropCompositor) throw new PlatformNotSupportedException();
+            if (!hasInteropCompositor) return null;
             if (hwndDestination == 0 || hwndSource == 0) return null;
 
             return InteropCompositor.CreateVisualFromHwnd(Compositor, new HWND(hwndDestination), new HWND(hwndSource), sourceClientAreaOnly, out hThumbnailId);
@@ -61,27 +65,31 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
                 {
                     if (compositor == null)
                     {
-                        var handle = new System.Threading.EventWaitHandle(false, System.Threading.EventResetMode.AutoReset);
+                        var obj = new object();
 
                         // 在子线程创建Compositor
                         dispatcherQueueController = CreateDispatcherQueueController(false);
                         dispatcherQueueController.DispatcherQueue.TryEnqueue(Windows.System.DispatcherQueuePriority.High, () =>
                         {
                             compositor = InteropCompositor.CreateCompositor();
+                            hasInteropCompositor = true;
 
-                            if (compositor != null)
+                            if (compositor == null)
                             {
-                                hasInteropCompositor = true;
-                            }
-                            else
-                            {
+                                hasInteropCompositor = false;
                                 compositor = new WinCompositor();
                             }
 
-                            handle.Set();
+                            lock (obj)
+                            {
+                                Monitor.PulseAll(obj);
+                            }
                         });
 
-                        handle.WaitOne();
+                        lock (obj)
+                        {
+                            Monitor.Wait(obj);
+                        }
                     }
                 }
             }

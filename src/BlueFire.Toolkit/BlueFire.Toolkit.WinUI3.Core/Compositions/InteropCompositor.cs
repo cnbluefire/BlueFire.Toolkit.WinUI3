@@ -25,24 +25,24 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
 
         internal unsafe static WinCompositor? CreateCompositor()
         {
-            if (RuntimeInformation.ProcessArchitecture != Architecture.X64
-                && RuntimeInformation.ProcessArchitecture != Architecture.Arm64) return null;
-
             using var factory = CreateInteropCompositorFactoryPartner();
 
             if (factory.HasValue)
             {
                 using (ComPtr<IInteropCompositorPartner> result = default)
                 {
-                    var hr = factory.Value.CreateInteropCompositor(
-                        (void*)0,
-                        (void*)0,
-                        IInteropCompositorPartner.IID_Guid,
-                        result.PointerRef);
-
-                    if (hr.Succeeded && result.HasValue)
+                    fixed (Guid* guid = &IInteropCompositorPartner.IID_Guid)
                     {
-                        return WinCompositor.FromAbi(result.Pointer);
+                        var hr = factory.Value.CreateInteropCompositor(
+                            (void*)0,
+                            (void*)0,
+                            guid,
+                            result.PointerRef);
+
+                        if (hr.Succeeded && result.HasValue)
+                        {
+                            return WinCompositor.FromAbi(result.Pointer);
+                        }
                     }
                 }
             }
@@ -166,9 +166,9 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
                 return ((delegate* unmanaged[Stdcall]<IInteropCompositorPartner*, HRESULT>)lpVtbl[4])((IInteropCompositorPartner*)Unsafe.AsPointer(ref this));
             }
 
-            public unsafe HRESULT CreateManipulationTransform(void* transform, Guid iid, void** result)
+            public unsafe HRESULT CreateManipulationTransform(void* transform, Guid* iid, void** result)
             {
-                return ((delegate* unmanaged[Stdcall]<IInteropCompositorPartner*, void*, Guid, void**, HRESULT>)lpVtbl[5])((IInteropCompositorPartner*)Unsafe.AsPointer(ref this), transform, iid, result);
+                return ((delegate* unmanaged[Stdcall]<IInteropCompositorPartner*, void*, Guid*, void**, HRESULT>)lpVtbl[5])((IInteropCompositorPartner*)Unsafe.AsPointer(ref this), transform, iid, result);
             }
 
             public unsafe HRESULT RealClose()
@@ -212,9 +212,9 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
                 return ((delegate* unmanaged[Stdcall]<IInteropCompositorFactoryPartner*, uint>)lpVtbl[2])((IInteropCompositorFactoryPartner*)Unsafe.AsPointer(ref this));
             }
 
-            public unsafe HRESULT CreateInteropCompositor(void* renderingDevice, void* callback, Guid iid, void** instance)
+            public unsafe HRESULT CreateInteropCompositor(void* renderingDevice, void* callback, Guid* iid, void** instance)
             {
-                return ((delegate* unmanaged[Stdcall]<IInteropCompositorFactoryPartner*, void*, void*, Guid, void**, HRESULT>)lpVtbl[6])((IInteropCompositorFactoryPartner*)Unsafe.AsPointer(ref this), renderingDevice, callback, iid, instance);
+                return ((delegate* unmanaged[Stdcall]<IInteropCompositorFactoryPartner*, void*, void*, Guid*, void**, HRESULT>)lpVtbl[6])((IInteropCompositorFactoryPartner*)Unsafe.AsPointer(ref this), renderingDevice, callback, iid, instance);
             }
 
             public unsafe HRESULT CheckEnabled(bool* enableInteropCompositor, bool* enableExposeVisual)
