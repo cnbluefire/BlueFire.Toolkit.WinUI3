@@ -21,7 +21,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         private static readonly Guid IID_ICanvasDevice = new Guid(IID_ICanvasDeviceString);
 
         private static bool canvasDeviceFactoryNotSupported;
-        private static ComPtr<ICanvasFactoryNative>? canvasFactoryNative;
+        private static ComPtr<ICanvasFactoryNative> canvasFactoryNative;
 
         // https://microsoft.github.io/Win2D/WinUI3/html/Interop.htm
         // Microsoft.Graphics.Canvas.native.h
@@ -108,6 +108,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
                 pFactoryNative.Release();
             }
         }
+
         public static T? GetOrCreateFromPtr<T>(CanvasDevice? device, nint resource) where T : class, IWinRTObject
         {
             return GetOrCreateFromPtr<T>(device, resource, 0);
@@ -123,17 +124,16 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             using var objRef = GetCanvasDeviceReference(device);
 
             var factoryNative = GetCanvasDeviceFactory();
-            if (!factoryNative.HasValue) return null;
+            if (factoryNative == null) return null;
 
             nint wrapper = 0;
 
-            var hr = factoryNative.Value.Value.GetOrCreate((void*)(objRef?.ThisPtr ?? IntPtr.Zero), (void*)resource, dpi, (void**)(&wrapper));
+            var hr = factoryNative->GetOrCreate((void*)(objRef?.ThisPtr ?? IntPtr.Zero), (void*)resource, dpi, (void**)(&wrapper));
 
             if (hr.Succeeded)
             {
                 return MarshalInspectable<T>.FromAbi(wrapper);
             }
-
 
             return null;
         }
@@ -165,88 +165,40 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             }
         }
 
-
-        //[ComImport]
-        //[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        //[Guid("5F10688D-EA55-4D55-A3B0-4DDB55C0C20A")]
-        //private interface ICanvasResourceWrapperNative
-        //{
-        //    int GetNativeResource(IntPtr device, float dpi, ref Guid iid, out nint resource);
-        //}
-
-        //[ComImport]
-        //[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        //[Guid("695C440D-04B3-4EDD-BFD9-63E51E9F7202")]
-        //private interface ICanvasFactoryNative
-        //{
-        //    void GetIids(out int iidCount, out nint iids);
-
-        //    void GetRuntimeClassName(out nint className);
-
-        //    void GetTrustLevel(out WinRT.TrustLevel trustLevel);
-
-        //    void GetOrCreate(IntPtr device, nint resource, float dpi, out nint wrapper);
-
-        //    void RegisterWrapper(nint resource, nint wrapper);
-
-        //    void UnregisterWrapper(nint resource);
-
-        //    void RegisterEffectFactory(ref Guid effectId, nint factory);
-
-        //    void UnregisterEffectFactory(ref Guid effectId);
-        //}
-
         private static void InitializeCanvasDeviceFactory()
         {
-            if (canvasFactoryNative == null)
+            if (!canvasFactoryNative.HasValue)
             {
                 lock (typeof(Direct2DInterop))
                 {
-                    if (canvasFactoryNative == null)
+                    if (!canvasFactoryNative.HasValue)
                     {
-                        ICanvasFactoryNative.Interface? rcw = null;
-                        try
-                        {
-                            rcw = CanvasDevice.As<ICanvasFactoryNative.Interface>();
+                        var hr = (Windows.Win32.Foundation.HRESULT)CanvasDevice
+                            .As<IWinRTObject>()
+                            .NativeObject
+                            .TryAs(ICanvasFactoryNative.IID_Guid, out var pCanvasFactoryNative);
 
-                            if (rcw != null)
-                            {
-                                var hr = ComObjectHelper.QueryInterface<ICanvasFactoryNative>(rcw, ICanvasFactoryNative.IID_Guid, out var result);
-                                if (hr.Succeeded)
-                                {
-                                    canvasFactoryNative = result;
-                                }
-                            }
-                        }
-                        catch { }
-                        finally
+                        if (hr.Succeeded && pCanvasFactoryNative != IntPtr.Zero)
                         {
-                            if (rcw != null) Marshal.ReleaseComObject(rcw);
+                            canvasFactoryNative = ComPtr<ICanvasFactoryNative>.Attach(pCanvasFactoryNative);
+                        }
+                        else
+                        {
+                            canvasDeviceFactoryNotSupported = true;
                         }
                     }
                 }
             }
         }
 
-        private static ComPtr<ICanvasFactoryNative>? GetCanvasDeviceFactory()
+        private unsafe static ICanvasFactoryNative* GetCanvasDeviceFactory()
         {
-            if (!canvasFactoryNative.HasValue && !canvasDeviceFactoryNotSupported)
+            if (!canvasDeviceFactoryNotSupported)
             {
-                lock (typeof(Direct2DInterop))
-                {
-                    if (!canvasFactoryNative.HasValue && !canvasDeviceFactoryNotSupported)
-                    {
-                        InitializeCanvasDeviceFactory();
-                    }
-
-                    if (!canvasFactoryNative.HasValue)
-                    {
-                        canvasDeviceFactoryNotSupported = true;
-                    }
-                }
+                InitializeCanvasDeviceFactory();
+                return canvasFactoryNative.HasValue ? canvasFactoryNative.AsTypedPointer() : null;
             }
-
-            return canvasFactoryNative;
+            return null;
         }
 
         private static IObjectReference? GetCanvasDeviceReference(IDirect3DDevice? device)
@@ -283,26 +235,4 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             return objRef;
         }
     }
-
-    /*
-        class __declspec(uuid("5F10688D-EA55-4D55-A3B0-4DDB55C0C20A"))
-        ICanvasResourceWrapperNative : public IUnknown
-        {
-        public:
-            IFACEMETHOD(GetNativeResource)(ICanvasDevice* device, float dpi, REFIID iid, void** resource) = 0;
-        };
-     
-
-        class __declspec(uuid("695C440D-04B3-4EDD-BFD9-63E51E9F7202"))
-        ICanvasFactoryNative : public IInspectable
-        {
-        public:
-            IFACEMETHOD(GetOrCreate)(ICanvasDevice* device, IUnknown* resource, float dpi, IInspectable** wrapper) = 0;
-            IFACEMETHOD(RegisterWrapper)(IUnknown* resource, IInspectable* wrapper) = 0;
-            IFACEMETHOD(UnregisterWrapper)(IUnknown* resource) = 0;
-            IFACEMETHOD(RegisterEffectFactory)(REFIID effectId, ICanvasEffectFactoryNative* factory) = 0;
-            IFACEMETHOD(UnregisterEffectFactory)(REFIID effectId) = 0;
-        };
-
-     */
 }

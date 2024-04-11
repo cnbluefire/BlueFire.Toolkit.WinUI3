@@ -19,6 +19,8 @@ namespace BlueFire.Toolkit.WinUI3.Test
             var device = CanvasDevice.GetSharedDevice();
             var d2d1Device = Direct2DInterop.GetWrappedResource<Windows.Win32.Graphics.Direct2D.ID2D1Device1>(device);
 
+            var device2 = Direct2DInterop.GetOrCreate<CanvasDevice>(null, d2d1Device);
+
             var test = ((IWinRTObject)device).NativeObject.ThisPtr;
             Marshal.AddRef(test);
             var before = Marshal.Release(test);

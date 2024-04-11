@@ -92,27 +92,27 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
 
         public unsafe winmdroot.Foundation.HRESULT GetOrCreate(void* device, void* resource, float dpi, void** wrapper)
         {
-            return ((delegate* unmanaged[Stdcall]<ICanvasFactoryNative*, void*, void*, float, void**, winmdroot.Foundation.HRESULT>)lpVtbl[7])((ICanvasFactoryNative*)Unsafe.AsPointer(ref this), device, resource, dpi, wrapper);
+            return ((delegate* unmanaged[Stdcall]<ICanvasFactoryNative*, void*, void*, float, void**, winmdroot.Foundation.HRESULT>)lpVtbl[6])((ICanvasFactoryNative*)Unsafe.AsPointer(ref this), device, resource, dpi, wrapper);
         }
 
         public unsafe winmdroot.Foundation.HRESULT RegisterWrapper(void* resource, void** wrapper)
         {
-            return ((delegate* unmanaged[Stdcall]<ICanvasFactoryNative*, void*, void*, winmdroot.Foundation.HRESULT>)lpVtbl[8])((ICanvasFactoryNative*)Unsafe.AsPointer(ref this), resource, wrapper);
+            return ((delegate* unmanaged[Stdcall]<ICanvasFactoryNative*, void*, void*, winmdroot.Foundation.HRESULT>)lpVtbl[7])((ICanvasFactoryNative*)Unsafe.AsPointer(ref this), resource, wrapper);
         }
 
         public unsafe winmdroot.Foundation.HRESULT UnregisterWrapper(void* resource)
         {
-            return ((delegate* unmanaged[Stdcall]<ICanvasFactoryNative*, void*, winmdroot.Foundation.HRESULT>)lpVtbl[9])((ICanvasFactoryNative*)Unsafe.AsPointer(ref this), resource);
+            return ((delegate* unmanaged[Stdcall]<ICanvasFactoryNative*, void*, winmdroot.Foundation.HRESULT>)lpVtbl[8])((ICanvasFactoryNative*)Unsafe.AsPointer(ref this), resource);
         }
 
         public unsafe winmdroot.Foundation.HRESULT RegisterEffectFactory(Guid* effectId, void* factory)
         {
-            return ((delegate* unmanaged[Stdcall]<ICanvasFactoryNative*, Guid*, void*, winmdroot.Foundation.HRESULT>)lpVtbl[10])((ICanvasFactoryNative*)Unsafe.AsPointer(ref this), effectId, factory);
+            return ((delegate* unmanaged[Stdcall]<ICanvasFactoryNative*, Guid*, void*, winmdroot.Foundation.HRESULT>)lpVtbl[9])((ICanvasFactoryNative*)Unsafe.AsPointer(ref this), effectId, factory);
         }
 
         public unsafe winmdroot.Foundation.HRESULT UnregisterEffectFactory(Guid* effectId)
         {
-            return ((delegate* unmanaged[Stdcall]<ICanvasFactoryNative*, Guid*, winmdroot.Foundation.HRESULT>)lpVtbl[11])((ICanvasFactoryNative*)Unsafe.AsPointer(ref this), effectId);
+            return ((delegate* unmanaged[Stdcall]<ICanvasFactoryNative*, Guid*, winmdroot.Foundation.HRESULT>)lpVtbl[10])((ICanvasFactoryNative*)Unsafe.AsPointer(ref this), effectId);
         }
 
         private void** lpVtbl;

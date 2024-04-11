@@ -87,6 +87,7 @@ Windows.Win32.Graphics.Direct2D.ID2D1Factory2
 Windows.Win32.Graphics.Direct2D.ID2D1Device1
 Windows.Win32.Graphics.Direct2D.D2D1CreateFactory
 Windows.Win32.Graphics.Direct2D.ID2D1DeviceContext
+Windows.Win32.Graphics.Direct2D.ID2D1DeviceContext2
 
 Windows.Win32.Graphics.Direct3D11.ID3D11Device
 Windows.Win32.Graphics.Direct3D11.D3D11CreateDevice
