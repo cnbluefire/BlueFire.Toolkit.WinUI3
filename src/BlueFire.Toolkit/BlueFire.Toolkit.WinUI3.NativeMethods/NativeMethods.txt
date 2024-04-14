@@ -56,6 +56,11 @@ Windows.Win32.UI.WindowsAndMessaging.TranslateMessage
 Windows.Win32.UI.WindowsAndMessaging.DispatchMessage
 Windows.Win32.UI.WindowsAndMessaging.SetParent
 Windows.Win32.UI.WindowsAndMessaging.ShowWindow
+Windows.Win32.UI.WindowsAndMessaging.RegisterWindowMessage
+Windows.Win32.UI.WindowsAndMessaging.IsWindowVisible
+Windows.Win32.UI.WindowsAndMessaging.NCCALCSIZE_PARAMS
+Windows.Win32.UI.WindowsAndMessaging.GetDesktopWindow
+Windows.Win32.UI.WindowsAndMessaging.GetParent
 
 Windows.Win32.UI.HiDpi.GetDpiForWindow
 
@@ -69,8 +74,10 @@ Windows.Win32.UI.Input.KeyboardAndMouse.SendInput
 Windows.Win32.UI.Input.KeyboardAndMouse.GetAsyncKeyState
 Windows.Win32.UI.Input.KeyboardAndMouse.GetCapture
 Windows.Win32.UI.Input.KeyboardAndMouse.SetCapture
+Windows.Win32.UI.Input.KeyboardAndMouse.ReleaseCapture
 Windows.Win32.UI.Input.KeyboardAndMouse.SetActiveWindow
 Windows.Win32.UI.Input.KeyboardAndMouse.SetFocus
+Windows.Win32.UI.Input.KeyboardAndMouse.IsWindowEnabled
 
 Windows.Win32.UI.Input.Pointer.GetPointerInfo
 

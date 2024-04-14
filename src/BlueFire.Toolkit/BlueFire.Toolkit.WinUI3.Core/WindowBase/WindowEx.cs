@@ -135,6 +135,7 @@ namespace BlueFire.Toolkit.WinUI3
                 {
                     sender.xamlWindow.Content = a.NewValue as UIElement;
                     sender.UpdateLoadHelper(a.NewValue as FrameworkElement);
+                    sender.XamlRoot = sender.xamlWindow.Content?.XamlRoot;
                 }
             }));
 
@@ -355,7 +356,11 @@ namespace BlueFire.Toolkit.WinUI3
         {
             isLoaded = true;
 
-            ((FrameworkElement)sender).Loaded -= LoadHelper_Loaded;
+            var ele = (FrameworkElement)sender;
+
+            this.XamlRoot = ele.XamlRoot;
+            
+            ele.Loaded -= LoadHelper_Loaded;
             loadHelper = null;
 
             loadedHandler?.Invoke(this, new RoutedEventArgs());

@@ -36,6 +36,7 @@ using Microsoft.UI.Windowing;
 using Microsoft.Graphics.Canvas;
 using BlueFire.Toolkit.WinUI3.Core.Dispatching;
 using BlueFire.Toolkit.WinUI3.Controls;
+using BlueFire.Toolkit.WinUI3.Core.Extensions;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -148,11 +149,34 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
         private async void myButton_Click(object sender, RoutedEventArgs e)
         {
-            var test = WindowManager.TryGetAllWindowIds();
+            var cd = new ContentDialog()
+            {
+                XamlRoot = this.XamlRoot,
+                Content = "123",
+                PrimaryButtonText = "OK",
+                SecondaryButtonText = "Cancel",
+            };
+
+            var res = await cd.ShowModalWindowAsync(this.GetWindowId());
+
+            Debug.WriteLine(res);
+
             return;
 
-            var mainWindow = new MainWindow();
-            var result = await mainWindow.AppWindow.ShowDialogAsync(AppWindow.Id);
+
+            //var window = new Toolkit.WinUI3.Core.Controls.Primitives.ModernMessageWindow(
+            //    new Toolkit.WinUI3.Core.Controls.Primitives.ModernMessageBoxPresenter()
+            //    {
+            //        Content = "123",
+            //        PrimaryButtonText = "OK",
+            //        SecondaryButtonText = "Cancel",
+            //    }, this.GetWindowHandle());
+
+            //var a = await window.ShowAsync();
+            //return;
+
+            //var mainWindow = new MainWindow();
+            //var result = await mainWindow.AppWindow.ShowDialogAsync(AppWindow.Id);
 
             //Debug.WriteLine($"DialogResult: {result}");
 

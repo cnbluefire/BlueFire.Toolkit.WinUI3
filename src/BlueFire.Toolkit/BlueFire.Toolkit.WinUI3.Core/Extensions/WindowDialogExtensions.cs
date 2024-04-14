@@ -16,6 +16,20 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
     /// </summary>
     public static class WindowDialogExtensions
     {
+        private static uint _WM_MOVECENTER = 0;
+
+        internal static uint WM_MOVECENTER
+        {
+            get
+            {
+                if (_WM_MOVECENTER == 0)
+                {
+                    _WM_MOVECENTER = PInvoke.RegisterWindowMessage(nameof(WM_MOVECENTER));
+                }
+                return _WM_MOVECENTER;
+            }
+        }
+
         /// <summary>
         /// Set dialog window result and close window.
         /// </summary>
@@ -70,17 +84,26 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
         /// <returns></returns>
         public static async Task<bool?> ShowDialogAsync(this AppWindow window, WindowId owner)
         {
+            var manager = WindowManager.Get(window);
+            if (manager == null) return null;
+
             var hwnd = new Windows.Win32.Foundation.HWND((nint)window.Id.Value);
-            var ownerHwnd = new Windows.Win32.Foundation.HWND((nint)owner.Value);
+            var ownerHwnd = EnsureOwnerWindow(owner);
+
+            if (!PInvoke.IsWindowEnabled(ownerHwnd)) return null;
+
+            var threadWindows = GetThreadWindows();
+            EnableThreadWindows(threadWindows, false);
+
+            var capture = PInvoke.GetCapture();
+            if (!capture.IsNull)
+            {
+                PInvoke.ReleaseCapture();
+            }
 
             var tcs = new TaskCompletionSource<bool?>();
             var properties = new ShowDialogProperties(window);
             DialogPropertiesManager.SetProperties(hwnd, properties);
-            var locker = new object();
-
-            var manager = WindowManager.Get(window);
-
-            if (manager == null) return null;
 
             var monitor = manager.GetMonitorInternal();
             monitor.WindowMessageBeforeReceived += OnWindowMessageBeforeReceived;
@@ -88,11 +111,8 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
 
             try
             {
-                try
-                {
-                    PInvoke.SetWindowLongAuto(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_HWNDPARENT, ownerHwnd);
-                }
-                catch { }
+                PInvoke.SetWindowLongAuto(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_HWNDPARENT, ownerHwnd);
+
 
                 if (window.Presenter is not OverlappedPresenter presenter)
                 {
@@ -102,6 +122,8 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
 
                 presenter.IsMinimizable = false;
                 presenter.IsModal = true;
+
+                MoveWindowToCenter(ownerHwnd.Value, hwnd.Value);
 
                 if (PInvoke.GetWindowRect(ownerHwnd, out var rect))
                 {
@@ -117,6 +139,11 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
 
                 return await tcs.Task;
             }
+            catch
+            {
+                EnableThreadWindows(threadWindows, true);
+                throw;
+            }
             finally
             {
                 DialogPropertiesManager.RemoveProperties(hwnd);
@@ -131,15 +158,20 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
                 {
                     properties.Closing = true;
 
-                    PInvoke.EnableWindow(ownerHwnd, true);
+                    EnableThreadWindows(threadWindows, true);
                     PInvoke.SetActiveWindow(ownerHwnd);
                 }
                 else if (e.MessageId == PInvoke.WM_DESTROY)
                 {
+                    PInvoke.SetWindowLongAuto(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_HWNDPARENT, default);
                     tcs.TrySetResult(properties.Result);
                     DialogPropertiesManager.RemoveProperties(hwnd);
                     monitor.WindowMessageBeforeReceived -= OnWindowMessageBeforeReceived;
                     monitor.WindowMessageAfterReceived -= OnWindowMessageAfterReceived;
+                }
+                else if (_WM_MOVECENTER != 0 && e.MessageId == _WM_MOVECENTER)
+                {
+                    MoveWindowToCenter(ownerHwnd.Value, hwnd.Value);
                 }
             }
 
@@ -150,7 +182,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
                     if (PInvoke.IsWindow(hwnd))
                     {
                         // Closing Cancelled
-                        PInvoke.EnableWindow(ownerHwnd, false);
+                        EnableThreadWindows(threadWindows, false);
                         PInvoke.SetActiveWindow(hwnd);
                     }
                     else
@@ -204,10 +236,64 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
                     showDialogProperties.Remove(hwnd);
                 }
             }
-
         }
 
+
+
         #endregion Properties Manager
+
+
+        private static IReadOnlyList<Windows.Win32.Foundation.HWND> GetThreadWindows() =>
+            PInvoke.EnumThreadWindows((hWnd, _) =>
+                PInvoke.IsWindowVisible(hWnd)
+                && PInvoke.IsWindowEnabled(hWnd), 0) ?? Array.Empty<Windows.Win32.Foundation.HWND>();
+
+        private static void EnableThreadWindows(IEnumerable<Windows.Win32.Foundation.HWND> windows, bool state)
+        {
+            var _state = new Windows.Win32.Foundation.BOOL(state);
+            foreach (var hWnd in windows)
+            {
+                if (PInvoke.IsWindow(hWnd)) PInvoke.EnableWindow(hWnd, _state);
+            }
+        }
+
+        private static Windows.Win32.Foundation.HWND EnsureOwnerWindow(WindowId ownerWindow)
+        {
+            var ownerHWnd = (Windows.Win32.Foundation.HWND)Win32Interop.GetWindowFromWindowId(ownerWindow);
+            if (ownerHWnd.IsNull || ownerHWnd.Value == PInvoke.GetDesktopWindow()) return new Windows.Win32.Foundation.HWND();
+            if (!PInvoke.IsWindow(ownerHWnd)) return new Windows.Win32.Foundation.HWND();
+
+            while (!ownerHWnd.IsNull)
+            {
+                var style = PInvoke.GetWindowLongAuto(ownerHWnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_STYLE);
+                if ((style & (nint)Windows.Win32.UI.WindowsAndMessaging.WINDOW_STYLE.WS_CHILD) != 0)
+                {
+                    ownerHWnd = PInvoke.GetParent(ownerHWnd);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return ownerHWnd;
+        }
+
+        private static void MoveWindowToCenter(nint ownerWindow, nint ownedWindow)
+        {
+            if (PInvoke.GetWindowRect((Windows.Win32.Foundation.HWND)ownerWindow, out var parentRect)
+                && PInvoke.GetWindowRect((Windows.Win32.Foundation.HWND)ownedWindow, out var rect))
+            {
+                var left = parentRect.left + parentRect.Width / 2 - rect.Width / 2;
+                var top = parentRect.top + parentRect.Height / 2 - rect.Height / 2;
+
+                PInvoke.SetWindowPos((Windows.Win32.Foundation.HWND)ownedWindow,
+                    default,
+                    left, top, 0, 0,
+                    Windows.Win32.UI.WindowsAndMessaging.SET_WINDOW_POS_FLAGS.SWP_NOSIZE
+                    | Windows.Win32.UI.WindowsAndMessaging.SET_WINDOW_POS_FLAGS.SWP_NOZORDER);
+            }
+        }
 
         internal class ShowDialogProperties
         {

@@ -19,13 +19,13 @@ namespace BlueFire.Toolkit.WinUI3.Test
             var device = CanvasDevice.GetSharedDevice();
             var d2d1Device = Direct2DInterop.GetWrappedResource<Windows.Win32.Graphics.Direct2D.ID2D1Device1>(device);
 
-            var device2 = Direct2DInterop.GetOrCreate<CanvasDevice>(null, d2d1Device);
+            var device2 = Direct2DInterop.GetOrCreate<CanvasDevice>(null, d2d1Device!);
 
             var test = ((IWinRTObject)device).NativeObject.ThisPtr;
             Marshal.AddRef(test);
             var before = Marshal.Release(test);
 
-            var punk = Marshal.GetIUnknownForObject(d2d1Device);
+            var punk = Marshal.GetIUnknownForObject(d2d1Device!);
             Marshal.AddRef(test);
             var after = Marshal.Release(test);
 
@@ -38,7 +38,7 @@ namespace BlueFire.Toolkit.WinUI3.Test
             var device = CanvasDevice.GetSharedDevice();
             var dxgiDevice = GraphicsHelper.GetInterface<Windows.Win32.Graphics.Dxgi.IDXGIDevice>(device);
 
-            var punk = Marshal.GetIUnknownForObject(dxgiDevice);
+            var punk = Marshal.GetIUnknownForObject(dxgiDevice!);
 
             Marshal.AddRef(punk);
             var before = Marshal.Release(punk);
