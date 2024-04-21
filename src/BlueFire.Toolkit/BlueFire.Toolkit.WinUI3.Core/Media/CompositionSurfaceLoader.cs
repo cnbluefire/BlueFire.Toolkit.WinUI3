@@ -16,6 +16,8 @@ using LoadedImageSourceLoadStatus = Microsoft.UI.Xaml.Media.LoadedImageSourceLoa
 using WinRT;
 using BlueFire.Toolkit.WinUI3.Extensions;
 using Windows.Win32.System.Com;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Storage;
 
 namespace BlueFire.Toolkit.WinUI3.Media
 {
@@ -95,9 +97,10 @@ namespace BlueFire.Toolkit.WinUI3.Media
             {
                 try
                 {
-                    var streamRef = RandomAccessStreamReference.CreateFromUri(uri);
+                    var streamRef = await CreateStreamReferenceFromUri(uri);
                     using var stream = await streamRef.OpenReadAsync().AsTask(cts.Token);
                     await DrawImageCore(stream, desiredMaxSize, cts.Token);
+
                     LoadCompleted?.Invoke(this, new SurfaceLoadCompletedEventArgs(LoadedImageSourceLoadStatus.Success, null));
                 }
                 catch (Exception ex)
@@ -105,6 +108,36 @@ namespace BlueFire.Toolkit.WinUI3.Media
                     LoadCompleted?.Invoke(this, new SurfaceLoadCompletedEventArgs(ConvertExceptionToStatus(ex), ex));
                 }
             });
+        }
+
+        private static async Task<RandomAccessStreamReference> CreateStreamReferenceFromUri(Uri uri)
+        {
+            if (string.Equals(uri.Scheme, "ms-resource", StringComparison.OrdinalIgnoreCase))
+            {
+                var candidate = Resources.ResourceLoader.ResourceManager.MainResourceMap.GetValue(uri.AbsolutePath);
+                if (candidate != null)
+                {
+                    if (candidate.Kind == Microsoft.Windows.ApplicationModel.Resources.ResourceCandidateKind.EmbeddedData)
+                    {
+                        var bytes = candidate.ValueAsBytes;
+                        var stream = new InMemoryRandomAccessStream();                        
+                        await stream.WriteAsync(bytes.AsBuffer());
+                        await stream.FlushAsync();
+                        stream.Seek(0);
+                        return RandomAccessStreamReference.CreateFromStream(stream);
+                    }
+                    else if (candidate.Kind == Microsoft.Windows.ApplicationModel.Resources.ResourceCandidateKind.FilePath)
+                    {
+                        var file = await StorageFile.GetFileFromPathAsync(candidate.ValueAsString);
+                        return RandomAccessStreamReference.CreateFromFile(file);
+                    }
+                }
+                throw new FileNotFoundException(uri.ToString());
+            }
+            else
+            {
+                return RandomAccessStreamReference.CreateFromUri(uri);
+            }
         }
 
         #region Create Resource

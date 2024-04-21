@@ -37,7 +37,7 @@ namespace BlueFire.Toolkit.WinUI3.Core.Controls.Primitives
             this.contentDialog = contentDialog;
             this.owner = owner;
 
-            var backdrop = new TransparentBackdrop();
+            var backdrop = new ColorBackdrop();
             this.SystemBackdrop = backdrop;
 
             if (Application.Current.Resources.TryGetValue("ContentDialogBackground", out var _ContentDialogBackground)

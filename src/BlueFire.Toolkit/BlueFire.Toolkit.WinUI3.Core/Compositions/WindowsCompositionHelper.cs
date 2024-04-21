@@ -32,13 +32,6 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
             }
         }
 
-        public enum CompositorInitializeResult
-        {
-            Success,
-            Failed,
-            AlreadyInitialized,
-        }
-
         /// <summary>
         /// Create a thumbnail visual for the window.
         /// </summary>

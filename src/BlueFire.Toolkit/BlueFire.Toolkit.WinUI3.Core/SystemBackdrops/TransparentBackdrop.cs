@@ -13,18 +13,18 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
     public class TransparentBackdrop : SystemBackdrop
     {
         private Dictionary<WindowId, TransparentBackdropControllerEntry> entries = new Dictionary<WindowId, TransparentBackdropControllerEntry>();
+        
+        internal IReadOnlyCollection<TransparentBackdropControllerEntry> ControllerEntries => entries.Values;
 
         protected override void OnTargetConnected(ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
         {
             var windowId = xamlRoot.ContentIslandEnvironment.AppWindowId;
 
-            var test = GetIUnknownPtr(connectedTarget);
-
             lock (entries)
             {
                 if (entries.ContainsKey(windowId)) return;
 
-                var entry = new TransparentBackdropControllerEntry(connectedTarget, windowId);
+                var entry = CreateControllerEntry(connectedTarget, xamlRoot);
                 entry.OnClear += Entry_OnClear;
                 entries[windowId] = entry;
             }
@@ -76,30 +76,6 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             return ptr;
         }
 
-        /// <summary>
-        /// Window background color. Can be a translucent color.
-        /// </summary>
-        public Windows.UI.Color BackgroundColor
-        {
-            get { return (Windows.UI.Color)GetValue(BackgroundColorProperty); }
-            set { SetValue(BackgroundColorProperty, value); }
-        }
-
-        public static readonly DependencyProperty BackgroundColorProperty =
-            DependencyProperty.Register("BackgroundColor", typeof(Windows.UI.Color), typeof(TransparentBackdrop), new PropertyMetadata(Windows.UI.Color.FromArgb(0, 255, 255, 255), (s, a) =>
-            {
-                if (s is TransparentBackdrop sender && !Equals(a.NewValue, a.OldValue))
-                {
-                    var color = (Windows.UI.Color)a.NewValue;
-
-                    lock (sender.entries)
-                    {
-                        foreach (var item in sender.entries.Values)
-                        {
-                            item.BackgroundColor = color;
-                        }
-                    }
-                }
-            }));
+        internal virtual TransparentBackdropControllerEntry CreateControllerEntry(ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot) => new TransparentBackdropControllerEntry(connectedTarget, xamlRoot.ContentIslandEnvironment.AppWindowId);
     }
 }

@@ -64,4 +64,27 @@
 		<ProjectReference Include="..\BlueFire.Toolkit.WinUI3.NativeMethods\BlueFire.Toolkit.WinUI3.NativeMethods.csproj" />
 	</ItemGroup>
 
+	<Target Name="AddCustomEmbeddedItems" BeforeTargets="_GenerateProjectPriFileCore" AfterTargets="_CalculateInputsForGenerateProjectPriFileCore">
+		<ItemGroup>
+			<_MappedEmbeddedPRIResource Include="@(EmbeddedPRIResource->'$(AssemblyName)\%(RelativeDir)%(Filename)%(Extension)')" />
+		</ItemGroup>
+		<Copy SourceFiles="@(EmbeddedPRIResource)" DestinationFiles="@(EmbeddedPRIResource->'$(IntermediateOutputPath)\embed\$(AssemblyName)\%(RelativeDir)%(Filename)%(Extension)')" />
+		<ReadLinesFromFile File="$(_EmbedFileResfilePath)" >
+			<Output
+			  TaskParameter="Lines"
+			  ItemName="ItemsFromFile"/>
+		</ReadLinesFromFile>
+
+		<ItemGroup>
+			<CustomEmbeddedFileList Include="@(ItemsFromFile)" />
+			<CustomEmbeddedFileList Include="@(_MappedEmbeddedPRIResource)" />
+		</ItemGroup>
+
+		<WriteLinesToFile
+			File="$(_EmbedFileResfilePath)"
+			Lines="@(CustomEmbeddedFileList)"
+			Overwrite="true"
+			Encoding="Unicode"/>
+	</Target>
+
 </Project>

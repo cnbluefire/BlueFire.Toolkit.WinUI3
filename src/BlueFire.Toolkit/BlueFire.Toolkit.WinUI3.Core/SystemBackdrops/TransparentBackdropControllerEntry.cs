@@ -19,12 +19,12 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
         private HWND hWnd;
         private WindowManager? windowManager;
         private WindowMessageMonitor? messageMonitor;
-        private ICompositionSupportsSystemBackdrop? connectedTarget;
-        private Windows.UI.Composition.CompositionColorBrush? colorBrush;
+        private ICompositionSupportsSystemBackdrop connectedTarget;
         private bool flag;
 
         internal TransparentBackdropControllerEntry(ICompositionSupportsSystemBackdrop connectedTarget, WindowId windowId)
         {
+            this.connectedTarget = connectedTarget;
             this.windowId = windowId;
             this.hWnd = new HWND(Microsoft.UI.Win32Interop.GetWindowFromWindowId(windowId));
             windowManager = WindowManager.Get(windowId);
@@ -46,8 +46,7 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
                         hRgnBlur = hRgn,
                     });
 
-                    colorBrush = Compositions.WindowsCompositionHelper.Compositor.CreateColorBrush(Windows.UI.Color.FromArgb(0, 255, 255, 255));
-                    connectedTarget.SystemBackdrop = colorBrush;
+                    OnAttached(connectedTarget, windowId);
                 }
             }
 
@@ -61,20 +60,7 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 
         internal ICompositionSupportsSystemBackdrop? ConnectedTarget => connectedTarget;
 
-        internal Windows.UI.Color BackgroundColor
-        {
-            get => colorBrush?.Color ?? Windows.UI.Color.FromArgb(0, 255, 255, 255);
-            set
-            {
-                if (colorBrush != null)
-                {
-                    colorBrush.Color = value;
-                }
-            }
-        }
-
-
-        private unsafe void WndProc(WindowManager sender, WindowMessageReceivedEventArgs e)
+        internal virtual unsafe void WndProc(WindowManager sender, WindowMessageReceivedEventArgs e)
         {
             if (e.MessageId == PInvoke.WM_PAINT)
             {
@@ -116,18 +102,32 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
                 fEnable = false,
             });
 
+            var target = connectedTarget;
+            var windowId = this.windowId;
+
             if (connectedTarget != null)
             {
                 connectedTarget.SystemBackdrop = null;
-                connectedTarget = null;
+                connectedTarget = null!;
             }
 
+            windowId = default;
+
             OnClear?.Invoke(this, EventArgs.Empty);
+
+            OnDetached(target, windowId);
         }
 
         public event EventHandler? OnClear;
 
-        protected virtual void Dispose(bool disposing)
+        protected virtual void OnAttached(ICompositionSupportsSystemBackdrop connectedTarget, WindowId windowId) { }
+
+        protected virtual void OnDetached(ICompositionSupportsSystemBackdrop connectedTarget, WindowId windowId) { }
+
+        protected virtual void DisposeCore(bool disposing) { }
+
+
+        private void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
@@ -136,10 +136,9 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
                     // TODO: 释放托管状态(托管对象)
 
                     Clear();
-
-                    colorBrush?.Dispose();
-                    colorBrush = null;
                 }
+
+                DisposeCore(disposing);
 
                 disposedValue = true;
             }
