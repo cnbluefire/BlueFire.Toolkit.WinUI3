@@ -49,9 +49,10 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
             LRESULT? result = null;
 
-            if (handler1 != null || handler2 != null)
+            if (handler1 != null || handler2 != null || handler3 != null)
             {
                 var args = WindowMessageReceivedEventArgsPool.Get();
+                WindowMessageReceivedEventArgs? args2 = null;
 
                 try
                 {
@@ -66,17 +67,26 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                     {
                         result = new LRESULT(args.LResult);
                     }
-                    else
-                    {
-                        if (handler2 != null)
-                        {
-                            var args2 = new WindowMessageReceivedEventArgs(args);
-                            handler2.Invoke(windowManager, args2);
 
-                            if (args2.Handled)
-                            {
-                                result = new LRESULT(args2.LResult);
-                            }
+                    if (!result.HasValue && handler2 != null)
+                    {
+                        args2 = new WindowMessageReceivedEventArgs(args);
+                        handler2.Invoke(windowManager, args2);
+
+                        if (args2.Handled)
+                        {
+                            result = new LRESULT(args2.LResult);
+                        }
+                    }
+
+                    if (!result.HasValue && handler3 != null)
+                    {
+                        var args3 = (args ?? args2)!;
+                        handler3.Invoke(windowManager, args3);
+
+                        if (args3.Handled)
+                        {
+                            result = new LRESULT(args3.LResult);
                         }
                     }
                 }
@@ -86,50 +96,26 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
                 }
             }
 
-            if (!result.HasValue)
+            if (uMsg == PInvoke.WM_CLOSE)
             {
-                if (uMsg == PInvoke.WM_CLOSE)
+                result = PInvoke.DefSubclassProc(hWnd, uMsg, wParam, lParam);
+                if (!PInvoke.IsWindow(hWnd))
                 {
-                    result = PInvoke.DefSubclassProc(hWnd, uMsg, wParam, lParam);
-                    if (!PInvoke.IsWindow(hWnd))
-                    {
-                        PInvoke.DestroyWindow(hWnd);
-                    }
+                    PInvoke.DestroyWindow(hWnd);
                 }
-                else if (uMsg == PInvoke.WM_DESTROY)
-                {
-                    windowMessageReceived = null;
-                    windowMessageBeforeReceived = null;
-                    windowMessageAfterReceived = null;
+            }
+            else if (uMsg == PInvoke.WM_DESTROY)
+            {
+                windowMessageReceived = null;
+                windowMessageBeforeReceived = null;
+                windowMessageAfterReceived = null;
 
-                    Uninstall();
-                }
+                Uninstall();
             }
 
             if (!result.HasValue)
             {
                 result = PInvoke.DefSubclassProc(hWnd, uMsg, wParam, lParam);
-            }
-
-            if (handler3 != null)
-            {
-                var args = WindowMessageReceivedEventArgsPool.Get();
-                try
-                {
-                    args.WindowId = new WindowId((ulong)hWnd.Value.ToInt64());
-                    args.MessageId = uMsg;
-                    args.WParam = wParam.Value;
-                    args.LParam = lParam.Value;
-
-                    args.Handled = true;
-                    args.LResult = result.Value;
-
-                    handler3?.Invoke(windowManager, args);
-                }
-                finally
-                {
-                    WindowMessageReceivedEventArgsPool.Return(args);
-                }
             }
 
             return result.Value;

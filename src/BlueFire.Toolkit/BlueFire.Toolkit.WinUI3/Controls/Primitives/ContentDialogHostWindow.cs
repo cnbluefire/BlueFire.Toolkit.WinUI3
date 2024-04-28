@@ -1,6 +1,7 @@
 ﻿using BlueFire.Toolkit.WinUI3.Extensions;
 using BlueFire.Toolkit.WinUI3.SystemBackdrops;
 using Microsoft.UI;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -16,7 +17,7 @@ using Windows.Foundation;
 using Windows.UI;
 using Windows.Win32;
 
-namespace BlueFire.Toolkit.WinUI3.Core.Controls.Primitives
+namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
 {
     internal class ContentDialogHostWindow : WindowEx
     {
@@ -37,15 +38,23 @@ namespace BlueFire.Toolkit.WinUI3.Core.Controls.Primitives
             this.contentDialog = contentDialog;
             this.owner = owner;
 
-            var backdrop = new ColorBackdrop();
-            this.SystemBackdrop = backdrop;
-
-            if (Application.Current.Resources.TryGetValue("ContentDialogBackground", out var _ContentDialogBackground)
-                && _ContentDialogBackground is SolidColorBrush ContentDialogBackground)
+            var configuration = new AcrylicBackdropConfiguration();
+            configuration.SetTheme(contentDialog.ActualTheme switch
             {
-                var color = ContentDialogBackground.Color;
-                backdrop.BackgroundColor = Color.FromArgb((byte)(color.A * ContentDialogBackground.Opacity), color.R, color.G, color.B);
-            }
+                ElementTheme.Dark => SystemBackdropTheme.Dark,
+                ElementTheme.Light => SystemBackdropTheme.Light,
+                _ => SystemBackdropTheme.Default
+            });
+
+            var backdrop = new MaterialCardBackdrop
+            {
+                CornerRadius = 0,
+                Margin = new(0),
+                MaterialConfiguration = new AcrylicBackdropConfiguration(),
+                Visible = false
+            };
+
+            this.SystemBackdrop = backdrop;
 
             loadedTaskSource = new TaskCompletionSource();
 
@@ -81,25 +90,31 @@ namespace BlueFire.Toolkit.WinUI3.Core.Controls.Primitives
             contentDialog.Opened += (s, a) =>
             {
                 canvas.Opacity = 1;
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    backdrop.BackgroundColor = Color.FromArgb(0, 255, 255, 255);
-                });
+                backdrop.Visible = true;
             };
 
             contentDialog.Closing += (s, a) =>
             {
-                DispatcherQueue.TryEnqueue(() =>
+                DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.High, () =>
                 {
                     if (!a.Cancel)
                     {
-                        AppWindow?.Hide();
-                        PInvoke.SetWindowPos(
-                            (Windows.Win32.Foundation.HWND)this.owner,
-                            new Windows.Win32.Foundation.HWND(IntPtr.Zero),
-                            0, 0, 0, 0,
-                            Windows.Win32.UI.WindowsAndMessaging.SET_WINDOW_POS_FLAGS.SWP_NOMOVE
-                            | Windows.Win32.UI.WindowsAndMessaging.SET_WINDOW_POS_FLAGS.SWP_NOSIZE);
+                        backdrop.Visible = false;
+                        canvas.Opacity = 0;
+
+                        // 快速触发 Closed 事件
+                        if (VisualTreeHelper.GetChildrenCount(contentDialog) > 0
+                            && VisualTreeHelper.GetChild(contentDialog, 0) is FrameworkElement dialogLayoutRoot)
+                        {
+                            var visualStateGroup = VisualStateManager.GetVisualStateGroups(dialogLayoutRoot)?
+                                .FirstOrDefault(c => c.Name == "DialogShowingStates");
+
+                            if (visualStateGroup != null
+                                && visualStateGroup.CurrentState?.Name != "DialogHidden")
+                            {
+                                VisualStateManager.GoToState(contentDialog, "DialogHidden", false);
+                            }
+                        }
                     }
                 });
             };
@@ -107,6 +122,7 @@ namespace BlueFire.Toolkit.WinUI3.Core.Controls.Primitives
             contentDialog.Closed += (s, a) =>
             {
                 ContentDialogResult = a.Result;
+
                 this.AppWindow.SetDialogResult(ContentDialogResult switch
                 {
                     ContentDialogResult.Primary => true,
@@ -222,7 +238,10 @@ namespace BlueFire.Toolkit.WinUI3.Core.Controls.Primitives
             UpdateClientSize(true);
             contentReady = true;
 
-            this.XamlWindow.SetTitleBar(titleBarRect);
+            if (task.Status == AsyncStatus.Started)
+            {
+                this.XamlWindow.SetTitleBar(titleBarRect);
+            }
         }
     }
 }

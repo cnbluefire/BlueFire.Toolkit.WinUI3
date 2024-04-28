@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 
-namespace BlueFire.Toolkit.WinUI3.Core.Extensions
+namespace BlueFire.Toolkit.WinUI3.Extensions
 {
     public static class ContentDialogExtensions
     {

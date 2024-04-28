@@ -1,12 +1,16 @@
 ﻿using BlueFire.Toolkit.WinUI3.WindowBase;
 using Microsoft.UI;
+using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using Windows.Graphics;
+using Windows.Win32.Foundation;
 using PInvoke = Windows.Win32.PInvoke;
 
 namespace BlueFire.Toolkit.WinUI3.Extensions
@@ -39,7 +43,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
         {
             if (windowId.Value == 0) return;
 
-            if (DialogPropertiesManager.TryGetProperties((nint)windowId.Value, out var value))
+            if (DialogWindowContext.TryGetContext((nint)windowId.Value, out var value))
             {
                 value.Result = result;
             }
@@ -54,7 +58,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
         {
             if (windowId.Value == 0) return default;
 
-            if (DialogPropertiesManager.TryGetProperties((nint)windowId.Value, out var value))
+            if (DialogWindowContext.TryGetContext((nint)windowId.Value, out var value))
             {
                 return value.Result;
             }
@@ -92,36 +96,18 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
 
             if (!PInvoke.IsWindowEnabled(ownerHwnd)) return null;
 
-            var threadWindows = GetThreadWindows();
-            EnableThreadWindows(threadWindows, false);
-
-            var capture = PInvoke.GetCapture();
-            if (!capture.IsNull)
-            {
-                PInvoke.ReleaseCapture();
-            }
-
-            var tcs = new TaskCompletionSource<bool?>();
-            var properties = new ShowDialogProperties(window);
-            DialogPropertiesManager.SetProperties(hwnd, properties);
-
-            var monitor = manager.GetMonitorInternal();
-            monitor.WindowMessageBeforeReceived += OnWindowMessageBeforeReceived;
-            monitor.WindowMessageAfterReceived += OnWindowMessageAfterReceived;
+            var context = new DialogWindowContext(manager, ownerHwnd);
 
             try
             {
-                PInvoke.SetWindowLongAuto(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_HWNDPARENT, ownerHwnd);
-
-
                 if (window.Presenter is not OverlappedPresenter presenter)
                 {
                     presenter = OverlappedPresenter.CreateForDialog();
                     window.SetPresenter(presenter);
                 }
 
+                // 无需设置 presenter.IsModal 因为随后会禁用UI线程所有窗口
                 presenter.IsMinimizable = false;
-                presenter.IsModal = true;
 
                 MoveWindowToCenter(ownerHwnd.Value, hwnd.Value);
 
@@ -137,111 +123,14 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
 
                 window.Show();
 
-                return await tcs.Task;
+                return await context.GetResultAsync();
             }
             catch
             {
-                EnableThreadWindows(threadWindows, true);
+                context.Dispose();
                 throw;
             }
-            finally
-            {
-                DialogPropertiesManager.RemoveProperties(hwnd);
-                monitor.WindowMessageBeforeReceived -= OnWindowMessageBeforeReceived;
-                monitor.WindowMessageAfterReceived -= OnWindowMessageAfterReceived;
-            }
-
-
-            void OnWindowMessageBeforeReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
-            {
-                if (e.MessageId == PInvoke.WM_CLOSE)
-                {
-                    properties.Closing = true;
-
-                    EnableThreadWindows(threadWindows, true);
-                    PInvoke.SetActiveWindow(ownerHwnd);
-                }
-                else if (e.MessageId == PInvoke.WM_DESTROY)
-                {
-                    PInvoke.SetWindowLongAuto(hwnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_HWNDPARENT, default);
-                    tcs.TrySetResult(properties.Result);
-                    DialogPropertiesManager.RemoveProperties(hwnd);
-                    monitor.WindowMessageBeforeReceived -= OnWindowMessageBeforeReceived;
-                    monitor.WindowMessageAfterReceived -= OnWindowMessageAfterReceived;
-                }
-                else if (_WM_MOVECENTER != 0 && e.MessageId == _WM_MOVECENTER)
-                {
-                    MoveWindowToCenter(ownerHwnd.Value, hwnd.Value);
-                }
-            }
-
-            void OnWindowMessageAfterReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
-            {
-                if (e.MessageId == PInvoke.WM_CLOSE)
-                {
-                    if (PInvoke.IsWindow(hwnd))
-                    {
-                        // Closing Cancelled
-                        EnableThreadWindows(threadWindows, false);
-                        PInvoke.SetActiveWindow(hwnd);
-                    }
-                    else
-                    {
-                        properties.Closed = true;
-                    }
-
-                    properties.Closing = false;
-                }
-
-            }
         }
-
-        #region Properties Manager
-
-        private static class DialogPropertiesManager
-        {
-            private static Dictionary<nint, ShowDialogProperties> showDialogProperties = new Dictionary<nint, ShowDialogProperties>();
-
-            public static bool TryGetProperties(nint hwnd, [NotNullWhen(true)] out ShowDialogProperties? properties)
-            {
-                properties = default;
-
-                lock (showDialogProperties)
-                {
-                    if (showDialogProperties.TryGetValue(hwnd, out var value))
-                    {
-                        properties = value;
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            public static void SetProperties(nint hwnd, ShowDialogProperties properties)
-            {
-                lock (showDialogProperties)
-                {
-                    if (!showDialogProperties.TryAdd(hwnd, properties))
-                    {
-                        throw new ArgumentException(nameof(hwnd));
-                    }
-                }
-            }
-
-            public static void RemoveProperties(nint hwnd)
-            {
-                lock (showDialogProperties)
-                {
-                    showDialogProperties.Remove(hwnd);
-                }
-            }
-        }
-
-
-
-        #endregion Properties Manager
-
 
         private static IReadOnlyList<Windows.Win32.Foundation.HWND> GetThreadWindows() =>
             PInvoke.EnumThreadWindows((hWnd, _) =>
@@ -295,15 +184,82 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             }
         }
 
-        internal class ShowDialogProperties
+        internal class DialogWindowContext : IDisposable
         {
-            private WeakReference<AppWindow> appWindow;
-            private bool? result;
+            private static Dictionary<nint, DialogWindowContext> dialogWindowContexts = new Dictionary<nint, DialogWindowContext>();
 
-            public ShowDialogProperties(AppWindow appWindow)
+            private bool disposeValue;
+
+            private WindowManager windowManager;
+            private bool? result;
+            private HWND activatedWindow;
+            private TaskCompletionSource<bool?> resultTaskSource;
+
+            public DialogWindowContext(WindowManager windowManager, HWND ownerHWnd)
             {
-                this.appWindow = new WeakReference<AppWindow>(appWindow);
+                this.windowManager = windowManager;
+                OwnerHWnd = ownerHWnd;
+
+                if (!OwnerHWnd.IsNull)
+                {
+                    lock (dialogWindowContexts)
+                    {
+                        dialogWindowContexts.Add(windowManager.WindowHandle, this);
+                    }
+
+                    var nonClientRegions = new Dictionary<NonClientRegionKind, RectInt32[]?>();
+                    NonClientRegions = nonClientRegions;
+
+                    // 缓存 inputNonClientPointerSource 防止 winui3 出现内部错误
+                    var inputNonClientPointerSource = InputNonClientPointerSource.GetForWindowId(Win32Interop.GetWindowIdFromWindow(OwnerHWnd.Value));
+                    InputNonClientPointerSource = inputNonClientPointerSource;
+
+                    if (inputNonClientPointerSource != null)
+                    {
+                        nonClientRegions[NonClientRegionKind.Close] = inputNonClientPointerSource.GetRegionRects(NonClientRegionKind.Close);
+                        nonClientRegions[NonClientRegionKind.Maximize] = inputNonClientPointerSource.GetRegionRects(NonClientRegionKind.Maximize);
+                        nonClientRegions[NonClientRegionKind.Minimize] = inputNonClientPointerSource.GetRegionRects(NonClientRegionKind.Minimize);
+                        nonClientRegions[NonClientRegionKind.Icon] = inputNonClientPointerSource.GetRegionRects(NonClientRegionKind.Icon);
+                        nonClientRegions[NonClientRegionKind.Caption] = inputNonClientPointerSource.GetRegionRects(NonClientRegionKind.Caption);
+                        nonClientRegions[NonClientRegionKind.TopBorder] = inputNonClientPointerSource.GetRegionRects(NonClientRegionKind.TopBorder);
+                        nonClientRegions[NonClientRegionKind.LeftBorder] = inputNonClientPointerSource.GetRegionRects(NonClientRegionKind.LeftBorder);
+                        nonClientRegions[NonClientRegionKind.BottomBorder] = inputNonClientPointerSource.GetRegionRects(NonClientRegionKind.BottomBorder);
+                        nonClientRegions[NonClientRegionKind.RightBorder] = inputNonClientPointerSource.GetRegionRects(NonClientRegionKind.RightBorder);
+                        nonClientRegions[NonClientRegionKind.Passthrough] = inputNonClientPointerSource.GetRegionRects(NonClientRegionKind.Passthrough);
+
+                        inputNonClientPointerSource.ClearAllRegionRects();
+                    }
+                }
+
+                ThreadWindows = GetThreadWindows();
+                activatedWindow = PInvoke.GetActiveWindow();
+                EnableThreadWindows(ThreadWindows, false);
+
+                var capture = PInvoke.GetCapture();
+                if (!capture.IsNull)
+                {
+                    PInvoke.SendMessage(capture, PInvoke.WM_CANCELMODE, 0, 0);
+                    PInvoke.ReleaseCapture();
+                }
+
+                var monitor = windowManager.GetMonitorInternal();
+
+                if (monitor != null)
+                {
+                    monitor.WindowMessageBeforeReceived += OnWindowMessageBeforeReceived;
+                    monitor.WindowMessageAfterReceived += OnWindowMessageAfterReceived;
+                }
+
+                PInvoke.SetWindowLongAuto(windowManager.HWND, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_HWNDPARENT, OwnerHWnd);
+
+                resultTaskSource = new TaskCompletionSource<bool?>();
             }
+
+            public InputNonClientPointerSource? InputNonClientPointerSource { get; set; }
+
+            public IReadOnlyDictionary<NonClientRegionKind, RectInt32[]?>? NonClientRegions { get; }
+
+            public IReadOnlyList<HWND>? ThreadWindows { get; private set; }
 
             public bool? Result
             {
@@ -312,17 +268,13 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
                 {
                     this.result = value;
 
-                    if (appWindow != null
-                        && appWindow.TryGetTarget(out AppWindow? window)
-                        && window != null)
+                    if (windowManager != null && PInvoke.IsWindow(windowManager.HWND))
                     {
                         if (!Closing
                             && !Closed)
                         {
-                            var hwnd = (nint)window.Id.Value;
-
                             PInvoke.SendMessage(
-                                new Windows.Win32.Foundation.HWND(hwnd),
+                                windowManager.HWND,
                                 PInvoke.WM_SYSCOMMAND,
                                 PInvoke.SC_CLOSE,
                                 0);
@@ -333,6 +285,114 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             public bool Closing { get; set; }
 
             public bool Closed { get; set; }
+
+            public WindowId Owner { get; }
+
+            public HWND OwnerHWnd { get; }
+
+
+            private void OnWindowMessageBeforeReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
+            {
+                if (e.MessageId == PInvoke.WM_CLOSE)
+                {
+                    Closing = true;
+                }
+                else if (e.MessageId == PInvoke.WM_DESTROY)
+                {
+                    Closed = true;
+                    Closing = false;
+
+                    PInvoke.SetWindowLongAuto(sender.HWND, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_HWNDPARENT, default);
+                    this.Dispose();
+                }
+                else if (_WM_MOVECENTER != 0 && e.MessageId == _WM_MOVECENTER)
+                {
+                    MoveWindowToCenter(OwnerHWnd.Value, sender.WindowHandle);
+                }
+            }
+
+            private void OnWindowMessageAfterReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
+            {
+                if (e.MessageId == PInvoke.WM_CLOSE)
+                {
+                    if (!e.Handled)
+                    {
+                        Closing = false;
+                        Closed = true;
+                        this.Dispose();
+                    }
+                }
+            }
+
+            public Task<bool?> GetResultAsync() => resultTaskSource.Task;
+
+            public void Dispose()
+            {
+                if (disposeValue) return;
+                disposeValue = true;
+
+                Windows.Win32.Foundation.HWND hWnd = default;
+
+                if (windowManager != null)
+                {
+                    hWnd = windowManager.HWND;
+                    lock (dialogWindowContexts)
+                    {
+                        dialogWindowContexts.Remove(windowManager.WindowHandle);
+                    }
+
+                    PInvoke.SetWindowLongAuto(windowManager.HWND, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_HWNDPARENT, default);
+
+                    var monitor = windowManager.GetMonitorInternal();
+
+                    if (monitor != null)
+                    {
+                        monitor.WindowMessageBeforeReceived -= OnWindowMessageBeforeReceived;
+                        monitor.WindowMessageAfterReceived -= OnWindowMessageAfterReceived;
+                    }
+                }
+
+                if (ThreadWindows != null)
+                {
+                    EnableThreadWindows(ThreadWindows, true);
+                    ThreadWindows = null;
+                }
+
+                if (!hWnd.IsNull) PInvoke.ShowWindow(hWnd, Windows.Win32.UI.WindowsAndMessaging.SHOW_WINDOW_CMD.SW_HIDE);
+
+                if (!activatedWindow.IsNull) PInvoke.SetActiveWindow(activatedWindow);
+                else if (!OwnerHWnd.IsNull) PInvoke.SetActiveWindow(OwnerHWnd);
+
+                if (InputNonClientPointerSource != null && NonClientRegions != null)
+                {
+                    foreach (var (kind, regions) in NonClientRegions)
+                    {
+                        InputNonClientPointerSource.ClearRegionRects(kind);
+                        if (regions != null && regions.Length > 0)
+                        {
+                            InputNonClientPointerSource.SetRegionRects(kind, regions);
+                        }
+                    }
+                }
+
+                resultTaskSource.TrySetResult(Result);
+            }
+
+            public static bool TryGetContext(nint hwnd, [NotNullWhen(true)] out DialogWindowContext? context)
+            {
+                context = default;
+
+                lock (dialogWindowContexts)
+                {
+                    if (dialogWindowContexts.TryGetValue(hwnd, out var value))
+                    {
+                        context = value;
+                        return true;
+                    }
+                }
+
+                return false;
+            }
         }
     }
 }
