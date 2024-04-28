@@ -9,21 +9,62 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Win32;
 using Windows.Win32.Foundation;
+using WinRT;
 
 namespace BlueFire.Toolkit.WinUI3.Extensions
 {
     public static class ContentDialogExtensions
     {
+        private static Dictionary<nint, WeakReference<Controls.Primitives.ContentDialogHostWindow>> hostWindows = new Dictionary<nint, WeakReference<Controls.Primitives.ContentDialogHostWindow>>();
+
         public static async Task<ContentDialogResult> ShowModalWindowAsync(this ContentDialog contentDialog, WindowId ownerWindow)
         {
-            var ownerHandle = Win32Interop.GetWindowFromWindowId(ownerWindow);
+            var ptr = (nint)((IWinRTObject)contentDialog).NativeObject.ThisPtr;
 
-            var window = new Controls.Primitives.ContentDialogHostWindow(
-                contentDialog, ownerHandle);
+            Controls.Primitives.ContentDialogHostWindow window;
 
-            await window.AppWindow.ShowDialogAsync(ownerWindow);
-            return window.ContentDialogResult;
+            lock (hostWindows)
+            {
+                if (hostWindows.ContainsKey(ptr)) throw new ArgumentException(null, nameof(contentDialog));
+
+                var ownerHandle = Win32Interop.GetWindowFromWindowId(ownerWindow);
+
+                window = new Controls.Primitives.ContentDialogHostWindow(
+                    contentDialog, ownerHandle);
+
+                hostWindows[ptr] = new WeakReference<Controls.Primitives.ContentDialogHostWindow>(window);
+            }
+
+            try
+            {
+                await window.AppWindow.ShowDialogAsync(ownerWindow);
+                return window.ContentDialogResult;
+            }
+            finally
+            {
+                lock (hostWindows)
+                {
+                    hostWindows.Remove(ptr);
+                }
+            }
         }
 
+        public static bool TryGetModalWindowId(this ContentDialog contentDialog, out WindowId windowId)
+        {
+            windowId = default;
+
+            var ptr = (nint)((IWinRTObject)contentDialog).NativeObject.ThisPtr;
+
+            lock (hostWindows)
+            {
+                if (hostWindows.TryGetValue(ptr, out var weakReference)
+                    && weakReference.TryGetTarget(out var target))
+                {
+                    windowId = target.AppWindow?.Id ?? default;
+                }
+            }
+
+            return windowId.Value != 0;
+        }
     }
 }

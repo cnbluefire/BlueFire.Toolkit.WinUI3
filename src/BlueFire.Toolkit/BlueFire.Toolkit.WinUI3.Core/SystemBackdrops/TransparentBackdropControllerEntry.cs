@@ -66,15 +66,23 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             {
                 e.Handled = true;
 
-                var hdc = PInvoke.BeginPaint(hWnd, out var ps);
+                Windows.Win32.Graphics.Gdi.PAINTSTRUCT ps = default;
+                var hdc = PInvoke.BeginPaint(hWnd, &ps);
                 if (hdc.Value == 0) e.LResult = 0;
 
-                var brush = PInvoke.GetStockObject(Windows.Win32.Graphics.Gdi.GET_STOCK_OBJECT_FLAGS.BLACK_BRUSH);
-                if (PInvoke.FillRect(hdc, &ps.rcPaint, new Windows.Win32.Graphics.Gdi.HBRUSH(brush.Value)) != 0)
+                try
                 {
-                    e.LResult = 1;
+                    var brush = PInvoke.GetStockObject(Windows.Win32.Graphics.Gdi.GET_STOCK_OBJECT_FLAGS.BLACK_BRUSH);
+                    if (PInvoke.FillRect(hdc, &ps.rcPaint, new Windows.Win32.Graphics.Gdi.HBRUSH(brush.Value)) != 0)
+                    {
+                        e.LResult = 1;
+                    }
+                    e.LResult = 0;
                 }
-                e.LResult = 0;
+                finally
+                {
+                    PInvoke.EndPaint(hWnd, &ps);
+                }
             }
             else if (e.MessageId == PInvoke.WM_DESTROY)
             {
@@ -133,8 +141,6 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             {
                 if (disposing)
                 {
-                    // TODO: 释放托管状态(托管对象)
-
                     Clear();
                 }
 

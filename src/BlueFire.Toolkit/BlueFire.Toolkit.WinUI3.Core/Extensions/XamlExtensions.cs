@@ -18,9 +18,9 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
         /// <returns></returns>
         public static WindowId GetWindowId(this UIElement element)
         {
-            if (element is WindowEx windoeEx)
+            if (element is WindowEx windowEx)
             {
-                return windoeEx.AppWindow.Id;
+                return windowEx.AppWindow.Id;
             }
             else if (element?.XamlRoot != null)
             {

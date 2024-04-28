@@ -109,15 +109,15 @@ namespace BlueFire.Toolkit.WinUI3
             }
         }
 
-        public UIElement Content
+        public UIElement? Content
         {
-            get { return (UIElement)GetValue(ContentProperty); }
+            get { return (UIElement?)GetValue(ContentProperty); }
             set { SetValue(ContentProperty, value); }
         }
 
-        public SystemBackdrop SystemBackdrop
+        public SystemBackdrop? SystemBackdrop
         {
-            get { return (SystemBackdrop)GetValue(SystemBackdropProperty); }
+            get { return (SystemBackdrop?)GetValue(SystemBackdropProperty); }
             set { SetValue(SystemBackdropProperty, value); }
         }
 

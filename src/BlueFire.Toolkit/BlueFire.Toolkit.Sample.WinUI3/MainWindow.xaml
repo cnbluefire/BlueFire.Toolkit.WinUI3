@@ -8,14 +8,25 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:toolkit="using:BlueFire.Toolkit.WinUI3"
     xmlns:toolkitControls="using:BlueFire.Toolkit.WinUI3.Controls"
+    xmlns:toolkitBackdrops="using:BlueFire.Toolkit.WinUI3.SystemBackdrops"
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     mc:Ignorable="d"
     
     Title="Haha"
     Width="500" MinWidth="400" MaxWidth="800"
     Height="350" MinHeight="350" MaxHeight="500">
+    <toolkit:WindowEx.SystemBackdrop>
+        <toolkitBackdrops:MaterialCardBackdrop 
+            MaterialConfiguration="DarkAcrylicThin"
+            Margin="20"
+            ShadowBlurRadius="22"
+            ShadowOffset="0,5"
+            ShadowOpacity="0.8">
+        </toolkitBackdrops:MaterialCardBackdrop>
+    </toolkit:WindowEx.SystemBackdrop>
 
     <StackPanel x:Name="LayoutRoot" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <TextBlock x:Name="BackdropName" HorizontalAlignment="Center" Margin="0,0,0,12" />
         <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
         <Grid Visibility="Collapsed" Background="Black" Padding="20" Margin="20" PointerPressed="Grid_PointerPressed" PointerMoved="Grid_PointerMoved">
             <canvas:CanvasControl x:Name="myCanvasControl" Draw="myCanvasControl_Draw" Width="150" Height="150" />
@@ -24,10 +35,10 @@
             <TextBlock>哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567</TextBlock>
         </toolkitControls:AutoScrollView>-->
 
-        <toolkitControls:TextView Text="哈哈哈测试测试ABC嘻嘻1234567👨‍👩‍👧‍👦 哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦 哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦 哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦"
+        <toolkitControls:TextView Visibility="Collapsed" Text="哈哈哈测试测试ABC嘻嘻1234567👨‍👩‍👧‍👦 哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦 哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦 哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦"
                                   FontFamily="Custom Font" FontSize="24" TextWrapping="Wrap" StrokeThickness="1" Stroke="Red" SecondaryStroke="#9900FF00" />
 
-        <ToggleSwitch x:Name="enableHotKeySwitcher" IsOn="True" Toggled="enableHotKeySwitcher_Toggled" />
-        <toolkitControls:HotKeyInputBox x:Name="myHotKeyInputBox" />
+        <ToggleSwitch x:Name="enableHotKeySwitcher" Visibility="Collapsed" IsOn="True" Toggled="enableHotKeySwitcher_Toggled" />
+        <toolkitControls:HotKeyInputBox x:Name="myHotKeyInputBox" Visibility="Collapsed" />
     </StackPanel>
 </toolkit:WindowEx>

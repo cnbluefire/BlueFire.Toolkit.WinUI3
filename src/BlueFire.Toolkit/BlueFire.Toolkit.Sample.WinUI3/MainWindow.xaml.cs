@@ -37,6 +37,9 @@ using Microsoft.Graphics.Canvas;
 using BlueFire.Toolkit.WinUI3.Core.Dispatching;
 using BlueFire.Toolkit.WinUI3.Controls;
 using BlueFire.Toolkit.WinUI3.Core.Extensions;
+using Microsoft.UI.Composition.SystemBackdrops;
+using Windows.UI.Composition;
+using System.Reflection;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -48,44 +51,80 @@ namespace BlueFire.Toolkit.Sample.WinUI3
     /// </summary>
     public sealed partial class MainWindow : WindowEx
     {
+        private CompositionSurfaceLoader surfaceLoader;
         private WindowMessageListener windowMessageListener;
 
         unsafe public MainWindow()
         {
             this.InitializeComponent();
 
-            if (backdrop == null)
-            {
-                backdrop = new TransparentBackdrop();
-            }
-
-            this.SystemBackdrop = backdrop;
-
             this.AppWindow.Closing += AppWindow_Closing;
 
-            var rootVisual = WindowsCompositionHelper.Compositor.CreateSpriteVisual();
-            rootVisual.RelativeSizeAdjustment = System.Numerics.Vector2.One;
+            //var rootVisual = WindowsCompositionHelper.Compositor.CreateSpriteVisual();
+            //rootVisual.RelativeSizeAdjustment = System.Numerics.Vector2.One;
 
-            surfaceLoader = CompositionSurfaceLoader.StartLoadFromUri(new Uri("https://www.microsoft.com/favicon.ico?v2"));
+            //surfaceLoader = CompositionSurfaceLoader.StartLoadFromUri(new Uri("https://www.microsoft.com/favicon.ico?v2"));
 
-            var brush = WindowsCompositionHelper.Compositor.CreateSurfaceBrush(surfaceLoader.Surface);
+            //var brush = WindowsCompositionHelper.Compositor.CreateSurfaceBrush(surfaceLoader.Surface);
 
-            brush.Stretch = Windows.UI.Composition.CompositionStretch.Uniform;
-            brush.HorizontalAlignmentRatio = 0.5f;
-            brush.VerticalAlignmentRatio = 0.5f;
+            //brush.Stretch = Windows.UI.Composition.CompositionStretch.Uniform;
+            //brush.HorizontalAlignmentRatio = 0.5f;
+            //brush.VerticalAlignmentRatio = 0.5f;
 
-            rootVisual.Brush = brush;
+            //rootVisual.Brush = brush;
 
-            this.RootVisual = rootVisual;
+            //this.RootVisual = rootVisual;
 
-            this.Loaded += MainWindow_Loaded;
+            //this.Loaded += MainWindow_Loaded;
 
-            myHotKeyInputBox.HotKeyModel = HotKeyManager.RegisterKey("Test", HotKeyModifiers.MOD_CONTROL | HotKeyModifiers.MOD_ALT, VirtualKeys.VK_LEFT);
-            HotKeyManager.HotKeyInvoked += HotKeyManager_HotKeyInvoked;
-            myHotKeyInputBox.HotKeyModel.VirtualKey = VirtualKeys.VK_RIGHT;
+            //myHotKeyInputBox.HotKeyModel = HotKeyManager.RegisterKey("Test", HotKeyModifiers.MOD_CONTROL | HotKeyModifiers.MOD_ALT, VirtualKeys.VK_LEFT);
+            //HotKeyManager.HotKeyInvoked += HotKeyManager_HotKeyInvoked;
+            //myHotKeyInputBox.HotKeyModel.VirtualKey = VirtualKeys.VK_RIGHT;
 
-            AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
-            AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+            //AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
+            //AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+
+            var hWnd = (Windows.Win32.Foundation.HWND)this.GetWindowHandle();
+
+            WindowManager.Get(AppWindow).WindowStyle &= ~(WindowManager.WindowStyleFlags.WS_MINIMIZEBOX
+                | WindowManager.WindowStyleFlags.WS_MAXIMIZEBOX
+                | WindowManager.WindowStyleFlags.WS_BORDER
+                | WindowManager.WindowStyleFlags.WS_SYSMENU
+                | WindowManager.WindowStyleFlags.WS_THICKFRAME
+                | WindowManager.WindowStyleFlags.WS_CAPTION);
+
+            WindowManager.Get(AppWindow).RedrawFrame();
+
+            UpdateNonClientRegions();
+        }
+
+        private InputNonClientPointerSource? inputNonClientPointerSource;
+
+        private void UpdateNonClientRegions()
+        {
+            if (this.SystemBackdrop is MaterialCardBackdrop backdrop)
+            {
+                // 缓存 inputNonClientPointerSource 防止 winui3 出现内部错误
+                inputNonClientPointerSource ??=
+                    InputNonClientPointerSource.GetForWindowId(this.AppWindow.Id);
+
+                var kinds = new[]
+                {
+                    NonClientRegionKind.Caption,
+                    NonClientRegionKind.LeftBorder,
+                    NonClientRegionKind.TopBorder,
+                    NonClientRegionKind.RightBorder,
+                    NonClientRegionKind.BottomBorder
+                };
+
+                var kindRegions =
+                    backdrop.GetNonClientRegions(this.AppWindow.Id, kinds);
+
+                foreach (var (kind, regions) in kindRegions)
+                {
+                    inputNonClientPointerSource.SetRegionRects(kind, regions);
+                }
+            }
         }
 
         private void HotKeyManager_HotKeyInvoked(HotKeyInvokedEventArgs args)
@@ -136,9 +175,6 @@ namespace BlueFire.Toolkit.Sample.WinUI3
             Debug.WriteLine(sender);
         }
 
-        CompositionSurfaceLoader surfaceLoader;
-
-        static TransparentBackdrop backdrop;
 
         private void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
         {
@@ -146,20 +182,69 @@ namespace BlueFire.Toolkit.Sample.WinUI3
         }
 
         bool dark = false;
+        string[] allNames;
+        int index = 0;
 
         private async void myButton_Click(object sender, RoutedEventArgs e)
         {
+            //var window = new Window();
+            //window.SystemBackdrop = new MaterialCardBackdrop()
+            //{
+            //    MaterialConfiguration = MaterialCardBackdropConfigurations.DarkAcrylicDefault
+            //};
+            //window.Activate();
+
+
+            //return;
+
+            //if (allNames == null)
+            //{
+            //    allNames = typeof(MaterialCardBackdropConfigurations).GetProperties(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
+            //        .Select(c => c.GetCustomAttribute<MaterialCardBackdropConfigurationNameAttribute>().Name)
+            //        //.Select(c => c.Name)
+            //        .Distinct()
+            //        .ToArray();
+            //}
+
+            //BackdropName.Text = allNames[index];
+            //((MaterialCardBackdrop)this.SystemBackdrop).MaterialConfiguration = MaterialCardBackdropConfiguration.Parse(allNames[index]);
+
+            //index = (index + 1) % allNames.Length;
+
+            //return;
+
             var cd = new ContentDialog()
             {
                 XamlRoot = this.XamlRoot,
-                Content = "123",
-                PrimaryButtonText = "OK",
-                SecondaryButtonText = "Cancel",
+                Content = "The ContentDialog is shown as a window.",
+                PrimaryButtonText = "Create New",
+                SecondaryButtonText = "Close",
+
+                // 移除背景，以显示亚克力背景
+                Background = null
+            };
+
+            cd.PrimaryButtonClick += async (s, a) =>
+            {
+                if (cd.TryGetModalWindowId(out var cdWindowId))
+                {
+                    a.Cancel = true;
+
+                    var cd2 = new ContentDialog()
+                    {
+                        XamlRoot = this.XamlRoot,
+                        Content = "Show some message.",
+                        PrimaryButtonText = "OK",
+                        SecondaryButtonText = "Cancel",
+                        Background = null
+                    };
+
+                    var res2 = await cd2.ShowModalWindowAsync(cdWindowId);
+                    Debug.WriteLine(res2);
+                }
             };
 
             var res = await cd.ShowModalWindowAsync(this.GetWindowId());
-
-            Debug.WriteLine(res);
 
             return;
 
@@ -189,6 +274,7 @@ namespace BlueFire.Toolkit.Sample.WinUI3
         {
             base.OnSizeChanged(args);
 
+            UpdateNonClientRegions();
             //Debug.WriteLine($"NewSize: {args.NewSize}, PreviousSize: {args.PreviousSize}");
         }
 
@@ -196,6 +282,7 @@ namespace BlueFire.Toolkit.Sample.WinUI3
         {
             base.OnDpiChanged(args);
 
+            UpdateNonClientRegions();
             //Debug.WriteLine($"NewDpi: {args.NewDpi}, PreviousDpi: {args.PreviousDpi}");
         }
 
