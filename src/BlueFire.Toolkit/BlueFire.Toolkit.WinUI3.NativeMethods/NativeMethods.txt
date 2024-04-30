@@ -63,6 +63,7 @@ Windows.Win32.UI.WindowsAndMessaging.GetDesktopWindow
 Windows.Win32.UI.WindowsAndMessaging.GetParent
 
 Windows.Win32.UI.HiDpi.GetDpiForWindow
+Windows.Win32.UI.HiDpi.GetDpiForMonitor
 
 Windows.Win32.UI.Input.KeyboardAndMouse.EnableWindow
 Windows.Win32.UI.Input.KeyboardAndMouse.SetActiveWindow
@@ -89,6 +90,7 @@ Windows.Win32.System.Threading.SetThreadpoolWait
 Windows.Win32.System.Threading.CloseThreadpoolWait
 
 Windows.Win32.Graphics.Gdi.MonitorFromWindow
+Windows.Win32.Graphics.Gdi.GetMonitorInfo
 Windows.Win32.Graphics.Gdi.InvalidateRect
 Windows.Win32.Graphics.Gdi.GetSysColor
 Windows.Win32.Graphics.Gdi.CreateRectRgn
@@ -132,6 +134,8 @@ Windows.Win32.Graphics.DirectWrite.IDWriteFontSet
 Windows.Win32.Graphics.DirectWrite.IDWriteFontFaceReference
 Windows.Win32.Graphics.DirectWrite.DWriteCreateFactory
 
+Windows.Win32.Graphics.DirectComposition.IDCompositionDesktopDevice
+
 Windows.Win32.System.WinRT.Composition.ICompositorInterop
 Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop2
 Windows.Win32.System.WinRT.Composition.ICompositorDesktopInterop
@@ -146,5 +150,3 @@ Windows.Win32.Storage.Packaging.Appx.GetCurrentApplicationUserModelId
 Windows.Win32.Storage.Packaging.Appx.ParseApplicationUserModelId
 
 Windows.Win32.System.WinRT.Direct3D11.IDirect3DDxgiInterfaceAccess
-
-Windows.Win32.Graphics.DirectComposition.IDCompositionDesktopDevice

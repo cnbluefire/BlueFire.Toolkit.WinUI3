@@ -63,9 +63,20 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             {
                 base.OnDetached(connectedTarget, windowId);
 
-                connectedTarget.SystemBackdrop = null;
-                colorBrush?.Dispose();
-                colorBrush = null;
+                if (!CloseRequested)
+                {
+                    connectedTarget.SystemBackdrop = null;
+                    colorBrush?.Dispose();
+                    colorBrush = null;
+                }
+                else
+                {
+                    Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+                    {
+                        colorBrush?.Dispose();
+                        colorBrush = null;
+                    });
+                }
             }
 
 

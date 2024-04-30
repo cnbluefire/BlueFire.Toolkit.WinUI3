@@ -17,7 +17,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
     {
         private static Dictionary<nint, WeakReference<Controls.Primitives.ContentDialogHostWindow>> hostWindows = new Dictionary<nint, WeakReference<Controls.Primitives.ContentDialogHostWindow>>();
 
-        public static async Task<ContentDialogResult> ShowModalWindowAsync(this ContentDialog contentDialog, WindowId ownerWindow)
+        public static async Task<ContentDialogResult> ShowModalWindowAsync(this ContentDialog contentDialog, ShowDialogOptions? options = null)
         {
             var ptr = (nint)((IWinRTObject)contentDialog).NativeObject.ThisPtr;
 
@@ -27,17 +27,15 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             {
                 if (hostWindows.ContainsKey(ptr)) throw new ArgumentException(null, nameof(contentDialog));
 
-                var ownerHandle = Win32Interop.GetWindowFromWindowId(ownerWindow);
-
                 window = new Controls.Primitives.ContentDialogHostWindow(
-                    contentDialog, ownerHandle);
+                    contentDialog);
 
                 hostWindows[ptr] = new WeakReference<Controls.Primitives.ContentDialogHostWindow>(window);
             }
 
             try
             {
-                await window.AppWindow.ShowDialogAsync(ownerWindow);
+                await window.AppWindow.ShowDialogAsync(options);
                 return window.ContentDialogResult;
             }
             finally

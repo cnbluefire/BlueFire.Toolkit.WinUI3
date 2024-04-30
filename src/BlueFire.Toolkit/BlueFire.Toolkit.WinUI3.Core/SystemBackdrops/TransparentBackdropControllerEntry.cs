@@ -22,6 +22,8 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
         private ICompositionSupportsSystemBackdrop connectedTarget;
         private bool flag;
 
+        private bool closeRequested;
+
         internal TransparentBackdropControllerEntry(ICompositionSupportsSystemBackdrop connectedTarget, WindowId windowId)
         {
             this.connectedTarget = connectedTarget;
@@ -60,6 +62,8 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 
         internal ICompositionSupportsSystemBackdrop? ConnectedTarget => connectedTarget;
 
+        internal bool CloseRequested => closeRequested;
+
         internal virtual unsafe void WndProc(WindowManager sender, WindowMessageReceivedEventArgs e)
         {
             if (e.MessageId == PInvoke.WM_PAINT)
@@ -84,8 +88,18 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
                     PInvoke.EndPaint(hWnd, &ps);
                 }
             }
+            else if (e.MessageId == PInvoke.WM_CLOSE)
+            {
+                var hWnd = (Windows.Win32.Foundation.HWND)Win32Interop.GetWindowFromWindowId(e.WindowId);
+                closeRequested = true;
+                Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread()?.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+                {
+                    if (PInvoke.IsWindow(hWnd)) closeRequested = false;
+                });
+            }
             else if (e.MessageId == PInvoke.WM_DESTROY)
             {
+                closeRequested = true;
                 Clear();
             }
         }
@@ -104,18 +118,25 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 
             windowManager = null;
 
-            PInvoke.DwmEnableBlurBehindWindow(hWnd, new Windows.Win32.Graphics.Dwm.DWM_BLURBEHIND()
+            if (!closeRequested)
             {
-                dwFlags = PInvoke.DWM_BB_ENABLE,
-                fEnable = false,
-            });
+                PInvoke.DwmEnableBlurBehindWindow(hWnd, new Windows.Win32.Graphics.Dwm.DWM_BLURBEHIND()
+                {
+                    dwFlags = PInvoke.DWM_BB_ENABLE,
+                    fEnable = false,
+                });
+            }
 
             var target = connectedTarget;
             var windowId = this.windowId;
 
             if (connectedTarget != null)
             {
-                connectedTarget.SystemBackdrop = null;
+                if (!closeRequested)
+                {
+                    connectedTarget.SystemBackdrop = null;
+                }
+
                 connectedTarget = null!;
             }
 

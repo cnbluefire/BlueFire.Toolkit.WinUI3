@@ -544,16 +544,19 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 
                 if (visualHelper != null)
                 {
-                    if (windowManager != null)
+                    if (windowManager?.AppWindow != null)
                     {
                         windowManager.BackdropVisual.Children.Remove(visualHelper.Visual);
                     }
                 }
 
-                var hWnd = (Windows.Win32.Foundation.HWND)Win32Interop.GetWindowFromWindowId(windowId);
-                var exStyle = (uint)Windows.Win32.PInvoke.GetWindowLongAuto(hWnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
-                exStyle &= ~(uint)Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_LAYERED;
-                Windows.Win32.PInvoke.SetWindowLongAuto(hWnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (nint)exStyle);
+                if (!CloseRequested)
+                {
+                    var hWnd = (Windows.Win32.Foundation.HWND)Win32Interop.GetWindowFromWindowId(windowId);
+                    var exStyle = (uint)Windows.Win32.PInvoke.GetWindowLongAuto(hWnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
+                    exStyle &= ~(uint)Windows.Win32.UI.WindowsAndMessaging.WINDOW_EX_STYLE.WS_EX_LAYERED;
+                    Windows.Win32.PInvoke.SetWindowLongAuto(hWnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (nint)exStyle);
+                }
             }
 
             internal override unsafe void WndProc(WindowManager sender, WindowMessageReceivedEventArgs e)

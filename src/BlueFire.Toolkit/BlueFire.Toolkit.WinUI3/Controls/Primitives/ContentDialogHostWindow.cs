@@ -27,16 +27,14 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
         private bool contentReady;
         private TaskCompletionSource loadedTaskSource;
         private readonly ContentDialog contentDialog;
-        private readonly nint owner;
 
-        internal ContentDialogHostWindow(ContentDialog contentDialog, nint owner)
+        internal ContentDialogHostWindow(ContentDialog contentDialog)
         {
             if (contentDialog == null) throw new ArgumentNullException(nameof(contentDialog));
             if (contentDialog.Parent != null) throw new InvalidOperationException(nameof(contentDialog.Parent));
             if (IsContentDialogOpened(contentDialog)) throw new InvalidOperationException("ContentDialog is already opened.");
 
             this.contentDialog = contentDialog;
-            this.owner = owner;
 
             var configuration = new AcrylicBackdropConfiguration();
             configuration.SetTheme(contentDialog.ActualTheme switch
@@ -48,7 +46,7 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
 
             var backdrop = new MaterialCardBackdrop
             {
-                CornerRadius = 0,
+                BorderThickness = 0,
                 Margin = new(0),
                 MaterialConfiguration = new AcrylicBackdropConfiguration(),
                 Visible = false
@@ -173,7 +171,7 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
             }
             else
             {
-                scale = PInvoke.GetDpiForWindow((Windows.Win32.Foundation.HWND)owner) / 96d;
+                scale = GetOwnerWindowDpi(this.Handle) / 96d;
             }
 
             var clientSize = contentDialog.DesiredSize;
@@ -224,7 +222,6 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
                     e.Handled = true;
                     e.LResult = 0;
                 }
-
             }
         }
 
@@ -242,6 +239,20 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
             {
                 this.XamlWindow.SetTitleBar(titleBarRect);
             }
+        }
+
+        private static uint GetOwnerWindowDpi(Windows.Win32.Foundation.HWND hWnd)
+        {
+            var ownerWindow = (Windows.Win32.Foundation.HWND)PInvoke.GetWindowLongAuto(hWnd, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_HWNDPARENT);
+            if (!ownerWindow.IsNull) return PInvoke.GetDpiForWindow(ownerWindow);
+
+            var monitor = PInvoke.MonitorFromWindow(default, Windows.Win32.Graphics.Gdi.MONITOR_FROM_FLAGS.MONITOR_DEFAULTTOPRIMARY);
+            if (PInvoke.GetDpiForMonitor(monitor, Windows.Win32.UI.HiDpi.MONITOR_DPI_TYPE.MDT_DEFAULT, out var dpiX, out var dpiY).Succeeded)
+            {
+                return dpiX;
+            }
+
+            return PInvoke.GetDpiForWindow(hWnd);
         }
     }
 }

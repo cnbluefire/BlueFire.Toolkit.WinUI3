@@ -11,7 +11,10 @@
 		<UseWinUI>true</UseWinUI>
 		<EnableMsixTooling>true</EnableMsixTooling>
 		<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+		<LocalBuildPackageVersion>*-*</LocalBuildPackageVersion>
 	</PropertyGroup>
+
+	<Import Project="$(MSBuildProjectDirectory)\..\build\LocalPackageVersion.props" />
 
 	<PropertyGroup>
 		<UseLocalNugetLibrary>false</UseLocalNugetLibrary>
@@ -35,15 +38,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BlueFire.Toolkit.WinUI3" Version="*-*" Condition="$(UseLocalNugetLibrary)" />
-		<PackageReference Include="BlueFire.Toolkit.WinUI3.TextView" Version="*-*" Condition="$(UseLocalNugetLibrary)" />
-		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.1.1" Condition="$(UseLocalNugetLibrary)" />
+		<PackageReference Include="BlueFire.Toolkit.WinUI3" Version="$(LocalBuildPackageVersion)" Condition="'$(UseLocalNugetLibrary)' == 'true'" />
+		<PackageReference Include="BlueFire.Toolkit.WinUI3.TextView" Version="$(LocalBuildPackageVersion)" Condition="'$(UseLocalNugetLibrary)' == 'true'" />
+		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.1.1" Condition="'$(UseLocalNugetLibrary)' == 'true'" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.231219000" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.2428" />
 		<Manifest Include="$(ApplicationManifest)" />
 	</ItemGroup>
 	
-	<ItemGroup Condition="!($(UseLocalNugetLibrary))">
+	<ItemGroup Condition="'$(UseLocalNugetLibrary)' != 'true'">
 		<ProjectReference Include="..\BlueFire.Toolkit.WinUI3\BlueFire.Toolkit.WinUI3.csproj" />
 		<ProjectReference Include="..\BlueFire.Toolkit.WinUI3.TextView\BlueFire.Toolkit.WinUI3.TextView.csproj" />
 	</ItemGroup>
@@ -65,4 +68,5 @@
 	<PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
 		<HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
 	</PropertyGroup>
+
 </Project>

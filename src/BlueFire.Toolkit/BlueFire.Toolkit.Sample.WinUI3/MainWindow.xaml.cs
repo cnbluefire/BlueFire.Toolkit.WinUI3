@@ -84,8 +84,6 @@ namespace BlueFire.Toolkit.Sample.WinUI3
             //AppWindow.TitleBar.ExtendsContentIntoTitleBar = true;
             //AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
 
-            var hWnd = (Windows.Win32.Foundation.HWND)this.GetWindowHandle();
-
             WindowManager.Get(AppWindow).WindowStyle &= ~(WindowManager.WindowStyleFlags.WS_MINIMIZEBOX
                 | WindowManager.WindowStyleFlags.WS_MAXIMIZEBOX
                 | WindowManager.WindowStyleFlags.WS_BORDER
@@ -215,10 +213,10 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
             var cd = new ContentDialog()
             {
-                XamlRoot = this.XamlRoot,
                 Content = "The ContentDialog is shown as a window.",
                 PrimaryButtonText = "Create New",
-                SecondaryButtonText = "Close",
+                SecondaryButtonText = "Create Without Owner",
+                CloseButtonText = "Close",
 
                 // 移除背景，以显示亚克力背景
                 Background = null
@@ -230,21 +228,35 @@ namespace BlueFire.Toolkit.Sample.WinUI3
                 {
                     a.Cancel = true;
 
-                    var cd2 = new ContentDialog()
-                    {
-                        XamlRoot = this.XamlRoot,
-                        Content = "Show some message.",
-                        PrimaryButtonText = "OK",
-                        SecondaryButtonText = "Cancel",
-                        Background = null
-                    };
-
-                    var res2 = await cd2.ShowModalWindowAsync(cdWindowId);
-                    Debug.WriteLine(res2);
+                    await ShowChildContentDialog(cdWindowId);
                 }
             };
 
-            var res = await cd.ShowModalWindowAsync(this.GetWindowId());
+            cd.SecondaryButtonClick += async (s, a) =>
+            {
+                a.Cancel = true;
+                await ShowChildContentDialog();
+            };
+
+            var res = await cd.ShowModalWindowAsync(new ShowDialogOptions(this.GetWindowId(), DialogWindowStartupLocation.CenterOwner));
+
+            static async Task ShowChildContentDialog(WindowId ownerWindow = default)
+            {
+                var cd2 = new ContentDialog()
+                {
+                    Content = "Show some message.",
+                    PrimaryButtonText = "OK",
+                    SecondaryButtonText = "Cancel",
+                    Background = null
+                };
+
+                var res2 = await cd2.ShowModalWindowAsync(ownerWindow switch
+                {
+                    { Value: 0 } => null,
+                    _ => new ShowDialogOptions(ownerWindow, DialogWindowStartupLocation.CenterOwner)
+                });
+                Debug.WriteLine(res2);
+            }
 
             return;
 

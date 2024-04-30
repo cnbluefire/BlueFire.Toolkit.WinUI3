@@ -1,0 +1,7 @@
+<Project> 
+    <PropertyGroup> 
+        <LocalBuildPackageReleaseVersion>0.0.5-alpha.7</LocalBuildPackageReleaseVersion> 
+        <LocalBuildPackageDebugVersion>0.0.5.1-alpha.7-debug</LocalBuildPackageDebugVersion> 
+        <LocalBuildPackageVersion>$(LocalBuildPackageReleaseVersion)</LocalBuildPackageVersion> 
+    </PropertyGroup> 
+</Project> 

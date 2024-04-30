@@ -426,10 +426,10 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
 
             if (width <= 1 || height <= 1)
             {
-                backgroundShadowHostGeometry.Path = null;
-                backgroundShadowClipGeometry.Path = null;
-                hostBrushVisualClipGeometry.Path = null;
-                borderGeometry.Path = null;
+                backgroundShadowHostGeometry.Path = EmptyPath;
+                backgroundShadowClipGeometry.Path = EmptyPath;
+                hostBrushVisualClipGeometry.Path = EmptyPath;
+                borderGeometry.Path = EmptyPath;
             }
             else
             {
@@ -464,7 +464,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
                 }
                 else
                 {
-                    borderGeometry.Path = null;
+                    borderGeometry.Path = EmptyPath;
                 }
 
             }
@@ -536,6 +536,22 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
 
                 //acrylicHelper?.Dispose();
                 //acrylicHelper = null!;
+            }
+        }
+
+        private CompositionPath? emptyPath;
+
+        private CompositionPath EmptyPath
+        {
+            get
+            {
+                if (emptyPath == null)
+                {
+                    using var geometry = CanvasGeometry.CreatePolygon(null, new[] { Vector2.Zero });
+                    emptyPath = new CompositionPath(geometry);
+                }
+
+                return emptyPath;
             }
         }
     }
