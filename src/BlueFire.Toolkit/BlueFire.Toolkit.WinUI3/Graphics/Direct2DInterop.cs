@@ -2,6 +2,7 @@
 using Microsoft.Graphics.Canvas;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -109,17 +110,17 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             }
         }
 
-        public static T? GetOrCreateFromPtr<T>(CanvasDevice? device, nint resource) where T : class, IWinRTObject
+        public static T? GetOrCreateFromPtr<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.Interfaces)] T>(CanvasDevice? device, nint resource) where T : class, IWinRTObject
         {
             return GetOrCreateFromPtr<T>(device, resource, 0);
         }
 
-        public static T? GetOrCreateFromPtr<T>(nint resource) where T : class, IWinRTObject
+        public static T? GetOrCreateFromPtr<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.Interfaces)] T>(nint resource) where T : class, IWinRTObject
         {
             return GetOrCreateFromPtr<T>(null, resource, 0);
         }
 
-        public static unsafe T? GetOrCreateFromPtr<T>(CanvasDevice? device, nint resource, float dpi) where T : class, IWinRTObject
+        public static unsafe T? GetOrCreateFromPtr<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.Interfaces)] T>(CanvasDevice? device, nint resource, float dpi) where T : class, IWinRTObject
         {
             using var objRef = GetCanvasDeviceReference(device);
 
@@ -138,17 +139,17 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             return null;
         }
 
-        public static T? GetOrCreate<T>(CanvasDevice? device, object resource) where T : class, IWinRTObject
+        public static T? GetOrCreate<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.Interfaces)] T>(CanvasDevice? device, object resource) where T : class, IWinRTObject
         {
             return GetOrCreate<T>(device, resource, 0);
         }
 
-        public static T? GetOrCreate<T>(object resource) where T : class, IWinRTObject
+        public static T? GetOrCreate<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.Interfaces)] T>(object resource) where T : class, IWinRTObject
         {
             return GetOrCreate<T>(null, resource, 0);
         }
 
-        public static T? GetOrCreate<T>(CanvasDevice? device, object resource, float dpi) where T : class, IWinRTObject
+        public static T? GetOrCreate<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicConstructors | DynamicallyAccessedMemberTypes.Interfaces)] T>(CanvasDevice? device, object resource, float dpi) where T : class, IWinRTObject
         {
             if (resource == null) return default;
 

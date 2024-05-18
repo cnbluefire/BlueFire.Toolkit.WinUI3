@@ -30,11 +30,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
         private double blurAmount = 30f;
         private bool useHostBackdropBrush = IsDwmHostBackdropBrushSupported;
 
-        private CompositionEasingFunction? fallbackTransitionEasing;
-        private CompositionScopedBatch? switchTransitionBatch;
-
         private CompositionSurfaceBrush? noiseBrush;
-        private bool disposedValue;
 
         public double TintOpacity
         {

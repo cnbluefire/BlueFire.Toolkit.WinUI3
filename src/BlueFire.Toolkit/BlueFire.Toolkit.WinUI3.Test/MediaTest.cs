@@ -39,7 +39,7 @@ namespace BlueFire.Toolkit.WinUI3.Test
             Assert.AreNotEqual(loader.NaturalSize.Height, 0);
         }
 
-        //[TestMethod]
+        [UITestMethod]
         public void CloneGeometry()
         {
             var geometry = (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), "M0 0L1 1");

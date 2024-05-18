@@ -185,6 +185,15 @@ namespace BlueFire.Toolkit.Sample.WinUI3
 
         private async void myButton_Click(object sender, RoutedEventArgs e)
         {
+            if (BlueFire.Toolkit.WinUI3.Resources.Localizer.Default.Language == "en-US")
+            {
+                BlueFire.Toolkit.WinUI3.Resources.Localizer.Default.Language = "";
+            }
+            else
+            {
+                BlueFire.Toolkit.WinUI3.Resources.Localizer.Default.Language = "en-US";
+            }
+
             //var window = new Window();
             //window.SystemBackdrop = new MaterialCardBackdrop()
             //{

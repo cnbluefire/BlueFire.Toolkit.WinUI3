@@ -76,8 +76,6 @@ namespace BlueFire.Toolkit.WinUI3
 
     }
 
-    public delegate void WindowMessageReceivedEventHandler(WindowManager sender, WindowMessageReceivedEventArgs e);
-
     internal static class WindowMessageReceivedEventArgsPool
     {
         private static ConcurrentQueue<WindowMessageReceivedEventArgs> items = new ConcurrentQueue<WindowMessageReceivedEventArgs>();

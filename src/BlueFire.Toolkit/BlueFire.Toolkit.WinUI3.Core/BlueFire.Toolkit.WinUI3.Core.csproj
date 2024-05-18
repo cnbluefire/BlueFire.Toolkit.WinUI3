@@ -9,6 +9,10 @@
 		<CsWin32Enabled>true</CsWin32Enabled>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<IsAotCompatible>true</IsAotCompatible>
+	</PropertyGroup>
+
 	<Import Project="$([MSBuild]::GetPathOfFileAbove('Common.props', '$(MSBuildThisFileDirectory)../'))" />
 
 	<ItemGroup>

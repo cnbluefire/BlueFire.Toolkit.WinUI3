@@ -20,6 +20,7 @@
 		<UseLocalNugetLibrary>false</UseLocalNugetLibrary>
 		<RestoreAdditionalProjectSources Condition="$(UseLocalNugetLibrary)">
 			$(RestoreAdditionalProjectSources);
+			$(MSBuildProjectDirectory)\..\build\nupkgs\BlueFire.Toolkit.WinUI3.Resources;
 			$(MSBuildProjectDirectory)\..\build\nupkgs\BlueFire.Toolkit.WinUI3.Core;
 			$(MSBuildProjectDirectory)\..\build\nupkgs\BlueFire.Toolkit.WinUI3;
 			$(MSBuildProjectDirectory)\..\build\nupkgs\BlueFire.Toolkit.WinUI3.TextView;

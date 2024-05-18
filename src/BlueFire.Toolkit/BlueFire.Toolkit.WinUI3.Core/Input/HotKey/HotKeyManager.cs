@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -17,7 +19,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
     {
         private static HotKeyListener? listener;
         private static List<HotKeyModel> models = new List<HotKeyModel>();
-        private static List<WeakReference<Controls.HotKeyInputBox>> inputBoxes = new List<WeakReference<Controls.HotKeyInputBox>>();
+        private static List<WeakReference<FrameworkElement>> inputBoxes = new List<WeakReference<FrameworkElement>>();
         internal static object locker = new object();
 
         private static bool isEnabledInternal = true;
@@ -154,7 +156,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
             }
         }
 
-        internal static void AddInputBox(Controls.HotKeyInputBox hotKeyInputBox)
+        internal static void AddInputBox(FrameworkElement hotKeyInputBox)
         {
             lock (locker)
             {
@@ -173,12 +175,12 @@ namespace BlueFire.Toolkit.WinUI3.Input
                     }
                 }
 
-                inputBoxes.Add(new WeakReference<Controls.HotKeyInputBox>(hotKeyInputBox));
+                inputBoxes.Add(new WeakReference<FrameworkElement>(hotKeyInputBox));
                 UpdateInputBoxFocusState();
             }
         }
 
-        internal static void RemoveInputBox(Controls.HotKeyInputBox hotKeyInputBox)
+        internal static void RemoveInputBox(FrameworkElement hotKeyInputBox)
         {
             lock (locker)
             {
@@ -215,7 +217,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
                             if (target.IsLoaded
                                 && target.FocusState != Microsoft.UI.Xaml.FocusState.Unfocused
                                 && target.XamlRoot?.ContentIslandEnvironment != null
-                                && WindowManager.Get(target.XamlRoot.ContentIslandEnvironment.AppWindowId)?.IsForegroundWindow == true)
+                                && IsForegroundWindow(target.XamlRoot.ContentIslandEnvironment.AppWindowId))
                             {
                                 enabled = false;
                                 break;
@@ -231,6 +233,11 @@ namespace BlueFire.Toolkit.WinUI3.Input
                 }
 
                 IsEnabledInternal = enabled;
+            }
+
+            static bool IsForegroundWindow(WindowId windowId)
+            {
+                return PInvoke.GetForegroundWindow().Value == Win32Interop.GetWindowFromWindowId(windowId);
             }
         }
 

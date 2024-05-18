@@ -88,6 +88,7 @@ Windows.Win32.System.Threading.GetCurrentThreadId
 Windows.Win32.System.Threading.CreateThreadpoolWait
 Windows.Win32.System.Threading.SetThreadpoolWait
 Windows.Win32.System.Threading.CloseThreadpoolWait
+Windows.Win32.System.Threading.GetCurrentThreadEffectiveToken
 
 Windows.Win32.Graphics.Gdi.MonitorFromWindow
 Windows.Win32.Graphics.Gdi.GetMonitorInfo
@@ -148,5 +149,9 @@ Windows.Win32.System.WinRT.RoUninitialize
 
 Windows.Win32.Storage.Packaging.Appx.GetCurrentApplicationUserModelId
 Windows.Win32.Storage.Packaging.Appx.ParseApplicationUserModelId
+Windows.Win32.Storage.Packaging.Appx.AppPolicyGetWindowingModel
 
 Windows.Win32.System.WinRT.Direct3D11.IDirect3DDxgiInterfaceAccess
+
+Windows.Win32.Globalization.GetUserDefaultLocaleName
+

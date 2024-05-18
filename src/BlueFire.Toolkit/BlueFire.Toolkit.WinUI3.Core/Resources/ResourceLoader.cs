@@ -19,28 +19,6 @@ namespace BlueFire.Toolkit.WinUI3.Resources
 {
     internal static class ResourceLoader
     {
-        private static ResourceManager? resourceManager;
-        private static object staticLocker = new object();
-
-        internal static ResourceManager ResourceManager
-        {
-            get
-            {
-                if (resourceManager == null)
-                {
-                    lock (staticLocker)
-                    {
-                        if (resourceManager == null)
-                        {
-                            resourceManager = new ResourceManager();
-                        }
-                    }
-                }
-
-                return resourceManager;
-            }
-        }
-
         internal static async Task<string?> GetAppLogoFilePathAsync(uint dpi, ApplicationTheme requestedTheme, bool highContrast, CancellationToken cancellationToken)
         {
             if (PackageInfo.IsPackagedApp)
@@ -58,23 +36,23 @@ namespace BlueFire.Toolkit.WinUI3.Resources
 
         internal static string? GetFileResourcePath(string resourceName, uint dpi, ApplicationTheme requestedTheme, bool highContrast)
         {
-            var context = ResourceManager.CreateResourceContext();
+            var context = ResourceManagerFactory.ResourceManager.CreateResourceContext();
             context.QualifierValues[KnownResourceQualifierName.TargetSize] = "128";
 
             InitializeResourceContext(context, requestedTheme, highContrast);
 
-            var value = ResourceManager.MainResourceMap.TryGetValue("Files\\" + resourceName, context);
+            var value = ResourceManagerFactory.ResourceManager.MainResourceMap.TryGetValue("Files\\" + resourceName, context);
             if (value == null
                 || (value.QualifierValues.TryGetValue(KnownResourceQualifierName.TargetSize, out var resultTargetSize)
                     && int.TryParse(resultTargetSize, out var resultTargetSizeValue)
                     && resultTargetSizeValue < 128))
             {
-                context = ResourceManager.CreateResourceContext();
+                context = ResourceManagerFactory.ResourceManager.CreateResourceContext();
                 context.QualifierValues[KnownResourceQualifierName.Scale] = (dpi / 96d * 100).ToString("0");
 
                 InitializeResourceContext(context, requestedTheme, highContrast);
 
-                var value2 = ResourceManager.MainResourceMap.TryGetValue("Files\\" + resourceName, context);
+                var value2 = ResourceManagerFactory.ResourceManager.MainResourceMap.TryGetValue("Files\\" + resourceName, context);
                 if (value2 != null)
                 {
                     value = value2;

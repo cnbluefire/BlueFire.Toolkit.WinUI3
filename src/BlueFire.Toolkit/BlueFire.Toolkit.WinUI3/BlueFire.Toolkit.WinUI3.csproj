@@ -9,10 +9,15 @@
 		<EnableMsixTooling>true</EnableMsixTooling>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<IsAotCompatible>true</IsAotCompatible>
+	</PropertyGroup>
+
 	<Import Project="$([MSBuild]::GetPathOfFileAbove('Common.props', '$(MSBuildThisFileDirectory)../'))" />
 
 	<ItemGroup>
 		<Content Remove="Assets\NoiseAsset_256x256_PNG.png" />
+		<None Remove="Controls\Primitives\HotKeyInputBox.xaml" />
 		<EmbeddedPRIResource Include="Assets\NoiseAsset_256x256_PNG.png" />
 	</ItemGroup>
 
@@ -23,5 +28,5 @@
 	<ItemGroup>
 		<ProjectReference Include="..\BlueFire.Toolkit.WinUI3.Core\BlueFire.Toolkit.WinUI3.Core.csproj" />
 	</ItemGroup>
-	
+
 </Project>

@@ -114,7 +114,7 @@ namespace BlueFire.Toolkit.WinUI3.Media
         {
             if (string.Equals(uri.Scheme, "ms-resource", StringComparison.OrdinalIgnoreCase))
             {
-                var candidate = Resources.ResourceLoader.ResourceManager.MainResourceMap.GetValue(uri.AbsolutePath);
+                var candidate = Resources.ResourceManagerFactory.ResourceManager.MainResourceMap.GetValue(uri.AbsolutePath);
                 if (candidate != null)
                 {
                     if (candidate.Kind == Microsoft.Windows.ApplicationModel.Resources.ResourceCandidateKind.EmbeddedData)
