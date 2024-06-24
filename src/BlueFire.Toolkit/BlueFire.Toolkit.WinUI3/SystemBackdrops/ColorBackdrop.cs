@@ -40,7 +40,10 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 
         internal override TransparentBackdropControllerEntry CreateControllerEntry(ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
         {
-            return new ColorBackdropControllerEntry(connectedTarget, xamlRoot.ContentIslandEnvironment.AppWindowId);
+            return new ColorBackdropControllerEntry(connectedTarget, xamlRoot.ContentIslandEnvironment.AppWindowId)
+            {
+                BackgroundColor = BackgroundColor
+            };
         }
 
         private class ColorBackdropControllerEntry : TransparentBackdropControllerEntry

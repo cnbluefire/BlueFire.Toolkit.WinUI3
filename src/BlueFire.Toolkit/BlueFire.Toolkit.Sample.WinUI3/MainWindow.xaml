@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <toolkit:WindowEx
     x:Class="BlueFire.Toolkit.Sample.WinUI3.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -10,35 +10,70 @@
     xmlns:toolkitControls="using:BlueFire.Toolkit.WinUI3.Controls"
     xmlns:toolkitBackdrops="using:BlueFire.Toolkit.WinUI3.SystemBackdrops"
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
-    mc:Ignorable="d"
-    
-    Title="Haha"
-    Width="500" MinWidth="400" MaxWidth="800"
-    Height="350" MinHeight="350" MaxHeight="500">
+    xmlns:model="using:BlueFire.Toolkit.Sample.WinUI3.Models"
+    xmlns:utils="using:BlueFire.Toolkit.Sample.WinUI3.Utils"
+    mc:Ignorable="d"    
+    Title="BlueFire Toolkit Gallery"
+    Width="960" MinWidth="600"
+    Height="700" MinHeight="400">
     <toolkit:WindowEx.SystemBackdrop>
         <toolkitBackdrops:MaterialCardBackdrop 
-            MaterialConfiguration="DarkAcrylicThin"
-            Margin="20"
-            ShadowBlurRadius="22"
-            ShadowOffset="0,5"
-            ShadowOpacity="0.8">
+            MaterialConfiguration="MicaAlt"
+            Margin="0"
+            CornerRadius="0"
+            BorderThickness="0"
+            ShadowOpacity="0">
         </toolkitBackdrops:MaterialCardBackdrop>
     </toolkit:WindowEx.SystemBackdrop>
 
-    <StackPanel x:Name="LayoutRoot" Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <TextBlock x:Name="BackdropName" HorizontalAlignment="Center" Margin="0,0,0,12" />
-        <Button x:Name="myButton" Click="myButton_Click">Click Me</Button>
-        <Grid Visibility="Collapsed" Background="Black" Padding="20" Margin="20" PointerPressed="Grid_PointerPressed" PointerMoved="Grid_PointerMoved">
-            <canvas:CanvasControl x:Name="myCanvasControl" Draw="myCanvasControl_Draw" Width="150" Height="150" />
-        </Grid>
-        <!--<toolkitControls:AutoScrollView UseLayoutRounding="True" Width="200" IsPlaying="True">
-            <TextBlock>哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567 哈哈哈嘻嘻嘻1234567</TextBlock>
-        </toolkitControls:AutoScrollView>-->
+    <Grid x:Name="LayoutRoot" Background="{ThemeResource LayerFillColorDefaultBrush}">
+        <Grid.Resources>
+            <local:MainNavViewTemplateSelector x:Key="MainNavViewTemplateSelector">
+                <local:MainNavViewTemplateSelector.ItemTemplate>
+                    <DataTemplate x:DataType="model:NavViewItemModel">
+                        <NavigationViewItem SelectsOnInvoked="{x:Bind SelectsOnInvoked}" 
+                                            Content="{x:Bind Self}" 
+                                            IsExpanded="True"
+                                            MenuItemsSource="{x:Bind SubMenuItems}">
+                            <NavigationViewItem.Icon>
+                                <IconSourceElement IconSource="{x:Bind IconSource}" />
+                            </NavigationViewItem.Icon>
+                        </NavigationViewItem>
+                    </DataTemplate>
+                </local:MainNavViewTemplateSelector.ItemTemplate>
+                <local:MainNavViewTemplateSelector.SeparatorTemplate>
+                    <DataTemplate>
+                        <NavigationViewItemSeparator />
+                    </DataTemplate>
+                </local:MainNavViewTemplateSelector.SeparatorTemplate>
+            </local:MainNavViewTemplateSelector>
+        </Grid.Resources>
+        <NavigationView x:Name="MainNavigationView" PaneDisplayMode="Left" 
+                        MenuItemsSource="{x:Bind VM.NavViewMenuItems}"
+                        MenuItemTemplateSelector="{StaticResource MainNavViewTemplateSelector}"
+                        ItemInvoked="MainNavigationView_ItemInvoked">
+            <NavigationView.Resources>
+                <ResourceDictionary>
+                    <ResourceDictionary.ThemeDictionaries>
+                        <ResourceDictionary x:Key="Default">
+                            <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
+                            <StaticResource ResourceKey="LayerOnMicaBaseAltFillColorDefaultBrush" x:Key="NavigationViewDefaultPaneBackground" />
+                            <StaticResource ResourceKey="LayerOnMicaBaseAltFillColorDefaultBrush" x:Key="NavigationViewExpandedPaneBackground" />
+                            <Thickness x:Key="NavigationViewContentGridBorderThickness">0</Thickness>
+                        </ResourceDictionary>
+                        <ResourceDictionary x:Key="Light">
+                            <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
+                            <StaticResource ResourceKey="LayerOnMicaBaseAltFillColorDefaultBrush" x:Key="NavigationViewDefaultPaneBackground" />
+                            <StaticResource ResourceKey="LayerOnMicaBaseAltFillColorDefaultBrush" x:Key="NavigationViewExpandedPaneBackground" />
+                            <Thickness x:Key="NavigationViewContentGridBorderThickness">0</Thickness>
+                        </ResourceDictionary>
+                    </ResourceDictionary.ThemeDictionaries>
+                </ResourceDictionary>
+            </NavigationView.Resources>
+            <NavigationView.Content>
+                <Frame x:Name="RootFrame" />
+            </NavigationView.Content>
+        </NavigationView>
+    </Grid>
 
-        <toolkitControls:TextView Visibility="Collapsed" Text="哈哈哈测试测试ABC嘻嘻1234567👨‍👩‍👧‍👦 哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦 哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦 哈哈哈嘻嘻嘻1234567👨‍👩‍👧‍👦"
-                                  FontFamily="Custom Font" FontSize="24" TextWrapping="Wrap" StrokeThickness="1" Stroke="Red" SecondaryStroke="#9900FF00" />
-
-        <ToggleSwitch x:Name="enableHotKeySwitcher" Visibility="Collapsed" IsOn="True" Toggled="enableHotKeySwitcher_Toggled" />
-        <toolkitControls:HotKeyInputBox x:Name="myHotKeyInputBox" Visibility="Collapsed" />
-    </StackPanel>
 </toolkit:WindowEx>

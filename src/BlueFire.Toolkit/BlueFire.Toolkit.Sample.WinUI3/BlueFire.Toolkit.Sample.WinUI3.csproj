@@ -29,6 +29,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<None Include="Views\ToolPages\*.xaml" Link="Views\ToolPages\Sources\%(RecursiveDir)\%(FileName)%(Extension).txt">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Include="Views\ToolPages\*.xaml.cs" Link="Views\ToolPages\Sources\%(RecursiveDir)\%(FileName)%(Extension).txt">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
 		<Content Include="Assets\SplashScreen.scale-200.png" />
 		<Content Include="Assets\LockScreenLogo.scale-200.png" />
 		<Content Include="Assets\Square150x150Logo.scale-200.png" />
@@ -40,16 +49,19 @@
 
 	<ItemGroup>
 		<PackageReference Include="BlueFire.Toolkit.WinUI3" Version="$(LocalBuildPackageVersion)" Condition="'$(UseLocalNugetLibrary)' == 'true'" />
-		<PackageReference Include="BlueFire.Toolkit.WinUI3.TextView" Version="$(LocalBuildPackageVersion)" Condition="'$(UseLocalNugetLibrary)' == 'true'" />
+		<!--<PackageReference Include="BlueFire.Toolkit.WinUI3.TextView" Version="$(LocalBuildPackageVersion)" Condition="'$(UseLocalNugetLibrary)' == 'true'" />-->
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+		<PackageReference Include="ColorCode.WinUI" Version="2.0.15" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.1.1" Condition="'$(UseLocalNugetLibrary)' == 'true'" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.231219000" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.2428" />
 		<Manifest Include="$(ApplicationManifest)" />
 	</ItemGroup>
-	
+
 	<ItemGroup Condition="'$(UseLocalNugetLibrary)' != 'true'">
 		<ProjectReference Include="..\BlueFire.Toolkit.WinUI3\BlueFire.Toolkit.WinUI3.csproj" />
-		<ProjectReference Include="..\BlueFire.Toolkit.WinUI3.TextView\BlueFire.Toolkit.WinUI3.TextView.csproj" />
+		<!--<ProjectReference Include="..\BlueFire.Toolkit.WinUI3.TextView\BlueFire.Toolkit.WinUI3.TextView.csproj" />-->
 	</ItemGroup>
 
 	<!-- 

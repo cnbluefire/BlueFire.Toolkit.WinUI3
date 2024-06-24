@@ -15,32 +15,17 @@ namespace BlueFire.Toolkit.WinUI3.Input
         private const bool DefaultIsEnabled = true;
         private const HotKeyModelStatus DefaultStatus = HotKeyModelStatus.Invalid;
 
-        private bool registered;
         private bool internalSet;
         private bool registrationSuccessful;
 
         internal HotKeyModel(string id, HotKeyModifiers modifiers, VirtualKeys virtualKey)
         {
-            registered = true;
             Id = id;
 
             Modifiers = modifiers;
             VirtualKey = virtualKey;
 
             UpdateStatus();
-        }
-
-        internal bool Registered
-        {
-            get => registered;
-            set
-            {
-                if (registered != value)
-                {
-                    registered = value;
-                    UpdateStatus();
-                }
-            }
         }
 
         internal HotKeyModifiers ModifiersInternal { get; private set; } = DefaultModifiers;
@@ -192,34 +177,27 @@ namespace BlueFire.Toolkit.WinUI3.Input
 
                 try
                 {
-                    if (!registered)
+                    if (IsEnabled)
                     {
-                        Status = HotKeyModelStatus.NotRegistered;
-                    }
-                    else
-                    {
-                        if (IsEnabled)
+                        if (HotKeyHelper.IsCompleted(Modifiers, VirtualKey))
                         {
-                            if (HotKeyHelper.IsCompleted(Modifiers, VirtualKey))
+                            if (RegistrationSuccessful)
                             {
-                                if (RegistrationSuccessful)
-                                {
-                                    Status = HotKeyModelStatus.Enabled;
-                                }
-                                else
-                                {
-                                    Status = HotKeyModelStatus.RegisterFailed;
-                                }
+                                Status = HotKeyModelStatus.Enabled;
                             }
                             else
                             {
-                                Status = HotKeyModelStatus.Invalid;
+                                Status = HotKeyModelStatus.RegisterFailed;
                             }
                         }
                         else
                         {
-                            Status = HotKeyModelStatus.Disabled;
+                            Status = HotKeyModelStatus.Invalid;
                         }
+                    }
+                    else
+                    {
+                        Status = HotKeyModelStatus.Disabled;
                     }
                 }
                 finally
@@ -264,11 +242,6 @@ namespace BlueFire.Toolkit.WinUI3.Input
         /// Hotkey is invalid.
         /// </summary>
         Invalid,
-
-        /// <summary>
-        /// Hotkey has not been registered.
-        /// </summary>
-        NotRegistered,
 
         /// <summary>
         /// Hotkey registration failed.

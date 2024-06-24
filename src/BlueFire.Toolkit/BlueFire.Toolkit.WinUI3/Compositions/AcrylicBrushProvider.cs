@@ -251,7 +251,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
 
         #region Create Brush
 
-        private static ICompositionSurface EnsureNoiseImageSurface()
+        internal static ICompositionSurface EnsureNoiseImageSurface()
         {
             if (noiseImageHolder == null)
             {

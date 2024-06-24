@@ -84,7 +84,6 @@ namespace BlueFire.Toolkit.WinUI3.Input
                     var listener = EnsureListener();
 
                     UpdateModelsRegistration();
-
                 }
 
                 return model;
@@ -102,11 +101,8 @@ namespace BlueFire.Toolkit.WinUI3.Input
                 var model = models.FirstOrDefault(c => c.Id == id);
                 if (model != null)
                 {
-                    if (model.Registered)
-                    {
-                        model.Registered = false;
-                        UpdateModelsRegistration();
-                    }
+                    models.Remove(model);
+                    UpdateModelsRegistration();
                 }
             }
         }

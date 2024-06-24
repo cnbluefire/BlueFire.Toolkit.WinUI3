@@ -274,6 +274,11 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
         private double blurAmount;
         private bool useHostBackdropBrush = AcrylicBrushProvider.IsDwmHostBackdropBrushSupported;
 
+        public AcrylicBackdropConfiguration()
+        {
+            AcrylicBrushProvider.EnsureNoiseImageSurface();
+        }
+
         public double TintOpacity
         {
             get => tintOpacity;

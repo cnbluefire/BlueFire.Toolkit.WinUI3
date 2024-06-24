@@ -37,6 +37,8 @@ namespace BlueFire.Toolkit.Sample.WinUI3
             this.InitializeComponent();
         }
 
+        public static new App Current => (App)Application.Current;
+
         /// <summary>
         /// Invoked when the application is launched.
         /// </summary>

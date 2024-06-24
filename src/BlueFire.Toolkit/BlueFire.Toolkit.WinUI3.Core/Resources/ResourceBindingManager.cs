@@ -16,7 +16,7 @@ namespace BlueFire.Toolkit.WinUI3.Resources
 
         public static ResourceBinding GetOrAdd(object obj, IPropertyAdapter propertyAdapter)
         {
-            var property = $"{propertyAdapter.DeclaringType.FullName}.{propertyAdapter.PropertyName}";
+            var property = propertyAdapter.GetPropertyKey();
 
             lock (allBindings)
             {
@@ -40,7 +40,7 @@ namespace BlueFire.Toolkit.WinUI3.Resources
 
         public static bool Remove(object obj, IPropertyAdapter propertyAdapter)
         {
-            var property = $"{propertyAdapter.DeclaringType.FullName}.{propertyAdapter.PropertyName}";
+            var property = propertyAdapter.GetPropertyKey();
 
             lock (allBindings)
             {

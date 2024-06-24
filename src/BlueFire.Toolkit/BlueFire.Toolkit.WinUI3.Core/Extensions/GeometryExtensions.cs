@@ -40,13 +40,13 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             },
             GeometryGroup group => new GeometryGroup()
             {
-                Children = CreateCollection<GeometryCollection, Geometry>(group.Children.Select(CloneGeometry)),
+                Children = CreateCollection(() => new GeometryCollection(), group.Children.Select(CloneGeometry)),
                 FillRule = group.FillRule,
                 Transform = group.Transform
             },
             PathGeometry path => new PathGeometry()
             {
-                Figures = CreateCollection<PathFigureCollection, PathFigure>(path.Figures.Select(ClonePathFigure)),
+                Figures = CreateCollection(() => new PathFigureCollection(), path.Figures.Select(ClonePathFigure)),
                 FillRule = path.FillRule,
                 Transform = path.Transform,
             },
@@ -60,7 +60,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             {
                 IsClosed = figure.IsClosed,
                 IsFilled = figure.IsFilled,
-                Segments = CreateCollection<PathSegmentCollection, PathSegment>(figure.Segments.Select(ClonePathSegment)),
+                Segments = CreateCollection(() => new PathSegmentCollection(), figure.Segments.Select(ClonePathSegment)),
                 StartPoint = figure.StartPoint,
             }
         };
@@ -87,15 +87,15 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             },
             PolyBezierSegment polyBezier => new PolyBezierSegment()
             {
-                Points = CreateCollection<PointCollection, Point>(polyBezier.Points),
+                Points = CreateCollection(() => new PointCollection(), polyBezier.Points),
             },
             PolyLineSegment polyLine => new PolyLineSegment()
             {
-                Points = CreateCollection<PointCollection, Point>(polyLine.Points),
+                Points = CreateCollection(() => new PointCollection(), polyLine.Points),
             },
             PolyQuadraticBezierSegment polyQuadraticBezier => new PolyQuadraticBezierSegment()
             {
-                Points = CreateCollection<PointCollection, Point>(polyQuadraticBezier.Points),
+                Points = CreateCollection(() => new PointCollection(), polyQuadraticBezier.Points),
             },
             QuadraticBezierSegment quadraticBezier => new QuadraticBezierSegment()
             {
@@ -105,9 +105,9 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             _ => null
         };
 
-        private static TCollection CreateCollection<TCollection, TItem>(IEnumerable<TItem?> items) where TCollection : IList<TItem>, new()
+        private static TCollection CreateCollection<TCollection, TItem>(Func<TCollection> ctor, IEnumerable<TItem?> items) where TCollection : IList<TItem>
         {
-            var collection = new TCollection();
+            var collection = ctor.Invoke();
             foreach (var item in items)
             {
                 if (item != null)

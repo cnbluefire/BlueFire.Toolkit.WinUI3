@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="BlueFire.Toolkit.Sample.WinUI3.Views.ToolPages.FormattedTextPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:BlueFire.Toolkit.Sample.WinUI3.Views.ToolPages"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:control="using:BlueFire.Toolkit.Sample.WinUI3.Controls"
+    xmlns:bftkControl="using:BlueFire.Toolkit.WinUI3.Controls"
+    xmlns:win2dCanvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
+    mc:Ignorable="d">
+
+    <Grid x:Name="LayoutRoot">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <control:ToolTitleControl Title="{x:Bind ToolModel.DisplayName}"
+                                  Namespace="{x:Bind ToolModel.Namespace}"
+                                  SourceFiles="{x:Bind ToolModel.SourceFiles}"
+                                  Margin="20,20,20,0"/>
+
+        <ScrollViewer Grid.Row="1" Margin="0,12,0,0">
+            <StackPanel Spacing="16" Padding="20,0,20,20">
+                <TextBlock TextWrapping="Wrap" Text="{x:Bind ToolModel.Description}" />
+
+                <control:ControlSourceCodeView ToolName="{x:Bind ToolModel.Name}" 
+                                               Title="Use the FormattedText class to measure text layout metrics."
+                                               CSharpBlocks="Sample Text, Block 1"
+                                               IsSourceCodeExpanded="False">
+                    <StackPanel HorizontalAlignment="Stretch">
+                        <win2dCanvas:CanvasControl x:Name="TextCanvas" Height="140" Draw="TextCanvas_Draw" />
+                    </StackPanel>
+                </control:ControlSourceCodeView>
+
+                <control:ControlSourceCodeView ToolName="{x:Bind ToolModel.Name}" 
+                                               Title="Render the FormattedText using the CompositionShape"
+                                               CSharpBlocks="Sample Text, Block 2"
+                                               IsSourceCodeExpanded="False">
+                    <Canvas x:Name="CompositionShapeHost" Height="120" />
+                </control:ControlSourceCodeView>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

@@ -166,6 +166,11 @@ namespace BlueFire.Toolkit.WinUI3.Resources
             }
             return false;
         }
+
+        internal virtual string GetPropertyKey()
+        {
+            return $"{DeclaringType.FullName}.{PropertyName}";
+        }
     }
 
     internal class XamlMemberPropertyAdapter : IPropertyAdapter

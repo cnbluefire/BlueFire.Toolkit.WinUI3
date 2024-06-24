@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="BlueFire.Toolkit.Sample.WinUI3.Views.ToolPages.HotKeyPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:BlueFire.Toolkit.Sample.WinUI3.Views.ToolPages"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:control="using:BlueFire.Toolkit.Sample.WinUI3.Controls"
+    xmlns:bftkControl="using:BlueFire.Toolkit.WinUI3.Controls"
+    mc:Ignorable="d">
+
+    <Grid x:Name="LayoutRoot">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <control:ToolTitleControl Title="{x:Bind ToolModel.DisplayName}"
+                                  Namespace="{x:Bind ToolModel.Namespace}"
+                                  SourceFiles="{x:Bind ToolModel.SourceFiles}"
+                                  Margin="20,20,20,0"/>
+
+        <ScrollViewer Grid.Row="1" Margin="0,12,0,0">
+            <StackPanel Spacing="16" Padding="20,0,20,20">
+                <TextBlock TextWrapping="Wrap" Text="{x:Bind ToolModel.Description}" />
+
+                <control:ControlSourceCodeView ToolName="{x:Bind ToolModel.Name}" 
+                                               Title="Register a hot key upon entering the page, unregister the hot key upon exiting the page, and use HotKeyInputBox to modify the hot key."
+                                               XamlBlocks="Block 1"
+                                               CSharpBlocks="Block 2,Block 3,Block 4"
+                                               IsSourceCodeExpanded="True">
+                    <!--region Block 1-->
+                    <StackPanel Orientation="Vertical" Spacing="8">
+                        <TextBlock Text="{x:Bind hotKeyModel.Label}" />
+                        <bftkControl:HotKeyInputBox HotKeyModel="{x:Bind hotKeyModel}" InvalidKeyDisplayText="Empty" />
+                    </StackPanel>
+                    <!--endregion Block 1-->
+                </control:ControlSourceCodeView>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>
