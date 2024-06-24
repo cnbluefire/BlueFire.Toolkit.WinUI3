@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
 	<Import Project="$([MSBuild]::GetPathOfFileAbove('PackageVersions.props', '$(MSBuildThisFileDirectory)'))" />
 
 	<PropertyGroup>
@@ -34,7 +34,8 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<PackageVersion>$(VersionPrefix)-$(VersionSuffix)</PackageVersion>
+		<PackageVersion>$(VersionPrefix)</PackageVersion>
+		<PackageVersion Condition="'$(VersionSuffix)' != ''">$(VersionPrefix)-$(VersionSuffix)	</PackageVersion>
 		<IsPackable>true</IsPackable>
 		<PackageOutputPath>$(MSBuildThisFileDirectory)\build\nupkgs\$(MSBuildProjectName)</PackageOutputPath>
 		<NuspecFile>$(MSBuildThisFileDirectory)\build\$(MSBuildProjectName).nuspec</NuspecFile>

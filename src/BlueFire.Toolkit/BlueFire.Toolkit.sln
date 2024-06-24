@@ -21,6 +21,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{7F1EB409-B79B-4F74-A030-FCC199429DDC}"
 	ProjectSection(SolutionItems) = preProject
 		Common.props = Common.props
+		build\LocalPackageVersion.props = build\LocalPackageVersion.props
 		PackageVersions.props = PackageVersions.props
 	EndProjectSection
 EndProject
