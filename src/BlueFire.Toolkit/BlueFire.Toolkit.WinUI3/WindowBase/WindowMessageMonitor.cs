@@ -49,40 +49,34 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
             LRESULT? result = null;
 
+            WindowMessageReceivedEventArgs? args = null;
+
             if (handler1 != null || handler2 != null)
             {
-                var args = WindowMessageReceivedEventArgsPool.Get();
+                args = new WindowMessageReceivedEventArgs();
 
-                try
+                args.WindowId = new WindowId((ulong)hWnd.Value.ToInt64());
+                args.MessageId = uMsg;
+                args.WParam = wParam.Value;
+                args.LParam = lParam.Value;
+
+                handler1?.Invoke(windowManager, args);
+
+                if (args.Handled)
                 {
-                    args.WindowId = new WindowId((ulong)hWnd.Value.ToInt64());
-                    args.MessageId = uMsg;
-                    args.WParam = wParam.Value;
-                    args.LParam = lParam.Value;
-
-                    handler1?.Invoke(windowManager, args);
-
-                    if (args.Handled)
+                    result = new LRESULT(args.LResult);
+                }
+                else
+                {
+                    if (handler2 != null)
                     {
-                        result = new LRESULT(args.LResult);
-                    }
-                    else
-                    {
-                        if (handler2 != null)
+                        handler2.Invoke(windowManager, args);
+
+                        if (args.Handled)
                         {
-                            var args2 = new WindowMessageReceivedEventArgs(args);
-                            handler2.Invoke(windowManager, args2);
-
-                            if (args2.Handled)
-                            {
-                                result = new LRESULT(args2.LResult);
-                            }
+                            result = new LRESULT(args.LResult);
                         }
                     }
-                }
-                finally
-                {
-                    WindowMessageReceivedEventArgsPool.Return(args);
                 }
             }
 
@@ -113,23 +107,20 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
             if (handler3 != null)
             {
-                var args = WindowMessageReceivedEventArgsPool.Get();
-                try
+                if (args == null)
                 {
-                    args.WindowId = new WindowId((ulong)hWnd.Value.ToInt64());
-                    args.MessageId = uMsg;
-                    args.WParam = wParam.Value;
-                    args.LParam = lParam.Value;
-
-                    args.Handled = true;
-                    args.LResult = result.Value;
-
-                    handler3?.Invoke(windowManager, args);
+                    args = new WindowMessageReceivedEventArgs();
                 }
-                finally
-                {
-                    WindowMessageReceivedEventArgsPool.Return(args);
-                }
+
+                args.WindowId = new WindowId((ulong)hWnd.Value.ToInt64());
+                args.MessageId = uMsg;
+                args.WParam = wParam.Value;
+                args.LParam = lParam.Value;
+
+                args.Handled = true;
+                args.LResult = result.Value;
+
+                handler3?.Invoke(windowManager, args);
             }
 
             return result.Value;

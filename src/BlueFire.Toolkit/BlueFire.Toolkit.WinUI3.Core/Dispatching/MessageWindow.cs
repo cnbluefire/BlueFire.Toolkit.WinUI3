@@ -113,24 +113,18 @@ namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
 
             if (handler != null)
             {
-                var args = WindowMessageReceivedEventArgsPool.Get();
-                try
-                {
-                    args.WindowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd.Value);
-                    args.MessageId = Msg;
-                    args.WParam = wParam.Value;
-                    args.LParam = lParam.Value;
+                var args = new WindowMessageReceivedEventArgs();
 
-                    handler?.Invoke(this, args);
-                    if (args.Handled)
-                    {
-                        handled = args.Handled;
-                        return (LRESULT)args.LResult;
-                    }
-                }
-                finally
+                args.WindowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd.Value);
+                args.MessageId = Msg;
+                args.WParam = wParam.Value;
+                args.LParam = lParam.Value;
+
+                handler?.Invoke(this, args);
+                if (args.Handled)
                 {
-                    WindowMessageReceivedEventArgsPool.Return(args);
+                    handled = args.Handled;
+                    return (LRESULT)args.LResult;
                 }
             }
 

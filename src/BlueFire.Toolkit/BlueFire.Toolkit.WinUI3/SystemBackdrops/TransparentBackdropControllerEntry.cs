@@ -17,6 +17,7 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 
         private WindowId windowId;
         private HWND hWnd;
+        private Windows.Win32.Graphics.Gdi.HBRUSH blackBrush;
         private WindowManager? windowManager;
         private WindowMessageMonitor? messageMonitor;
         private ICompositionSupportsSystemBackdrop connectedTarget;
@@ -76,8 +77,7 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 
                 try
                 {
-                    var brush = PInvoke.GetStockObject(Windows.Win32.Graphics.Gdi.GET_STOCK_OBJECT_FLAGS.BLACK_BRUSH);
-                    if (PInvoke.FillRect(hdc, &ps.rcPaint, new Windows.Win32.Graphics.Gdi.HBRUSH(brush.Value)) != 0)
+                    if (PInvoke.FillRect(hdc, &ps.rcPaint, GetBlackBrush()) != 0)
                     {
                         e.LResult = 1;
                     }
@@ -87,6 +87,19 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
                 {
                     PInvoke.EndPaint(hWnd, &ps);
                 }
+            }
+            else if (e.MessageId == PInvoke.WM_ERASEBKGND)
+            {
+                e.Handled = true;
+
+                var hdc = unchecked((Windows.Win32.Graphics.Gdi.HDC)(nint)e.WParam);
+                RECT clientRect = default;
+                PInvoke.GetClientRect(hWnd, &clientRect);
+                if (PInvoke.FillRect(hdc, &clientRect, GetBlackBrush()) != 0)
+                {
+                    e.LResult = 1;
+                }
+                e.LResult = 0;
             }
             else if (e.MessageId == PInvoke.WM_CLOSE)
             {
@@ -102,6 +115,17 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
                 closeRequested = true;
                 Clear();
             }
+        }
+
+        private Windows.Win32.Graphics.Gdi.HBRUSH GetBlackBrush()
+        {
+            if (blackBrush.IsNull)
+            {
+                var brush = PInvoke.GetStockObject(Windows.Win32.Graphics.Gdi.GET_STOCK_OBJECT_FLAGS.BLACK_BRUSH);
+                blackBrush = new Windows.Win32.Graphics.Gdi.HBRUSH(brush.Value);
+            }
+
+            return blackBrush;
         }
 
         private void Clear()
