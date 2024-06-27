@@ -9,6 +9,7 @@
 		<RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
 		<PublishProfile>win10-$(Platform).pubxml</PublishProfile>
 		<UseWinUI>true</UseWinUI>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<EnableMsixTooling>true</EnableMsixTooling>
 		<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
 		<LocalBuildPackageVersion>*-*</LocalBuildPackageVersion>
@@ -29,10 +30,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Include="Views\ToolPages\*.xaml" Link="Views\ToolPages\Sources\%(RecursiveDir)\%(FileName)%(Extension).txt">
+		<None Include="Views\ToolPages\*.xaml" Link="Views\ToolPages\Sources%(RecursiveDir)\%(FileName)%(Extension).txt">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
-		<None Include="Views\ToolPages\*.xaml.cs" Link="Views\ToolPages\Sources\%(RecursiveDir)\%(FileName)%(Extension).txt">
+		<None Include="Views\ToolPages\*.xaml.cs" Link="Views\ToolPages\Sources%(RecursiveDir)\%(FileName)%(Extension).txt">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>

@@ -65,6 +65,17 @@ namespace BlueFire.Toolkit.Sample.WinUI3.Views.ToolPages
                 myButton.Content = $"#{colors[colorIndex].A:X2}{colors[colorIndex].R:X2}{colors[colorIndex].G:X2}{colors[colorIndex].B:X2}";
                 CustomTitlebar.Visibility = Visibility.Collapsed;
             }
+            if (backdropType == nameof(LinearGradientBlurBackdrop))
+            {
+                #region LinearGradientBlurBackdrop Block
+
+                this.SystemBackdrop = new LinearGradientBlurBackdrop();
+
+                #endregion LinearGradientBlurBackdrop Block
+
+                CustomTitlebar.Visibility = Visibility.Collapsed;
+                myButton.Visibility = Visibility.Collapsed;
+            }
             else if (backdropType == nameof(MaterialCardBackdrop))
             {
                 #region MaterialCardBackdrop Block

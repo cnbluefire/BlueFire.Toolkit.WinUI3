@@ -122,6 +122,22 @@ ContentDialog
                         }
 
                     }),
+                    new ("LinearGradientBlurPanel", "LinearGradientBlurPanel", DefaultIcon, pageType: typeof(LinearGradientBlurPanelPage), tool: new ToolModel()
+                    {
+                        Name = "LinearGradientBlurPanel",
+                        DisplayName = "LinearGradientBlurPanel",
+                        Namespace = "BlueFire.Toolkit.WinUI3.Controls",
+                        Description = "Apply linear gradient blur to the content and the elements behind it.",
+                        SourceFiles =
+                        {
+                            new ToolSourceFileModel(ToolSourceFileType.Tool, "/src/BlueFire.Toolkit/BlueFire.Toolkit.WinUI3/Controls/LinearGradientBlurPanel.cs"),
+                            new ToolSourceFileModel(ToolSourceFileType.Tool, "/src/BlueFire.Toolkit/BlueFire.Toolkit.WinUI3/Compositions/LinearGradientBlur/LinearGradientBlurHelperBase.cs"),
+                            new ToolSourceFileModel(ToolSourceFileType.Tool, "/src/BlueFire.Toolkit/BlueFire.Toolkit.WinUI3/Compositions/LinearGradientBlur/LinearGradientBlurHelperWUC.cs"),
+                            new ToolSourceFileModel(ToolSourceFileType.SamplePage, "/src/BlueFire.Toolkit/BlueFire.Toolkit.Sample.WinUI3/Views/ToolPages/LinearGradientBlurPanelPage.xaml"),
+                            new ToolSourceFileModel(ToolSourceFileType.SamplePage, "/src/BlueFire.Toolkit/BlueFire.Toolkit.Sample.WinUI3/Views/ToolPages/LinearGradientBlurPanelPage.xaml.cs"),
+                        }
+
+                    }),
                 }),
                 new ("Window", "窗口", "\uE737", subMenuItems: new NavViewItemModel[]
                 {
@@ -213,6 +229,21 @@ ContentDialog
                             new ToolSourceFileModel(ToolSourceFileType.Tool, "/src/BlueFire.Toolkit/BlueFire.Toolkit.WinUI3/SystemBackdrops/ColorBackdrop.cs"),
                             new ToolSourceFileModel(ToolSourceFileType.SamplePage, "/src/BlueFire.Toolkit/BlueFire.Toolkit.Sample.WinUI3/Views/ToolPages/ColorBackdropPage.xaml"),
                             new ToolSourceFileModel(ToolSourceFileType.SamplePage, "/src/BlueFire.Toolkit/BlueFire.Toolkit.Sample.WinUI3/Views/ToolPages/ColorBackdropPage.xaml.cs"),
+                        }
+                    }),
+                    new ("LinearGradientBlurBackdrop", "LinearGradientBlurBackdrop", "\uE790", pageType: typeof(LinearGradientBlurBackdropPage), tool: new ToolModel()
+                    {
+                        Name = "LinearGradientBlurBackdrop",
+                        DisplayName = "LinearGradientBlurBackdrop",
+                        Namespace = "BlueFire.Toolkit.WinUI3.SystemBackdrops",
+                        Description = "Using a tilt shift blur as a window background.",
+                        SourceFiles =
+                        {
+                            new ToolSourceFileModel(ToolSourceFileType.Tool, "/src/BlueFire.Toolkit/BlueFire.Toolkit.WinUI3/SystemBackdrops/LinearGradientBlurBackdrop.cs"),
+                            new ToolSourceFileModel(ToolSourceFileType.Tool, "/src/BlueFire.Toolkit/BlueFire.Toolkit.WinUI3/Compositions/LinearGradientBlur/LinearGradientBlurHelperBase.cs"),
+                            new ToolSourceFileModel(ToolSourceFileType.Tool, "/src/BlueFire.Toolkit/BlueFire.Toolkit.WinUI3/Compositions/LinearGradientBlur/LinearGradientBlurHelperMUC.cs"),
+                            new ToolSourceFileModel(ToolSourceFileType.SamplePage, "/src/BlueFire.Toolkit/BlueFire.Toolkit.Sample.WinUI3/Views/ToolPages/LinearGradientBlurBackdropPage.xaml"),
+                            new ToolSourceFileModel(ToolSourceFileType.SamplePage, "/src/BlueFire.Toolkit/BlueFire.Toolkit.Sample.WinUI3/Views/ToolPages/LinearGradientBlurBackdropPage.xaml.cs"),
                         }
                     }),
                     new ("MaterialCardBackdrop", "MaterialCardBackdrop", "\uE790", pageType: typeof(MaterialCardBackdropPage), tool: new ToolModel()
