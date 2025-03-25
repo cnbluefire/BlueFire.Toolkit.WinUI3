@@ -1,34 +1,34 @@
-﻿using Microsoft.UI.Dispatching;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using BlueFire.Toolkit.WinUI3.Core.Dispatching;
+using BlueFire.Toolkit.WindowBase;
+using BlueFire.Toolkit.Dispatching;
+using Microsoft.UI.Dispatching;
 using Windows.Win32.Foundation;
-using PInvoke = Windows.Win32.PInvoke;
-using WNDCLASSEXW = Windows.Win32.UI.WindowsAndMessaging.WNDCLASSEXW;
-using HOT_KEY_MODIFIERS = Windows.Win32.UI.Input.KeyboardAndMouse.HOT_KEY_MODIFIERS;
-using BlueFire.Toolkit.WinUI3.Core.Dispatching;
 using Windows.System;
+using PInvoke = Windows.Win32.PInvoke;
+using HOT_KEY_MODIFIERS = Windows.Win32.UI.Input.KeyboardAndMouse.HOT_KEY_MODIFIERS;
+using BlueFire.Toolkit.WinUI3.Extensions;
 
 namespace BlueFire.Toolkit.WinUI3.Input
 {
-    internal class HotKeyListener : WindowMessageListener
+    internal partial class HotKeyListener : WorkerQueueObject
     {
-        private static Dictionary<nint, HotKeyListener> listeners = new Dictionary<nint, HotKeyListener>();
+        private const nint HWND_MESSAGE = -3;
+
+        private static int id;
 
         private bool disposedValue;
 
-        private static int id;
+        private NativeWindow nativeWindow = null!;
         private Dictionary<(HotKeyModifiers modifiers, VirtualKeys key), int> hotkeyEventHandlers
             = new Dictionary<(HotKeyModifiers modifiers, VirtualKeys key), int>();
 
-        public HotKeyListener() : base(MessageWindow.HWND_MESSAGE, "BlueFire.Toolkit.HotKeyWnd")
+        public HotKeyListener()
         {
-            this.MessageReceived += OnMessageReceived;
+            DispatcherQueue.RunSynchronously(() =>
+            {
+                nativeWindow = new NativeWindow(HWND_MESSAGE, "BlueFire.Toolkit.HotKeyWnd");
+                nativeWindow.MessageReceived += OnMessageReceived;
+            });
         }
 
         private void OnMessageReceived(object sender, WindowMessageReceivedEventArgs e)
@@ -72,7 +72,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
         {
             if (modifiers == 0 && key == 0) return false;
 
-            return RunOnDispatcherQueueSynchronously<bool>(() =>
+            return DispatcherQueue.RunSynchronously<bool>(() =>
             {
                 int hotKeyId;
 
@@ -89,7 +89,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
 
                 var modifiers2 = (HOT_KEY_MODIFIERS)(ushort)modifiers;
 
-                var res = PInvoke.RegisterHotKey((HWND)WindowHandle, hotKeyId, modifiers2 | HOT_KEY_MODIFIERS.MOD_NOREPEAT, (uint)key);
+                var res = PInvoke.RegisterHotKey((HWND)nativeWindow.WindowHandle, hotKeyId, modifiers2 | HOT_KEY_MODIFIERS.MOD_NOREPEAT, (uint)key);
                 if (res)
                 {
                     hotkeyEventHandlers[(modifiers, key)] = hotKeyId;
@@ -103,13 +103,13 @@ namespace BlueFire.Toolkit.WinUI3.Input
         {
             if (modifiers == 0 && key == 0) return;
 
-            RunOnDispatcherQueueSynchronously(() =>
+            DispatcherQueue.RunSynchronously(() =>
             {
                 lock (hotkeyEventHandlers)
                 {
                     if (hotkeyEventHandlers.Remove((modifiers, key), out var hotKeyId))
                     {
-                        PInvoke.UnregisterHotKey((HWND)WindowHandle, hotKeyId);
+                        PInvoke.UnregisterHotKey((HWND)nativeWindow.WindowHandle, hotKeyId);
                     }
                 }
             });
@@ -122,13 +122,13 @@ namespace BlueFire.Toolkit.WinUI3.Input
                 if (hotkeyEventHandlers.Count == 0) return;
             }
 
-            RunOnDispatcherQueueSynchronously(() =>
+            DispatcherQueue.RunSynchronously(() =>
             {
                 lock (hotkeyEventHandlers)
                 {
                     foreach (var (_, key) in hotkeyEventHandlers)
                     {
-                        PInvoke.UnregisterHotKey((HWND)WindowHandle, key);
+                        PInvoke.UnregisterHotKey((HWND)nativeWindow.WindowHandle, key);
                     }
 
                     hotkeyEventHandlers.Clear();
@@ -153,6 +153,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
                 if (disposing)
                 {
                     UnregisterAllKeys();
+                    nativeWindow.Dispose();
                 }
 
                 disposedValue = true;

@@ -1,4 +1,6 @@
-﻿using Microsoft.UI;
+﻿using BlueFire.Toolkit.Extensions;
+using BlueFire.Toolkit.WinUI3.Extensions;
+using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.ApplicationModel.Resources;
@@ -14,9 +16,8 @@ namespace BlueFire.Toolkit.WinUI3.Resources
     internal static class ResourceManagerFactory
     {
         private static DispatcherQueue? dispatcherQueue;
-        private static object locker = new object();
+        private static Lock locker = new Lock();
         private static ResourceManager? resourceManager;
-        private static AccessibilitySettings? accessibilitySettings;
         private static ResourceContext? currentContext;
         private static string? userDefaultLocaleName;
 
@@ -92,6 +93,25 @@ namespace BlueFire.Toolkit.WinUI3.Resources
         }
 
         internal static void RaiseQualifierValuesChanged()
+        {
+            if (dispatcherQueue == null)
+            {
+                currentContext = null;
+            }
+            else
+            {
+                if (dispatcherQueue!.HasThreadAccess)
+                {
+                    RaiseQualifierValuesChangedImpl();
+                }
+                else
+                {
+                    dispatcherQueue.TryEnqueue(DispatcherQueuePriority.Normal, () => RaiseQualifierValuesChangedImpl());
+                }
+            }
+        }
+
+        private static void RaiseQualifierValuesChangedImpl()
         {
             var context = GetCurrentContext(true);
             foreach (var binding in ResourceBindingManager.GetResourceBindings())
@@ -273,46 +293,19 @@ namespace BlueFire.Toolkit.WinUI3.Resources
             return false;
         }
 
-        private static void UpdateContrastQualifier(IDictionary<string, string> qualifierValues) =>
-            qualifierValues[KnownResourceQualifierName.Contrast] =
-                EnsureAccessibilitySettings().SystemHighContrastTheme switch
-                {
-                    SystemHighContrastTheme.HighContrastNone => "standard",
-                    SystemHighContrastTheme.HighContrast or SystemHighContrastTheme.HighContrastCustom => "high",
-                    SystemHighContrastTheme.HighContrastBlack => "black",
-                    SystemHighContrastTheme.HighContrastWhite => "white",
-                    _ => throw new NotSupportedException()
-                };
+        private static void UpdateContrastQualifier(IDictionary<string, string> qualifierValues)
+        {
+            qualifierValues[KnownResourceQualifierName.Contrast] = SystemQualifierValues.Values[KnownResourceQualifierName.Contrast];
+        }
 
         private static void UpdateDeviceFamilyQualifier(IDictionary<string, string> qualifierValues)
         {
-            var deviceFamilyInfo = DeviceFamilyInfo.GetDeviceFamilyInfo();
-
-            string qualifierValue = deviceFamilyInfo.DeviceFamily;
-
-            if (qualifierValue.StartsWith("Windows."))
-            {
-                qualifierValue = qualifierValue[8..].Replace('.', '_');
-            }
-
-            qualifierValues[KnownResourceQualifierName.DeviceFamily] = qualifierValue;
+            qualifierValues[KnownResourceQualifierName.DeviceFamily] = SystemQualifierValues.Values[KnownResourceQualifierName.DeviceFamily];
         }
 
         private static void UpdateHomeRegionQualifier(IDictionary<string, string> qualifierValues)
         {
-            var region = new Windows.Globalization.GeographicRegion();
-
-            var qualifierValue = region.CodeTwoLetter;
-            if (qualifierValue == "ZZ")
-            {
-                qualifierValue = region.CodeThreeDigit;
-                if (qualifierValue == "999")
-                {
-                    qualifierValue = "001";
-                }
-            }
-
-            qualifierValues[KnownResourceQualifierName.HomeRegion] = qualifierValue;
+            qualifierValues[KnownResourceQualifierName.HomeRegion] = SystemQualifierValues.Values[KnownResourceQualifierName.HomeRegion];
         }
 
         private static void UpdateLanguageAndLayoutDirectionQualifiers(IDictionary<string, string> qualifierValues)
@@ -338,37 +331,6 @@ namespace BlueFire.Toolkit.WinUI3.Resources
                     ApplicationTheme.Light => "light",
                     _ => "dark"
                 };
-
-
-        private static AccessibilitySettings EnsureAccessibilitySettings()
-        {
-            if (accessibilitySettings == null)
-            {
-                lock (locker)
-                {
-                    if (accessibilitySettings == null)
-                    {
-                        accessibilitySettings = new AccessibilitySettings();
-                        accessibilitySettings.HighContrastChanged += AccessibilitySettings_HighContrastChanged;
-                    }
-                }
-            }
-
-            return accessibilitySettings;
-        }
-
-        private static void AccessibilitySettings_HighContrastChanged(AccessibilitySettings? sender, object? args)
-        {
-            if (dispatcherQueue!.HasThreadAccess)
-            {
-                RaiseQualifierValuesChanged();
-            }
-            else
-            {
-                dispatcherQueue.TryEnqueue(DispatcherQueuePriority.Normal, () => RaiseQualifierValuesChanged());
-            }
-        }
-
 
         internal static string UserDefaultLocaleName
         {
@@ -399,6 +361,184 @@ namespace BlueFire.Toolkit.WinUI3.Resources
                     }
 
                     return new string(lpLocaleName, 0, length - 1);
+                }
+            }
+        }
+    }
+
+    internal class ResourceContextPool
+    {
+        private WeakObjectPool<ResourceContext> resourceContextPool;
+
+        internal ResourceContextPool(ResourceManager resourceManager)
+        {
+            resourceContextPool = new WeakObjectPool<ResourceContext>(() => resourceManager.CreateResourceContext());
+        }
+
+        public ResourceContextHandle Get(
+            string? languageTag,
+            FlowDirection? flowDirection,
+            int? scale,
+            ElementTheme? theme)
+        {
+            var handle = new ResourceContextHandle(resourceContextPool.Get(), c => resourceContextPool.Return(c));
+
+            if (TryGetLanguage(languageTag, out var language))
+            {
+                handle.ResourceContext.QualifierValues[KnownResourceQualifierName.Language] = language.LanguageTag;
+                handle.ResourceContext.QualifierValues[KnownResourceQualifierName.LayoutDirection] = GetLayoutDirectionQualifierValue(language, flowDirection);
+            }
+            else if (flowDirection.HasValue)
+            {
+                handle.ResourceContext.QualifierValues[KnownResourceQualifierName.Language] = "";
+                handle.ResourceContext.QualifierValues[KnownResourceQualifierName.LayoutDirection] = FlowDirectionToQualifierValue(flowDirection.Value);
+            }
+            else
+            {
+                handle.ResourceContext.QualifierValues[KnownResourceQualifierName.Language] = "";
+                handle.ResourceContext.QualifierValues[KnownResourceQualifierName.LayoutDirection] = "";
+            }
+
+            if (scale.HasValue)
+            {
+                handle.ResourceContext.QualifierValues[KnownResourceQualifierName.Scale] = $"{scale.Value}";
+            }
+            else
+            {
+                handle.ResourceContext.QualifierValues[KnownResourceQualifierName.Scale] = "";
+            }
+
+            if (theme.HasValue)
+            {
+                handle.ResourceContext.QualifierValues[KnownResourceQualifierName.Theme] = theme switch
+                {
+                    ElementTheme.Light => "light",
+                    ElementTheme.Dark => "dark",
+                    _ => Application.Current.RequestedTheme switch
+                    {
+                        ApplicationTheme.Light => "light",
+                        _ => "dark"
+                    }
+                };
+            }
+            else
+            {
+                handle.ResourceContext.QualifierValues[KnownResourceQualifierName.Theme] = "";
+            }
+
+
+
+            return handle;
+        }
+
+        private static ConcurrentDictionary<string, Language> languageCache = new ConcurrentDictionary<string, Language>();
+        private ConcurrentDictionary<string, ResourceContext> contexts = new();
+
+        //public ResourceContext GetResourceContext(string language, FlowDirection? flowDirection)
+        //{
+        //    var lang = GetLanguage(language);
+
+        //}
+
+        internal static bool TryGetLanguage(string? languageTag, [NotNullWhen(true)] out Language? language)
+        {
+            language = null;
+            if (!string.IsNullOrEmpty(languageTag) && Language.IsWellFormed(languageTag))
+            {
+                language = languageCache.GetOrAdd(languageTag, s => new Language(s));
+                return true;
+            }
+            return false;
+        }
+
+        internal static string GetLayoutDirectionQualifierValue(Language language, FlowDirection? flowDirection)
+        {
+            if (language != null && Windows.Win32.PInvoke.IsWindows10_17134OrGreater())
+            {
+                if (flowDirection.HasValue)
+                {
+                    return LanguageFlowDirectionToQualifierValue(language, flowDirection.Value);
+                }
+                else
+                {
+                    return LayoutDirectionToQualifierValue(language.LayoutDirection);
+                }
+            }
+            else if (flowDirection.HasValue)
+            {
+                return FlowDirectionToQualifierValue(flowDirection.Value);
+            }
+            return string.Empty;
+
+            static string LayoutDirectionToQualifierValue(LanguageLayoutDirection direction) => direction switch
+            {
+                LanguageLayoutDirection.Ltr => "LTR",
+                LanguageLayoutDirection.Rtl => "RTL",
+                LanguageLayoutDirection.TtbLtr => "TTBLTR",
+                LanguageLayoutDirection.TtbRtl => "TTBRTL",
+                _ => ThrowNotSupportedException<string>()
+            };
+
+            static string LanguageFlowDirectionToQualifierValue(Language language, FlowDirection flowDirection) => (language.LayoutDirection, flowDirection) switch
+            {
+                (LanguageLayoutDirection.TtbLtr, FlowDirection.LeftToRight) => "TTBLTR",
+                (LanguageLayoutDirection.TtbRtl, FlowDirection.RightToLeft) => "TTBRTL",
+                (_, FlowDirection.LeftToRight) => "LTR",
+                (_, FlowDirection.RightToLeft) => "RTL",
+                _ => ThrowNotSupportedException<string>()
+            };
+
+        }
+        internal static string FlowDirectionToQualifierValue(FlowDirection flowDirection) => flowDirection switch
+        {
+            FlowDirection.LeftToRight => "LTR",
+            FlowDirection.RightToLeft => "RTL",
+            _ => ThrowNotSupportedException<string>()
+        };
+
+        [DoesNotReturn]
+        private static T ThrowNotSupportedException<T>()
+        {
+            throw new NotSupportedException();
+        }
+
+        internal struct ResourceContextHandle : IDisposable
+        {
+            private readonly Action<ResourceContext> returnFunc;
+            private ResourceContext? resourceContext;
+
+            internal ResourceContextHandle(ResourceContext resourceContext, Action<ResourceContext> returnFunc)
+            {
+                this.resourceContext = resourceContext;
+                this.returnFunc = returnFunc;
+            }
+
+            public ResourceContext ResourceContext
+            {
+                get
+                {
+                    var resourceContext = this.resourceContext;
+                    if (resourceContext == null)
+                    {
+                        ThrowObjectDisposedException();
+                    }
+
+                    return resourceContext;
+                }
+            }
+
+            [DoesNotReturn]
+            private static void ThrowObjectDisposedException()
+            {
+                throw new ObjectDisposedException(nameof(ResourceContextHandle));
+            }
+
+            public void Dispose()
+            {
+                var resourceContext = Interlocked.Exchange(ref this.resourceContext, null);
+                if (resourceContext != null)
+                {
+                    returnFunc.Invoke(resourceContext);
                 }
             }
         }

@@ -10,18 +10,17 @@ using Windows.Win32.Foundation;
 using PInvoke = global::Windows.Win32.PInvoke;
 using BlueFire.Toolkit.WinUI3.Extensions;
 using System.Diagnostics;
+using BlueFire.Toolkit.WindowBase;
 
 namespace BlueFire.Toolkit.WinUI3.WindowBase
 {
-    internal class WindowMessageMonitor : IDisposable
+    internal partial class WindowMessageMonitor : IDisposable
     {
         private readonly WindowManager windowManager;
 
         private HWND hWnd;
-        private SUBCLASSPROC subClassProc;
-        private const int subClassId = 119;
         private bool disposedValue;
-        private bool attached = false;
+        private WindowMessageListener? messageListener;
 
         private WindowMessageReceivedEventHandler? windowMessageReceived;
         private WindowMessageReceivedEventHandler? windowMessageBeforeReceived;
@@ -29,125 +28,73 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
         internal unsafe WindowMessageMonitor(WindowManager windowManager)
         {
-            hWnd = windowManager.HWND;
-
-            subClassProc = new SUBCLASSPROC()
-            {
-                Func = &GlobalSubClassProc
-            };
             this.windowManager = windowManager;
+            this.hWnd = windowManager.HWND;
         }
 
         internal bool MessageReceivedEventHandled => windowMessageReceived != null;
 
-        [DebuggerNonUserCode]
-        private LRESULT SubClassProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, nuint uIdSubclass, nuint dwRefData)
+        private void OnMessageReceived(object sender, WindowMessageReceivedEventArgs e)
         {
             var handler1 = windowMessageBeforeReceived;
             var handler2 = windowMessageReceived;
             var handler3 = windowMessageAfterReceived;
 
-            LRESULT? result = null;
+            if (e.MessageId == PInvoke.WM_DESTROY)
+            {
+                windowMessageReceived = null;
+                windowMessageBeforeReceived = null;
+                windowMessageAfterReceived = null;
 
-            WindowMessageReceivedEventArgs? args = null;
+                Uninstall();
+            }
 
             if (handler1 != null || handler2 != null)
             {
-                args = new WindowMessageReceivedEventArgs();
+                handler1?.Invoke(windowManager, e);
 
-                args.WindowId = new WindowId((ulong)hWnd.Value.ToInt64());
-                args.MessageId = uMsg;
-                args.WParam = wParam.Value;
-                args.LParam = lParam.Value;
-
-                handler1?.Invoke(windowManager, args);
-
-                if (args.Handled)
+                if (e.Handled)
                 {
-                    result = new LRESULT(args.LResult);
+                    return;
                 }
                 else
                 {
                     if (handler2 != null)
                     {
-                        handler2.Invoke(windowManager, args);
+                        handler2.Invoke(windowManager, e);
 
-                        if (args.Handled)
+                        if (e.Handled)
                         {
-                            result = new LRESULT(args.LResult);
+                            return;
                         }
                     }
                 }
             }
 
-            if (!result.HasValue)
-            {
-                if (uMsg == PInvoke.WM_CLOSE)
-                {
-                    result = PInvoke.DefSubclassProc(hWnd, uMsg, wParam, lParam);
-                    if (!PInvoke.IsWindow(hWnd))
-                    {
-                        PInvoke.DestroyWindow(hWnd);
-                    }
-                }
-                else if (uMsg == PInvoke.WM_DESTROY)
-                {
-                    windowMessageReceived = null;
-                    windowMessageBeforeReceived = null;
-                    windowMessageAfterReceived = null;
-
-                    Uninstall();
-                }
-            }
-
-            if (!result.HasValue)
-            {
-                result = PInvoke.DefSubclassProc(hWnd, uMsg, wParam, lParam);
-            }
-
             if (handler3 != null)
             {
-                if (args == null)
-                {
-                    args = new WindowMessageReceivedEventArgs();
-                }
-
-                args.WindowId = new WindowId((ulong)hWnd.Value.ToInt64());
-                args.MessageId = uMsg;
-                args.WParam = wParam.Value;
-                args.LParam = lParam.Value;
-
-                args.Handled = true;
-                args.LResult = result.Value;
-
-                handler3?.Invoke(windowManager, args);
+                handler3?.Invoke(windowManager, e);
             }
-
-            return result.Value;
         }
 
         private unsafe bool Install()
         {
-            if (attached) return true;
+            if (messageListener != null) return true;
             if (disposedValue) return false;
 
-            if (PInvoke.IsWindow(hWnd))
+            var listener = messageListener = WindowMessageListener.TryCreate(hWnd);
+            if (listener != null)
             {
-                PInvoke.SetWindowSubclass(hWnd, subClassProc.Func, subClassId, 0).ThrowIfFalse();
-                attached = true;
-                return true;
+                listener.MessageReceived += OnMessageReceived;
             }
 
-            return false;
+            return messageListener != null;
         }
 
         private unsafe void Uninstall()
         {
-            if (attached)
-            {
-                PInvoke.RemoveWindowSubclass(hWnd, subClassProc.Func, subClassId).ThrowIfFalse();
-                attached = false;
-            }
+            var listener = Interlocked.Exchange(ref messageListener, null);
+            listener?.Dispose();
         }
 
         public event WindowMessageReceivedEventHandler? WindowMessageReceived
@@ -253,20 +200,5 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-
-
-        private unsafe struct SUBCLASSPROC
-        {
-            public delegate* unmanaged[Stdcall]<global::Windows.Win32.Foundation.HWND, uint, global::Windows.Win32.Foundation.WPARAM, global::Windows.Win32.Foundation.LPARAM, nuint, nuint, global::Windows.Win32.Foundation.LRESULT> Func;
-        }
-
-        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
-        private static unsafe LRESULT GlobalSubClassProc(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, nuint uIdSubclass, nuint dwRefData)
-        {
-            return WindowManager.Get(Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd.Value))?
-                .GetMonitorInternal()
-                .SubClassProc(hWnd, uMsg, wParam, lParam, uIdSubclass, dwRefData) ?? new LRESULT(0);
-        }
-
     }
 }

@@ -89,7 +89,7 @@ namespace BlueFire.Toolkit.WinUI3
                         }
 
                         return false;
-                    }, 0);
+                    });
 
                     return hWndArray?
                         .Select(c => Win32Interop.GetWindowIdFromWindow(c.Value))

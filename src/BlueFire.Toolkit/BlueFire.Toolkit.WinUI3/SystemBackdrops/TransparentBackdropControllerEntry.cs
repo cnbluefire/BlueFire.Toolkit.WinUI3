@@ -1,4 +1,5 @@
-﻿using BlueFire.Toolkit.WinUI3.WindowBase;
+﻿using BlueFire.Toolkit.WindowBase;
+using BlueFire.Toolkit.WinUI3.WindowBase;
 using Microsoft.UI;
 using Microsoft.UI.Composition;
 using System;
@@ -11,7 +12,7 @@ using Windows.Win32.Foundation;
 
 namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 {
-    internal class TransparentBackdropControllerEntry : IDisposable
+    internal partial class TransparentBackdropControllerEntry : IDisposable
     {
         private bool disposedValue;
 
@@ -19,7 +20,6 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
         private HWND hWnd;
         private Windows.Win32.Graphics.Gdi.HBRUSH blackBrush;
         private WindowManager? windowManager;
-        private WindowMessageMonitor? messageMonitor;
         private ICompositionSupportsSystemBackdrop connectedTarget;
         private bool flag;
 
@@ -34,23 +34,19 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 
             if (windowManager != null)
             {
-                messageMonitor = windowManager.GetMonitorInternal();
-                if (messageMonitor != null)
+                flag = true;
+                windowManager.WindowMessageReceived += WndProc;
+
+                using var rgn = PInvoke.CreateRectRgn_SafeHandle(-1, -1, -2, -2);
+                var hRgn = new Windows.Win32.Graphics.Gdi.HRGN(rgn.DangerousGetHandle());
+                PInvoke.DwmEnableBlurBehindWindow(hWnd, new Windows.Win32.Graphics.Dwm.DWM_BLURBEHIND()
                 {
-                    flag = true;
-                    messageMonitor.WindowMessageBeforeReceived += WndProc;
+                    dwFlags = PInvoke.DWM_BB_ENABLE | PInvoke.DWM_BB_BLURREGION,
+                    fEnable = true,
+                    hRgnBlur = hRgn,
+                });
 
-                    using var rgn = PInvoke.CreateRectRgn_SafeHandle(-1, -1, -2, -2);
-                    var hRgn = new Windows.Win32.Graphics.Gdi.HRGN(rgn.DangerousGetHandle());
-                    PInvoke.DwmEnableBlurBehindWindow(hWnd, new Windows.Win32.Graphics.Dwm.DWM_BLURBEHIND()
-                    {
-                        dwFlags = PInvoke.DWM_BB_ENABLE | PInvoke.DWM_BB_BLURREGION,
-                        fEnable = true,
-                        hRgnBlur = hRgn,
-                    });
-
-                    OnAttached(connectedTarget, windowId);
-                }
+                OnAttached(connectedTarget, windowId);
             }
 
             if (!flag)
@@ -65,7 +61,7 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 
         internal bool CloseRequested => closeRequested;
 
-        internal virtual unsafe void WndProc(WindowManager sender, WindowMessageReceivedEventArgs e)
+        internal virtual unsafe void WndProc(object? sender, WindowMessageReceivedEventArgs e)
         {
             if (e.MessageId == PInvoke.WM_PAINT)
             {
@@ -103,7 +99,7 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             }
             else if (e.MessageId == PInvoke.WM_CLOSE)
             {
-                var hWnd = (Windows.Win32.Foundation.HWND)Win32Interop.GetWindowFromWindowId(e.WindowId);
+                var hWnd = (Windows.Win32.Foundation.HWND)e.WindowHandle;
                 closeRequested = true;
                 Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread()?.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
                 {
@@ -134,13 +130,11 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 
             flag = false;
 
-            if (messageMonitor != null)
+            if (windowManager != null)
             {
-                messageMonitor.WindowMessageBeforeReceived -= WndProc;
-                messageMonitor = null;
+                windowManager.WindowMessageReceived -= WndProc;
+                windowManager = null;
             }
-
-            windowManager = null;
 
             if (!closeRequested)
             {

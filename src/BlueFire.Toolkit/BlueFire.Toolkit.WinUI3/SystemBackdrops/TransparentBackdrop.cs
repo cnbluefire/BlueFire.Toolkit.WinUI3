@@ -10,10 +10,10 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
     /// <summary>
     /// Transparent backdrop for window.
     /// </summary>
-    public class TransparentBackdrop : SystemBackdrop
+    public partial class TransparentBackdrop : SystemBackdrop
     {
         private Dictionary<WindowId, TransparentBackdropControllerEntry> entries = new Dictionary<WindowId, TransparentBackdropControllerEntry>();
-        
+
         internal IReadOnlyCollection<TransparentBackdropControllerEntry> ControllerEntries => entries.Values;
 
         protected override void OnTargetConnected(ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
@@ -68,6 +68,8 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
         private static nint GetIUnknownPtr(ICompositionSupportsSystemBackdrop? target)
         {
             if (target is null) return 0;
+
+            if (ComWrappers.TryGetComInstance(target, out var unknown)) return unknown;
 
             if (target is IWinRTObject winRtObj) return winRtObj.NativeObject.ThisPtr;
 

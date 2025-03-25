@@ -1,4 +1,5 @@
 ﻿Windows.Win32.UI.Shell.SetWindowSubclass
+Windows.Win32.UI.Shell.GetWindowSubclass
 Windows.Win32.UI.Shell.RemoveWindowSubclass
 Windows.Win32.UI.Shell.DefSubclassProc
 Windows.Win32.UI.Shell.ExtractIconW
@@ -61,9 +62,17 @@ Windows.Win32.UI.WindowsAndMessaging.IsWindowVisible
 Windows.Win32.UI.WindowsAndMessaging.NCCALCSIZE_PARAMS
 Windows.Win32.UI.WindowsAndMessaging.GetDesktopWindow
 Windows.Win32.UI.WindowsAndMessaging.GetParent
+Windows.Win32.UI.WindowsAndMessaging.SystemParametersInfoW
+Windows.Win32.UI.WindowsAndMessaging.SetPropW
+Windows.Win32.UI.WindowsAndMessaging.GetPropW
+Windows.Win32.UI.WindowsAndMessaging.RemovePropW
+Windows.Win32.UI.WindowsAndMessaging.GetWindowThreadProcessId
+Windows.Win32.UI.WindowsAndMessaging.MONITORINFOF_PRIMARY
+Windows.Win32.UI.WindowsAndMessaging.SYSTEM_PARAMETERS_INFO_ACTION
 
 Windows.Win32.UI.HiDpi.GetDpiForWindow
 Windows.Win32.UI.HiDpi.GetDpiForMonitor
+Windows.Win32.UI.HiDpi.GetSystemMetricsForDpi
 
 Windows.Win32.UI.Input.KeyboardAndMouse.EnableWindow
 Windows.Win32.UI.Input.KeyboardAndMouse.SetActiveWindow
@@ -88,7 +97,6 @@ Windows.Win32.System.Threading.GetCurrentThreadId
 Windows.Win32.System.Threading.CreateThreadpoolWait
 Windows.Win32.System.Threading.SetThreadpoolWait
 Windows.Win32.System.Threading.CloseThreadpoolWait
-Windows.Win32.System.Threading.GetCurrentThreadEffectiveToken
 
 Windows.Win32.Graphics.Gdi.MonitorFromWindow
 Windows.Win32.Graphics.Gdi.GetMonitorInfo
@@ -105,6 +113,14 @@ Windows.Win32.Graphics.Gdi.CreateBitmap
 Windows.Win32.Graphics.Gdi.GetStockObject
 Windows.Win32.Graphics.Gdi.BeginPaint
 Windows.Win32.Graphics.Gdi.EndPaint
+Windows.Win32.Graphics.Gdi.MONITORINFOEXW
+Windows.Win32.Graphics.Gdi.CreateDCW
+Windows.Win32.Graphics.Gdi.DeleteDC
+Windows.Win32.Graphics.Gdi.GetDeviceCaps
+Windows.Win32.Graphics.Gdi.GET_DEVICE_CAPS_INDEX
+Windows.Win32.Graphics.Gdi.MonitorFromPoint
+Windows.Win32.Graphics.Gdi.MonitorFromRect
+Windows.Win32.Graphics.Gdi.EnumDisplayMonitors
 
 Windows.Win32.Graphics.Dwm.DwmExtendFrameIntoClientArea
 Windows.Win32.Graphics.Dwm.DwmEnableBlurBehindWindow
@@ -114,6 +130,7 @@ Windows.Win32.Graphics.Dwm.DwmSetWindowAttribute
 Windows.Win32.Graphics.Dwm.DWM_THUMBNAIL_PROPERTIES
 Windows.Win32.Graphics.Dwm.DWM_TNP_*
 Windows.Win32.Graphics.Dwm.DwmUpdateThumbnailProperties
+Windows.Win32.Graphics.Dwm.DWMNCRENDERINGPOLICY
 
 Windows.Win32.Graphics.Direct2D.ID2D1Factory2
 Windows.Win32.Graphics.Direct2D.ID2D1Device1
@@ -142,14 +159,19 @@ Windows.Win32.System.WinRT.Composition.ICompositionDrawingSurfaceInterop2
 Windows.Win32.System.WinRT.Composition.ICompositorDesktopInterop
 
 Windows.Win32.System.WinRT.IMemoryBufferByteAccess
-Windows.Win32.System.WinRT.CreateDispatcherQueueController
 Windows.Win32.System.WinRT.RoGetActivationFactory
 Windows.Win32.System.WinRT.RoInitialize
 Windows.Win32.System.WinRT.RoUninitialize
+Windows.Win32.System.WinRT.DispatcherQueueOptions
 
 Windows.Win32.Storage.Packaging.Appx.GetCurrentApplicationUserModelId
 Windows.Win32.Storage.Packaging.Appx.ParseApplicationUserModelId
 Windows.Win32.Storage.Packaging.Appx.AppPolicyGetWindowingModel
+Windows.Win32.Storage.Packaging.Appx.OpenPackageInfoByFullName
+Windows.Win32.Storage.Packaging.Appx.GetCurrentPackageInfo
+Windows.Win32.Storage.Packaging.Appx.GetPackageInfo
+Windows.Win32.Storage.Packaging.Appx.ClosePackageInfo
+Windows.Win32.Storage.Packaging.Appx.PACKAGE_VERSION
 
 Windows.Win32.System.WinRT.Direct3D11.IDirect3DDxgiInterfaceAccess
 

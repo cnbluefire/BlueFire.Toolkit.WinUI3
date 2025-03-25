@@ -499,7 +499,7 @@ namespace BlueFire.Toolkit.WinUI3.Resources.BlueFire_Toolkit_WinUI3_Resources_Xa
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-    internal class XamlSystemBaseType : global::Microsoft.UI.Xaml.Markup.IXamlType
+    internal partial class XamlSystemBaseType : global::Microsoft.UI.Xaml.Markup.IXamlType
     {
         string _fullName;
         global::System.Type _underlyingType;

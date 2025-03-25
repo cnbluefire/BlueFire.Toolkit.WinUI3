@@ -11,6 +11,7 @@ using Microsoft.Graphics.Canvas.Text;
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
+using BlueFire.Toolkit.Extensions;
 
 namespace BlueFire.Toolkit.WinUI3.Text
 {

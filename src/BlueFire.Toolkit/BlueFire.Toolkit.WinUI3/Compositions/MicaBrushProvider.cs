@@ -16,7 +16,7 @@ using Microsoft.UI.Xaml;
 
 namespace BlueFire.Toolkit.WinUI3.Compositions
 {
-    internal sealed class MicaBrushProvider : CompositionBrushProvider
+    internal sealed partial class MicaBrushProvider : CompositionBrushProvider
     {
         // https://github.com/microsoft/microsoft-ui-xaml/tree/e30572d2b3516ced7c2c574d5fb9d059a00e8570/dev/Materials/Backdrop
         // https://github.com/wherewhere/Mica-For-UWP
@@ -78,7 +78,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
         {
             var effect = TraceDisposable(CreateEffect());
 
-            var factory = TraceDisposable(Compositor.CreateEffectFactory(effect, animatableProperties));
+            var factory = TraceDisposable(Compositor.CreateEffectFactory(effect, animatableProperties.ToArray()));
 
             var brush = TraceDisposable(factory.CreateBrush());
             if (IsBlurredWallpaperBackdropBrushSupported)
@@ -91,6 +91,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
                 var colorBrush = TraceDisposable(Compositor.CreateColorBrush(Color.FromArgb(255, 0, 0, 0)));
                 brush.SetSourceParameter("source", colorBrush);
             }
+
             return brush;
         }
 
@@ -135,7 +136,6 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
                 Background = luminosityBlendEffect,
                 Foreground = tintOpacityEffect,
             });
-
 
             return colorBlendEffect;
         }

@@ -1,4 +1,5 @@
-﻿using BlueFire.Toolkit.WinUI3.Compositions;
+﻿using BlueFire.Toolkit.WindowBase;
+using BlueFire.Toolkit.WinUI3.Compositions;
 using Microsoft.UI;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Input;
@@ -16,10 +17,8 @@ using Color = Windows.UI.Color;
 
 namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 {
-    public class MaterialCardBackdrop : TransparentBackdrop
+    public partial class MaterialCardBackdrop : TransparentBackdrop
     {
-        private static MaterialCardBackdropConfiguration defaultConfiguration = new AcrylicBackdropConfiguration();
-
         private MaterialCardBackdropConfiguration? currentConfiguration;
         private CompositionBrushProvider? brushProvider;
 
@@ -495,7 +494,7 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             return entry;
         }
 
-        private class MaterialCardBackdropControllerEntry : TransparentBackdropControllerEntry
+        private partial class MaterialCardBackdropControllerEntry : TransparentBackdropControllerEntry
         {
             private bool attached;
             private MaterialCardVisualHelper? visualHelper;
@@ -559,7 +558,7 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
                 }
             }
 
-            internal override unsafe void WndProc(WindowManager sender, WindowMessageReceivedEventArgs e)
+            internal override unsafe void WndProc(object? sender, WindowMessageReceivedEventArgs e)
             {
                 base.WndProc(sender, e);
 

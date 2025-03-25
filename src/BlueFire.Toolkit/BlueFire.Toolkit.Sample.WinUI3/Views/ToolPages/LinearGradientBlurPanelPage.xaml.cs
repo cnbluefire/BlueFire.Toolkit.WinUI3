@@ -32,15 +32,15 @@ namespace BlueFire.Toolkit.Sample.WinUI3.Views.ToolPages
 
             #region Block 2
 
-            PointRadioButtons.ItemsSource = new[]
+            PointRadioButtons.ItemsSource = new List<PointModel>()
             {
-                new PointModel(new Point(0,0), new Point(0,1)),
-                new PointModel(new Point(0,0), new Point(1,1)),
-                new PointModel(new Point(0,0), new Point(1,0)),
-                new PointModel(new Point(0,1), new Point(1,0)),
-                new PointModel(new Point(0,1), new Point(0,0)),
-                new PointModel(new Point(1,1), new Point(0,0)),
-                new PointModel(new Point(1,0), new Point(0,0)),
+                new (new Point(0,0), new Point(0,1)),
+                new (new Point(0,0), new Point(1,1)),
+                new (new Point(0,0), new Point(1,0)),
+                new (new Point(0,1), new Point(1,0)),
+                new (new Point(0,1), new Point(0,0)),
+                new (new Point(1,1), new Point(0,0)),
+                new (new Point(1,0), new Point(0,0)),
             };
 
             #endregion Block 2
@@ -91,8 +91,13 @@ namespace BlueFire.Toolkit.Sample.WinUI3.Views.ToolPages
 
         #endregion Block 3
 
-        private record class PointModel(Point StartPoint, Point EndPoint)
+        [WinRT.GeneratedBindableCustomProperty]
+        internal partial class PointModel(Point startPoint, Point endPoint)
         {
+            public Point StartPoint => startPoint;
+
+            public Point EndPoint => endPoint;
+
             public override string ToString()
             {
                 return $"({StartPoint.X}, {StartPoint.Y}) --> ({EndPoint.X}, {EndPoint.Y})";

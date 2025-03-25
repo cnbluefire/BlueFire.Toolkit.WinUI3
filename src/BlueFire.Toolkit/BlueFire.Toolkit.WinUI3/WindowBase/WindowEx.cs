@@ -16,6 +16,7 @@ using Windows.Foundation;
 using Microsoft.UI;
 using Microsoft.UI.Content;
 using System.Numerics;
+using BlueFire.Toolkit.WindowBase;
 
 namespace BlueFire.Toolkit.WinUI3
 {
@@ -23,7 +24,7 @@ namespace BlueFire.Toolkit.WinUI3
     /// WindowEx object extends FrameworkElement.
     /// </summary>
     [ContentProperty(Name = nameof(Content))]
-    public class WindowEx : FrameworkElement
+    public partial class WindowEx : FrameworkElement
     {
         private XamlWindow xamlWindow;
         private WindowManager windowManager;
@@ -69,7 +70,7 @@ namespace BlueFire.Toolkit.WinUI3
 
             windowInitialized = true;
 
-            windowManager.GetMonitorInternal().WindowMessageBeforeReceived += WindowManager_WindowMessageBeforeReceived;
+            windowManager.WindowMessageReceived += WindowManager_WindowMessageReceived;
 
             SetWindowSize(Width, Height);
 
@@ -214,7 +215,7 @@ namespace BlueFire.Toolkit.WinUI3
             }
         }
 
-        private void WindowManager_WindowMessageBeforeReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
+        private void WindowManager_WindowMessageReceived(object? sender, WindowMessageReceivedEventArgs e)
         {
             if (e.MessageId == PInvoke.WM_DPICHANGED)
             {

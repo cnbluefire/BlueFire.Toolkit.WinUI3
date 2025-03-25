@@ -1,5 +1,7 @@
-﻿using BlueFire.Toolkit.WinUI3.WindowBase;
+﻿using BlueFire.Toolkit.WindowBase;
+using BlueFire.Toolkit.WinUI3.WindowBase;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
 using System;
@@ -11,7 +13,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Graphics;
-using Windows.System;
 using Windows.Win32.Foundation;
 using PInvoke = Windows.Win32.PInvoke;
 
@@ -20,7 +21,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
     /// <summary>
     /// Modal window extensions.
     /// </summary>
-    public static class WindowDialogExtensions
+    public static partial class WindowDialogExtensions
     {
         private static uint _WM_MOVECENTER = 0;
 
@@ -134,10 +135,10 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             }
         }
 
-        private static IReadOnlyList<HWND> GetThreadWindows() =>
+        private static HWND[] GetThreadWindows() =>
             PInvoke.EnumThreadWindows((hWnd, _) =>
                 PInvoke.IsWindowVisible(hWnd)
-                && PInvoke.IsWindowEnabled(hWnd), 0) ?? Array.Empty<HWND>();
+                && PInvoke.IsWindowEnabled(hWnd)) ?? Array.Empty<HWND>();
 
         private static void EnableThreadWindows(IEnumerable<HWND> windows, bool state)
         {
@@ -211,7 +212,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
             }
         }
 
-        internal class DialogWindowContext : IDisposable
+        internal partial class DialogWindowContext : IDisposable
         {
             private static Dictionary<nint, DialogWindowContext> dialogWindowContexts = new Dictionary<nint, DialogWindowContext>();
 
@@ -219,7 +220,6 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
 
             private WindowManager windowManager;
             private readonly ShowDialogOptions? options;
-            private WindowMessageMonitor monitor;
             private HWND hWnd;
             private bool? result;
             private HWND activatedWindow;
@@ -233,7 +233,6 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
                 OwnerHWnd = ownerHWnd;
 
                 hWnd = windowManager.HWND;
-                monitor = windowManager.GetMonitorInternal();
 
                 lock (dialogWindowContexts)
                 {
@@ -279,8 +278,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
 
                 ConnectOwnerWindow();
 
-                monitor.WindowMessageBeforeReceived += OnWindowMessageBeforeReceived;
-                monitor.WindowMessageAfterReceived += OnWindowMessageAfterReceived;
+                windowManager.WindowMessageReceived += OnMessageReceived;
 
                 resultTaskSource = new TaskCompletionSource<bool?>();
             }
@@ -320,12 +318,20 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
 
             public HWND OwnerHWnd { get; }
 
-            private void OnWindowMessageBeforeReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
+            private void OnMessageReceived(object? sender, WindowMessageReceivedEventArgs e)
             {
                 if (e.MessageId == PInvoke.WM_CLOSE)
                 {
                     Closing = true;
                     DisconnectOwnerWindow();
+                    DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
+                    {
+                        if (!Closed)
+                        {
+                            Closing = false;
+                            ConnectOwnerWindow();
+                        }
+                    });
                 }
                 else if (e.MessageId == PInvoke.WM_DESTROY)
                 {
@@ -336,19 +342,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
                 }
                 else if (_WM_MOVECENTER != 0 && e.MessageId == _WM_MOVECENTER)
                 {
-                    MoveWindowToCenter(OwnerHWnd.Value, sender.WindowHandle, options?.Location ?? DialogWindowStartupLocation.CenterScreen);
-                }
-            }
-
-            private void OnWindowMessageAfterReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
-            {
-                if (e.MessageId == PInvoke.WM_CLOSE)
-                {
-                    if (PInvoke.IsWindow(hWnd))
-                    {
-                        Closing = false;
-                        ConnectOwnerWindow();
-                    }
+                    MoveWindowToCenter(OwnerHWnd.Value, e.WindowHandle, options?.Location ?? DialogWindowStartupLocation.CenterScreen);
                 }
             }
 
@@ -407,8 +401,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
                     dialogWindowContexts.Remove(windowManager.WindowHandle);
                 }
 
-                monitor.WindowMessageBeforeReceived -= OnWindowMessageBeforeReceived;
-                monitor.WindowMessageAfterReceived -= OnWindowMessageAfterReceived;
+                windowManager.WindowMessageReceived -= OnMessageReceived;
 
                 ThreadWindows = Array.Empty<HWND>();
 

@@ -30,7 +30,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
         private TextAlignment textAlignment;
         private TextTrimming textTrimming;
         private TextWrapping textWrapping;
-        private object locker = new object();
+        private Lock locker = new Lock();
 
         /// <summary>
         /// Initializes a new instance of the FormattedText class.

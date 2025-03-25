@@ -9,10 +9,12 @@ using System.Threading.Tasks;
 using Windows.Win32.Foundation;
 using WinComposition = Windows.UI.Composition;
 using PInvoke = Windows.Win32.PInvoke;
+using BlueFire.Toolkit.WindowBase;
+using BlueFire.Toolkit.Compositions;
 
 namespace BlueFire.Toolkit.WinUI3.WindowBase
 {
-    internal class WindowCompositionResources : IDisposable
+    internal partial class WindowCompositionResources : IDisposable
     {
         private readonly WindowManager windowManager;
 
@@ -31,11 +33,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
             var style = unchecked((uint)PInvoke.GetWindowLongAuto(windowManager.HWND, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_STYLE));
             if (!CreateDesktopWindowTarget())
             {
-                var monitor = windowManager.GetMonitorInternal();
-                if (monitor != null)
-                {
-                    monitor.WindowMessageBeforeReceived += WindowCompositionResources_WindowMessageBeforeReceived;
-                }
+                windowManager.GetListenerInternal().MessageReceived += WindowManager_WindowMessageReceived;
             }
         }
 
@@ -43,15 +41,11 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
         internal WinComposition.SpriteVisual BackdropVisual => EnsureBackdropVisual();
 
-        private async void WindowCompositionResources_WindowMessageBeforeReceived(WindowManager sender, WindowMessageReceivedEventArgs e)
+        private async void WindowManager_WindowMessageReceived(object? sender, WindowMessageReceivedEventArgs e)
         {
             if (e.MessageId == PInvoke.WM_SHOWWINDOW)
             {
-                var monitor = windowManager.GetMonitorInternal();
-                if (monitor != null)
-                {
-                    monitor.WindowMessageBeforeReceived -= WindowCompositionResources_WindowMessageBeforeReceived;
-                }
+                windowManager.WindowMessageReceived -= WindowManager_WindowMessageReceived;
 
                 await Task.Yield();
                 CreateDesktopWindowTarget();
@@ -79,7 +73,7 @@ namespace BlueFire.Toolkit.WinUI3.WindowBase
 
             if (desktopWindowTarget == null)
             {
-                desktopWindowTarget = WindowsCompositionHelper.CreateDesktopWindowTarget(windowManager.WindowId, false);
+                desktopWindowTarget = WindowsCompositionHelper.CreateDesktopWindowTarget(windowManager.HWND, false);
 
                 desktopWindowTarget.Root = EnsureRootVisual();
             }

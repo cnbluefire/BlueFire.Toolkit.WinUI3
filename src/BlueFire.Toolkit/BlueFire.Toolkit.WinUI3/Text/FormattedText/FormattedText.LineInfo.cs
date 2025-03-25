@@ -106,7 +106,7 @@ namespace BlueFire.Toolkit.WinUI3.Text
         }
 
 
-        private class FormattedTextRendererImpl : ICanvasTextRenderer
+        private partial class FormattedTextRendererImpl : ICanvasTextRenderer
         {
             private CanvasTextLayout? textLayout;
             private List<FormattedTextGlyphRun> glyphRuns;

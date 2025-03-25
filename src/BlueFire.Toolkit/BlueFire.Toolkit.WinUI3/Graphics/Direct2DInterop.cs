@@ -1,4 +1,5 @@
-﻿using BlueFire.Toolkit.WinUI3.Extensions;
+﻿using BlueFire.Toolkit.Extensions;
+using BlueFire.Toolkit.WinUI3.Extensions;
 using Microsoft.Graphics.Canvas;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Graphics.DirectX.Direct3D11;
@@ -41,20 +43,16 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         {
             if (wrapper == null) throw new ArgumentException(null, nameof(wrapper));
 
-            var type = typeof(T);
-            if (type.GetCustomAttribute<ComImportAttribute>(true) == null)
-                throw new InvalidCastException(type.FullName);
-
-            var guid = type.GetGuidType().GUID;
-
-            nint resource = 0;
-
-            var hr = GetNativeResource(canvasDevice, wrapper, dpi, &guid, (void**)(&resource));
-
-            if (hr.Succeeded)
+            if (ComObjectHelper.TryGetInterfaceId<T>(out var iid))
             {
-                using var objRef = ObjectReference<WinRT.Interop.IUnknownVftbl>.Attach(ref resource);
-                return objRef.AsInterface<T>();
+                nint resource = 0;
+
+                var hr = GetNativeResource(canvasDevice, wrapper, dpi, &iid, (void**)(&resource));
+
+                if (hr.Succeeded)
+                {
+                    return ComObjectHelper.ConvertToManaged<T>(resource);
+                }
             }
 
             return null;
@@ -74,7 +72,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         {
             if (wrapper == null) throw new ArgumentException(null, nameof(wrapper));
 
-            var guid = typeof(T).GetGuidType().GUID;
+            var guid = typeof(T).GUID;
 
             ComPtr<T> comPtr = default;
 
@@ -153,7 +151,13 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         {
             if (resource == null) return default;
 
-            nint punk = Marshal.GetIUnknownForObject(resource);
+            bool fromComWrappers = true;
+            if (!ComWrappers.TryGetComInstance(resource, out var punk))
+            {
+                fromComWrappers = false;
+                punk = Marshal.GetIUnknownForObject(resource);
+            }
+
             if (punk == 0) throw new InvalidCastException(resource.GetType().FullName);
 
             try
@@ -162,7 +166,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             }
             finally
             {
-                Marshal.Release(punk);
+                if (!fromComWrappers) Marshal.Release(punk);
             }
         }
 
@@ -210,23 +214,28 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             {
                 try
                 {
-                    if (ComWrappersSupport.TryUnwrapObject(device, out var tmpObjRef))
+                    bool fromComWrappers = true;
+                    if (!ComWrappers.TryGetComInstance(device, out var punk))
                     {
-                        objRef = tmpObjRef.As(IID_ICanvasDevice);
-                    }
-                    else
-                    {
-                        nint punk = 0;
                         try
                         {
+                            fromComWrappers = false;
                             punk = Marshal.GetIUnknownForObject(device);
+                        }
+                        catch { }
+                    }
+
+                    if (punk != 0)
+                    {
+                        try
+                        {
                             using var tmpObjRef2 = ComWrappersSupport.GetObjectReferenceForInterface(punk);
 
                             objRef = tmpObjRef2.As(IID_ICanvasDevice);
                         }
                         finally
                         {
-                            Marshal.Release(punk);
+                            if (!fromComWrappers) Marshal.Release(punk);
                         }
                     }
                 }

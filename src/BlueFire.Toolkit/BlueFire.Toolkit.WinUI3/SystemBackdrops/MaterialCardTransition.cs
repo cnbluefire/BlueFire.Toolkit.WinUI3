@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BlueFire.Toolkit.Compositions;
 
 namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 {

@@ -1,4 +1,5 @@
-﻿using BlueFire.Toolkit.WinUI3.Extensions;
+﻿using BlueFire.Toolkit.WindowBase;
+using BlueFire.Toolkit.WinUI3.Extensions;
 using BlueFire.Toolkit.WinUI3.SystemBackdrops;
 using Microsoft.UI;
 using Microsoft.UI.Composition.SystemBackdrops;
@@ -19,8 +20,9 @@ using Windows.Win32;
 
 namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
 {
-    internal class ContentDialogHostWindow : WindowEx
+    internal partial class ContentDialogHostWindow : Window
     {
+        private Windows.Win32.Foundation.HWND windowHandle;
         private Canvas canvas;
         private Rectangle titleBarRect;
         private bool hasShown;
@@ -33,6 +35,15 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
             if (contentDialog == null) throw new ArgumentNullException(nameof(contentDialog));
             if (contentDialog.Parent != null) throw new InvalidOperationException(nameof(contentDialog.Parent));
             if (IsContentDialogOpened(contentDialog)) throw new InvalidOperationException("ContentDialog is already opened.");
+
+            windowHandle = (Windows.Win32.Foundation.HWND)this.GetWindowHandle();
+            SetupBorderlessWindowWithShadow();
+
+            var windowManager = WindowManager.Get(this);
+            if (windowManager != null)
+            {
+                windowManager.WindowMessageReceived += OnWindowMessageReceived;
+            }
 
             this.contentDialog = contentDialog;
 
@@ -56,6 +67,8 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
 
             loadedTaskSource = new TaskCompletionSource();
 
+            var transparentBrush = new SolidColorBrush(Colors.Transparent);
+
             this.Title = "ContentDialogHostWindow";
             this.Content = (canvas = new Canvas()
             {
@@ -66,13 +79,16 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
                     (titleBarRect = new Rectangle()
                     {
                         Height = 24,
-                        Fill = new SolidColorBrush(Colors.Transparent)
+                        Fill = transparentBrush
                     })
                 }
             });
+            canvas.Resources["OverlayCornerRadius"] = new CornerRadius(0);
+            canvas.Resources["ContentDialogBorderWidth"] = new Thickness(0);
+            canvas.Resources["ContentDialogBackground"] = transparentBrush;
 
             Canvas.SetZIndex(titleBarRect, 999);
-            this.XamlWindow.ExtendsContentIntoTitleBar = true;
+            this.ExtendsContentIntoTitleBar = true;
 
             canvas.Loaded += (s, a) =>
             {
@@ -87,6 +103,12 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
 
             contentDialog.Opened += (s, a) =>
             {
+                if (VisualTreeHelper.GetChildrenCount(s) > 0
+                    && VisualTreeHelper.GetChild(s, 0) is FrameworkElement templateRoot
+                    && templateRoot.FindName("BackgroundElement") is FrameworkElement backgroundElement)
+                {
+                    backgroundElement.Shadow = null;
+                }
                 canvas.Opacity = 1;
                 backdrop.Visible = true;
             };
@@ -100,19 +122,8 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
                         backdrop.Visible = false;
                         canvas.Opacity = 0;
 
-                        // 快速触发 Closed 事件
-                        if (VisualTreeHelper.GetChildrenCount(contentDialog) > 0
-                            && VisualTreeHelper.GetChild(contentDialog, 0) is FrameworkElement dialogLayoutRoot)
-                        {
-                            var visualStateGroup = VisualStateManager.GetVisualStateGroups(dialogLayoutRoot)?
-                                .FirstOrDefault(c => c.Name == "DialogShowingStates");
-
-                            if (visualStateGroup != null
-                                && visualStateGroup.CurrentState?.Name != "DialogHidden")
-                            {
-                                VisualStateManager.GoToState(contentDialog, "DialogHidden", false);
-                            }
-                        }
+                        // fast raise Closed event
+                        FastGoToState("DialogShowingStates", "DialogHidden");
                     }
                 });
             };
@@ -171,47 +182,31 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
             }
             else
             {
-                scale = GetOwnerWindowDpi(this.Handle) / 96d;
+                scale = GetOwnerWindowDpi(windowHandle) / 96d;
             }
 
             var clientSize = contentDialog.DesiredSize;
 
-            AppWindow.ResizeClient(new Windows.Graphics.SizeInt32(
+            AppWindow.Resize(new Windows.Graphics.SizeInt32(
                 (int)(scale * clientSize.Width),
                 (int)(scale * clientSize.Height)));
 
             if (centerToOwner)
             {
-                PInvoke.SendMessage(this.Handle, WindowDialogExtensions.WM_MOVECENTER, 0, 0);
+                PInvoke.SendMessage(windowHandle, WindowDialogExtensions.WM_MOVECENTER, 0, 0);
             }
 
             titleBarRect.Width = clientSize.Width;
         }
 
-        protected override void OnDpiChanged(WindowExDpiChangedEventArgs args)
+        private void OnWindowMessageReceived(object? sender, WindowMessageReceivedEventArgs e)
         {
-            base.OnDpiChanged(args);
-
-            UpdateClientSize(false);
-        }
-
-        protected override async void OnWindowMessageReceived(WindowMessageReceivedEventArgs e)
-        {
-            base.OnWindowMessageReceived(e);
-
             if (!hasShown && e.MessageId == PInvoke.WM_SHOWWINDOW && e.WParam != 0)
             {
                 hasShown = true;
-
-                var presenter = (OverlappedPresenter)this.AppWindow.Presenter;
-                presenter.SetBorderAndTitleBar(false, false);
-                presenter.IsResizable = false;
-                presenter.IsMinimizable = false;
-                presenter.IsMaximizable = false;
-
                 AppWindow?.Resize(new Windows.Graphics.SizeInt32(0, 0));
 
-                await InitializeDialogAsync();
+                _ = InitializeDialogAsync();
             }
             else if (e.MessageId == PInvoke.WM_SYSCOMMAND)
             {
@@ -229,16 +224,20 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
         {
             await WaitPresenterLoadedAsync();
             var task = contentDialog.ShowAsync(ContentDialogPlacement.InPlace);
+            
+            // fast raise Opened event
+            FastGoToState("DialogShowingStates", "DialogShowing");
 
-            await Task.Delay(TimeSpan.FromSeconds(0.25));
-
-            UpdateClientSize(true);
-            contentReady = true;
-
-            if (task.Status == AsyncStatus.Started)
+            DispatcherQueue.TryEnqueue(() =>
             {
-                this.XamlWindow.SetTitleBar(titleBarRect);
-            }
+                UpdateClientSize(true);
+                contentReady = true;
+
+                if (task.Status == AsyncStatus.Started)
+                {
+                    this.SetTitleBar(titleBarRect);
+                }
+            });
         }
 
         private static uint GetOwnerWindowDpi(Windows.Win32.Foundation.HWND hWnd)
@@ -254,5 +253,47 @@ namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
 
             return PInvoke.GetDpiForWindow(hWnd);
         }
+
+        private unsafe void SetupBorderlessWindowWithShadow()
+        {
+            var style = PInvoke.GetWindowLongAuto(windowHandle, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_STYLE);
+            style &= ~(nint)(Windows.Win32.UI.WindowsAndMessaging.WINDOW_STYLE.WS_CAPTION
+                | Windows.Win32.UI.WindowsAndMessaging.WINDOW_STYLE.WS_THICKFRAME
+                | Windows.Win32.UI.WindowsAndMessaging.WINDOW_STYLE.WS_MINIMIZEBOX
+                | Windows.Win32.UI.WindowsAndMessaging.WINDOW_STYLE.WS_MAXIMIZEBOX);
+            PInvoke.SetWindowLongAuto(windowHandle, Windows.Win32.UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX.GWL_STYLE, style);
+
+            var value = Windows.Win32.Graphics.Dwm.DWMNCRENDERINGPOLICY.DWMNCRP_ENABLED;
+            PInvoke.DwmSetWindowAttribute(
+                windowHandle,
+                Windows.Win32.Graphics.Dwm.DWMWINDOWATTRIBUTE.DWMWA_NCRENDERING_POLICY,
+                &value,
+                sizeof(Windows.Win32.Graphics.Dwm.DWMNCRENDERINGPOLICY));
+
+            PInvoke.DwmExtendFrameIntoClientArea(windowHandle, new Windows.Win32.UI.Controls.MARGINS()
+            {
+                cxLeftWidth = -1,
+                cxRightWidth = -1,
+                cyBottomHeight = -1,
+                cyTopHeight = -1
+            });
+        }
+
+        private void FastGoToState(string groupName, string stateName)
+        {
+            if (VisualTreeHelper.GetChildrenCount(contentDialog) > 0
+                && VisualTreeHelper.GetChild(contentDialog, 0) is FrameworkElement dialogLayoutRoot)
+            {
+                var visualStateGroup = VisualStateManager.GetVisualStateGroups(dialogLayoutRoot)?
+                    .FirstOrDefault(c => c.Name == groupName);
+
+                if (visualStateGroup != null
+                    && visualStateGroup.CurrentState?.Name != stateName)
+                {
+                    VisualStateManager.GoToState(contentDialog, stateName, false);
+                }
+            }
+        }
+
     }
 }

@@ -13,7 +13,7 @@
     <tags>winui3 winappsdk</tags>
     <description>Dependency Microsoft.Graphics.Win2D 1.1.0</description>
     <dependencies>
-      <group targetFramework="net6.0-windows10.0.22621">
+      <group targetFramework="net9.0-windows10.0.22621">
         <!-- <dependency id="Microsoft.Graphics.Win2D" version="1.1.0" /> -->
         <dependency id="BlueFire.Toolkit.WinUI3.Core" version="$version$" />
       </group>

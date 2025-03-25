@@ -12,10 +12,11 @@ using Windows.UI.Composition;
 using Windows.UI;
 using System.Numerics;
 using Microsoft.UI.Xaml.Media;
+using BlueFire.Toolkit.Compositions;
 
 namespace BlueFire.Toolkit.WinUI3.Compositions
 {
-    internal sealed class AcrylicBrushProvider : CompositionBrushProvider
+    internal sealed partial class AcrylicBrushProvider : CompositionBrushProvider
     {
         // https://github.com/microsoft/microsoft-ui-xaml/tree/e30572d2b3516ced7c2c574d5fb9d059a00e8570/dev/Materials/Acrylic
 
@@ -143,7 +144,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
                 noiseBrush.Surface = EnsureNoiseImageSurface();
             }
 
-            var factory = TraceDisposable(Compositor.CreateEffectFactory(effect, animatableProperties));
+            var factory = TraceDisposable(Compositor.CreateEffectFactory(effect, animatableProperties.ToArray()));
 
             var brush = TraceDisposable(factory.CreateBrush());
 

@@ -1,4 +1,4 @@
-﻿using BlueFire.Toolkit.WinUI3.Extensions;
+﻿using BlueFire.Toolkit.Extensions;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Windows.Win32.Foundation;
@@ -8,7 +8,7 @@ using WinRT;
 using WinCompositor = Windows.UI.Composition.Compositor;
 using Windows.Win32.Graphics.DirectComposition;
 
-namespace BlueFire.Toolkit.WinUI3.Compositions
+namespace BlueFire.Toolkit.Compositions
 {
     internal unsafe class InteropCompositor
     {

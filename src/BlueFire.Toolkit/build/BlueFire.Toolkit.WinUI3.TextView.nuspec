@@ -12,7 +12,7 @@
     <description>Package Description</description>
     <tags>winui3 winappsdk</tags>
     <dependencies>
-      <group targetFramework="net6.0-windows10.0.22621">
+      <group targetFramework="net9.0-windows10.0.22621">
         <dependency id="BlueFire.Toolkit.WinUI3" version="$version$" />
       </group>
     </dependencies>

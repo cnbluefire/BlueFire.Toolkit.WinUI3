@@ -19,7 +19,7 @@ namespace BlueFire.Toolkit.WinUI3.Controls
     /// <summary>
     /// Apply OpacityMask effect to UIElements like wpf.
     /// </summary>
-    public class OpacityMaskView : RedirectVisualView
+    public partial class OpacityMaskView : RedirectVisualView
     {
         public OpacityMaskView()
         {

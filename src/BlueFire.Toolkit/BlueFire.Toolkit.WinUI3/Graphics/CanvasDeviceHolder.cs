@@ -1,4 +1,5 @@
 ﻿using BlueFire.Toolkit.WinUI3.Extensions;
+using BlueFire.Toolkit.Graphics;
 using Microsoft.Graphics.Canvas;
 using Microsoft.UI.Dispatching;
 using System;
@@ -15,7 +16,7 @@ using IDXGIFactory1 = Windows.Win32.Graphics.Dxgi.IDXGIFactory1;
 
 namespace BlueFire.Toolkit.WinUI3.Graphics
 {
-    internal class CanvasDeviceHolder : IDisposable
+    internal partial class CanvasDeviceHolder : IDisposable
     {
         private CanvasDevice canvasDevice;
         private Direct3DDeviceLostHelper? deviceLostHelper;

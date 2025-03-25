@@ -14,7 +14,7 @@ namespace BlueFire.Toolkit.WinUI3.Controls
     /// <summary>
     /// UI input box for <see cref="BlueFire.Toolkit.WinUI3.Input.HotKeyManager"/>.
     /// </summary>
-    public class HotKeyInputBox : Control
+    public partial class HotKeyInputBox : Control
     {
         public HotKeyInputBox()
         {

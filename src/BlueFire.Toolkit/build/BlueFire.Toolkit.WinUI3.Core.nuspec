@@ -12,8 +12,8 @@
     <description>Package Description</description>
     <tags>winui3 winappsdk</tags>
     <dependencies>
-      <group targetFramework="net6.0-windows10.0.22621">
-        <dependency id="Microsoft.WindowsAppSDK" version="1.4.231219000" exclude="Build,Analyzers" />
+      <group targetFramework="net9.0-windows10.0.22621">
+        <dependency id="Microsoft.WindowsAppSDK" version="1.6.240923002" exclude="Build,Analyzers" />
 		<dependency id="System.Memory" version="4.5.5" include="All" />
 		<dependency id="System.Runtime.CompilerServices.Unsafe" version="6.0.0" include="All" />
 	  </group>

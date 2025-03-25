@@ -14,7 +14,7 @@ namespace BlueFire.Toolkit.WinUI3.Controls
     /// <summary>
     /// Marquee effect for UIElement
     /// </summary>
-    public class AutoScrollView : RedirectVisualView
+    public partial class AutoScrollView : RedirectVisualView
     {
         public AutoScrollView()
         {

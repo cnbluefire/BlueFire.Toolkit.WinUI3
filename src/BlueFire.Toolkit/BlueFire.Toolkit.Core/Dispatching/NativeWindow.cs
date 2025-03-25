@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BlueFire.Toolkit.WindowBase;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,29 +12,28 @@ using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
 
-namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
+namespace BlueFire.Toolkit.Dispatching
 {
-    internal class MessageWindow : IDisposable
+    internal partial class NativeWindow : IDisposable
     {
         private bool disposedValue;
 
         public const nint HWND_MESSAGE = -3;
 
-        private const string WindowClassName = "BlueFire.Toolkit.MessageWindow";
-        private const string DefaultWindowName = "BlueFire.Toolkit.MessageWindow";
+        private const string WindowClassName = "BlueFire.Toolkit.NativeWindow";
+        private const string DefaultWindowName = "BlueFire.Toolkit.NativeWindow";
 
-        private static ConcurrentDictionary<nint, WeakReference<MessageWindow>> windows = new ConcurrentDictionary<nint, WeakReference<MessageWindow>>();
         private static HINSTANCE HINSTANCE;
-        private static object hInstanceLocker = new object();
+        private static Lock hInstanceLocker = new Lock();
 
-        [ThreadStatic]
         private static ushort windowClassAtom;
 
         private readonly nint parentWindow;
         private readonly string? windowName;
         private nint windowHandle;
+        private GCHandle gcHandle;
 
-        public MessageWindow(nint parentWindow, string? windowName = DefaultWindowName)
+        internal NativeWindow(nint parentWindow, string? windowName = DefaultWindowName)
         {
             this.parentWindow = parentWindow;
             this.windowName = windowName;
@@ -65,7 +65,7 @@ namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
                     {
                         cbSize = (uint)sizeof(WNDCLASSEXW),
                         style = 0,
-                        lpfnWndProc = &GlobalWndProc,
+                        lpfnWndProc = &StaticWndProc,
                         cbClsExtra = 0,
                         cbWndExtra = 0,
                         hInstance = HINSTANCE,
@@ -77,13 +77,13 @@ namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
                         lpszClassName = pClassName
                     };
                     windowClassAtom = PInvoke.RegisterClassEx(&wndClassEx);
-                    if (windowClassAtom == 0) ((HRESULT)Marshal.GetHRForLastWin32Error()).ThrowOnFailure();
+                    if (windowClassAtom == 0) Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
                 }
             }
 
             fixed (char* pWindowName = windowName)
             {
-                var gcHandle = GCHandle.Alloc(this, GCHandleType.Normal);
+                gcHandle = GCHandle.Alloc(this, GCHandleType.Weak);
 
                 windowHandle = Windows.Win32.PInvoke.CreateWindowEx(
                     0,
@@ -99,86 +99,89 @@ namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
                     HINSTANCE,
                     (void*)GCHandle.ToIntPtr(gcHandle));
 
-                if (windowHandle == 0) ((HRESULT)Marshal.GetHRForLastWin32Error()).ThrowOnFailure();
+                if (windowHandle == 0)
+                {
+                    gcHandle.Free();
+                    Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
+                }
+
+                GC.KeepAlive(this);
             }
         }
 
-        internal nint WindowHandle => windowHandle;
+        public nint WindowHandle => windowHandle;
 
-        internal event WindowMessageReceivedEventHandler? MessageReceived;
+        public event WindowMessageReceivedEventHandler? MessageReceived;
 
-        protected virtual LRESULT WndProc(HWND hWnd, uint Msg, WPARAM wParam, LPARAM lParam, ref bool handled)
+        protected virtual void OnWndProc(WindowMessageReceivedEventArgs args)
         {
             var handler = MessageReceived;
 
             if (handler != null)
             {
-                var args = new WindowMessageReceivedEventArgs();
-
-                args.WindowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd.Value);
-                args.MessageId = Msg;
-                args.WParam = wParam.Value;
-                args.LParam = lParam.Value;
-
                 handler?.Invoke(this, args);
-                if (args.Handled)
-                {
-                    handled = args.Handled;
-                    return (LRESULT)args.LResult;
-                }
             }
-
-            return new LRESULT(0);
         }
 
-        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
-        private unsafe static LRESULT GlobalWndProc(HWND hWnd, uint Msg, WPARAM wParam, LPARAM lParam)
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
+        private unsafe static LRESULT StaticWndProc(HWND hWnd, uint Msg, WPARAM wParam, LPARAM lParam)
         {
+            const string NativeWindowPropertyName = "NATIVEWINDOW";
+
             bool handled = false;
             LRESULT result = default;
 
             if (Msg == PInvoke.WM_NCCREATE)
             {
                 var createStruct = (CREATESTRUCTW*)lParam.Value;
-                var gcHandle = GCHandle.FromIntPtr((nint)createStruct->lpCreateParams);
-                try
+                var gcHandle = (GCHandle)(nint)createStruct->lpCreateParams;
+
+                if (gcHandle.IsAllocated && gcHandle.Target is NativeWindow window)
                 {
-                    if (gcHandle.IsAllocated && gcHandle.Target is MessageWindow window)
+                    fixed (char* pPropName = NativeWindowPropertyName)
                     {
-                        RemoveAllInvalidWindow();
-                        windows[hWnd.Value] = new WeakReference<MessageWindow>(window);
+                        PInvoke.SetProp(hWnd, pPropName, (HANDLE)(nint)createStruct->lpCreateParams);
                     }
                 }
-                finally
+                else
                 {
-                    gcHandle.Free();
-                }
-            }
-            if (Msg == PInvoke.WM_DESTROY)
-            {
-                if (windows.Remove(hWnd.Value, out var weakWindow))
-                {
-                    if (weakWindow.TryGetTarget(out var window))
-                    {
-                        result = window.WndProc(hWnd, Msg, wParam, lParam, ref handled);
-                    }
-                    else
-                    {
-                        RemoveAllInvalidWindow();
-                    }
+                    return (LRESULT)0;
                 }
             }
             else
             {
-                if (windows.TryGetValue(hWnd.Value, out var weakWindow))
+                GCHandle gcHandle = default;
+                fixed (char* pPropName = NativeWindowPropertyName)
                 {
-                    if (weakWindow.TryGetTarget(out var window))
+                    var value = PInvoke.GetProp(hWnd, pPropName);
+                    if (!value.IsNull)
                     {
-                        result = window.WndProc(hWnd, Msg, wParam, lParam, ref handled);
+                        gcHandle = (GCHandle)(nint)value;
                     }
-                    else
+                }
+
+                if (Msg == PInvoke.WM_DESTROY)
+                {
+                    fixed (char* pPropName = NativeWindowPropertyName)
                     {
-                        RemoveAllInvalidWindow();
+                        PInvoke.RemoveProp(hWnd, pPropName);
+                    }
+                }
+
+                if (gcHandle.IsAllocated && gcHandle.Target is NativeWindow nativeWindow)
+                {
+                    var args = new WindowMessageReceivedEventArgs();
+
+                    args.WindowHandle = hWnd.Value;
+                    args.MessageId = Msg;
+                    args.WParam = wParam.Value;
+                    args.LParam = lParam.Value;
+
+                    nativeWindow.OnWndProc(args);
+
+                    if ((handled = args.Handled))
+                    {
+                        result = (LRESULT)args.LResult;
                     }
                 }
             }
@@ -189,22 +192,6 @@ namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
             }
 
             return result;
-        }
-
-        private static void RemoveAllInvalidWindow()
-        {
-            lock (windows)
-            {
-                var keys = windows.Keys.ToArray();
-                for (int i = 0; i < keys.Length; i++)
-                {
-                    if (windows.TryGetValue(keys[i], out var weakRef)
-                        && !weakRef.TryGetTarget(out _))
-                    {
-                        windows.Remove(keys[i], out _);
-                    }
-                }
-            }
         }
 
         private void DestroyWindow()
@@ -233,7 +220,7 @@ namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
             }
         }
 
-        ~MessageWindow()
+        ~NativeWindow()
         {
             DisposeCore(disposing: false);
         }
@@ -245,5 +232,4 @@ namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
         }
     }
 
-    public delegate void WindowMessageReceivedEventHandler(object sender, WindowMessageReceivedEventArgs e);
 }

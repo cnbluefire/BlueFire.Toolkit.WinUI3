@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml;
+﻿using BlueFire.Toolkit.WinUI3.Extensions;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
@@ -22,9 +23,8 @@ namespace BlueFire.Toolkit.Sample.WinUI3.Controls
         }
 
         protected override void OnApplyTemplate()
-        {
+        {            
             base.OnApplyTemplate();
-            var test = GetTemplateChild("HeaderPresenter");
             UpdateOrientationState();
             UpdateHeaderVisibilityState();
         }

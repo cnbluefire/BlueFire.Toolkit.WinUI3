@@ -9,10 +9,14 @@ using System.Runtime.InteropServices;
 using IDirect3DDxgiInterfaceAccess = Windows.Win32.System.WinRT.Direct3D11.IDirect3DDxgiInterfaceAccess;
 using IDXGIDevice = Windows.Win32.Graphics.Dxgi.IDXGIDevice;
 using IDXGIAdapter = Windows.Win32.Graphics.Dxgi.IDXGIAdapter;
-using BlueFire.Toolkit.WinUI3.Extensions;
+using BlueFire.Toolkit.Extensions;
 using WinRT.Interop;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using System.Reflection;
+using Windows.Win32;
 
-namespace BlueFire.Toolkit.WinUI3.Graphics
+namespace BlueFire.Toolkit.Graphics
 {
     /// <summary>
     /// <see cref="Windows.Graphics.DirectX.Direct3D11.IDirect3DDevice"/> interop helper.
@@ -32,22 +36,28 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         /// <returns></returns>
         public static unsafe T? GetInterface<T>(IDirect3DDevice? device) where T : class
         {
-            var iid = typeof(T).GetGuidType().GUID;
-            nint pvObject = 0;
-            var hr = (Windows.Win32.Foundation.HRESULT)GetInterface(device, ref iid, (void**)(&pvObject));
-
-            if (hr.Succeeded)
+            if (ComObjectHelper.TryGetInterfaceId<T>(out var iid))
             {
-                using var objRef = ObjectReference<IUnknownVftbl>.Attach(ref pvObject);
-                return objRef.AsInterface<T>();
-            }
+                IUnknownVftbl** punk = null;
+                nint pResult = 0;
 
+                var hr = (Windows.Win32.Foundation.HRESULT)GetInterface(device, ref iid, (void**)(&punk));
+
+                if (hr.Succeeded)
+                {
+                    hr = (Windows.Win32.Foundation.HRESULT)(*punk)->QueryInterface((nint)punk, &iid, &pResult);
+                    if (hr.Succeeded)
+                    {
+                        return ComObjectHelper.ConvertToManaged<T>(pResult);
+                    }
+                }
+            }
             return null;
         }
 
         internal static unsafe ComPtr<T> GetInterfacePtr<T>(IDirect3DDevice? device) where T : unmanaged
         {
-            var iid = typeof(T).GetGuidType().GUID;
+            var iid = typeof(T).GUID;
             void* pvObject = null;
             var hr = (Windows.Win32.Foundation.HRESULT)GetInterface(device, ref iid, &pvObject);
 
@@ -101,14 +111,15 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         /// <returns></returns>
         public static T? GetDXGIFactory<T>(IDirect3DDevice? device) where T : class
         {
-            var iid = typeof(T).GetGuidType().GUID;
-            nint pvObject = 0;
-            var hr = (Windows.Win32.Foundation.HRESULT)GetDXGIFactory(device, ref iid, (void**)(&pvObject));
-
-            if (hr.Succeeded)
+            if (ComObjectHelper.TryGetInterfaceId<T>(out var iid))
             {
-                using var objRef = ObjectReference<IUnknownVftbl>.Attach(ref pvObject);
-                return objRef.AsInterface<T>();
+                nint unknown = 0;
+                var hr = (Windows.Win32.Foundation.HRESULT)GetDXGIFactory(device, ref iid, (void**)(&unknown));
+
+                if (hr.Succeeded)
+                {
+                    return ComObjectHelper.ConvertToManaged<T>(unknown);
+                }
             }
 
             return null;
@@ -116,7 +127,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
 
         internal static ComPtr<T> GetDXGIFactoryPtr<T>(IDirect3DDevice? device) where T : unmanaged
         {
-            var iid = typeof(T).GetGuidType().GUID;
+            var iid = typeof(T).GUID;
             void* pvObject = null;
             var hr = (Windows.Win32.Foundation.HRESULT)GetDXGIFactory(device, ref iid, &pvObject);
 

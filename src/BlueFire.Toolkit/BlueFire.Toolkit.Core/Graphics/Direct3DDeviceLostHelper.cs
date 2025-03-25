@@ -12,17 +12,14 @@ using PInvoke = Windows.Win32.PInvoke;
 using ID3D11Device4 = Windows.Win32.Graphics.Direct3D11.ID3D11Device4;
 using IDXGIFactory7 = Windows.Win32.Graphics.Dxgi.IDXGIFactory7;
 
-namespace BlueFire.Toolkit.WinUI3.Graphics
+namespace BlueFire.Toolkit.Graphics
 {
     internal unsafe class Direct3DDeviceLostHelper : IDisposable
     {
-        private static int globalId = 0;
-        private static Dictionary<int, Direct3DDeviceLostHelper> instances = new Dictionary<int, Direct3DDeviceLostHelper>();
-
         private bool disposedValue;
 
         private IDirect3DDevice direct3DDevice;
-        private object locker;
+        private Lock locker;
         private PTP_WAIT_CALLBACK waitEventCallback;
         private nint threadPoolWait;
         private EventWaitHandle? waitHandle;
@@ -30,19 +27,14 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         private uint cookie2;
         private bool deviceLostRaised;
         private bool forceSoftwareRenderer;
-        private int id;
+        private GCHandle gcHandle;
 
         internal unsafe Direct3DDeviceLostHelper(IDirect3DDevice direct3DDevice, bool forceSoftwareRenderer)
         {
-            id = Interlocked.Increment(ref globalId);
-            lock (instances)
-            {
-                instances[id] = this;
-            }
-
+            this.gcHandle = GCHandle.Alloc(this, GCHandleType.Weak);
             this.direct3DDevice = direct3DDevice;
             this.forceSoftwareRenderer = forceSoftwareRenderer;
-            locker = new object();
+            locker = new Lock();
             waitEventCallback = new PTP_WAIT_CALLBACK()
             {
                 Func = &GlobalOnDeviceLost
@@ -64,20 +56,26 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
                 using var device = GraphicsHelper.GetInterfacePtr<ID3D11Device4>(d3dDevice);
                 if (!device.HasValue) return;
 
-                threadPoolWait = PInvoke.CreateThreadpoolWait(waitEventCallback.Func, (void*)id, (Windows.Win32.System.Threading.TP_CALLBACK_ENVIRON_V3*)0);
+                threadPoolWait = PInvoke.CreateThreadpoolWait(waitEventCallback.Func, (void*)(nint)gcHandle, (Windows.Win32.System.Threading.TP_CALLBACK_ENVIRON_V3*)0);
                 waitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
 
-                var safeHandle = waitHandle.SafeWaitHandle;
+                var nativeEventHandle = (HANDLE)waitHandle.SafeWaitHandle.DangerousGetHandle();
 
-                PInvoke.SetThreadpoolWait(new Windows.Win32.System.Threading.PTP_WAIT(threadPoolWait), safeHandle, null);
-                device.Value.RegisterDeviceRemovedEvent(safeHandle, out cookie);
+                PInvoke.SetThreadpoolWait((Windows.Win32.System.Threading.PTP_WAIT)threadPoolWait, nativeEventHandle, null);
+                fixed (uint* pCookie = &cookie)
+                {
+                    device.Value.RegisterDeviceRemovedEvent(nativeEventHandle, pCookie);
+                }
 
                 if (!forceSoftwareRenderer)
                 {
                     var dxgiFactory = GraphicsHelper.GetDXGIFactoryPtr<IDXGIFactory7>(d3dDevice);
                     if (!dxgiFactory.HasValue)
                     {
-                        dxgiFactory.Value.RegisterAdaptersChangedEvent(safeHandle, out cookie2);
+                        fixed (uint* pCookie2 = &cookie2)
+                        {
+                            dxgiFactory.Value.RegisterAdaptersChangedEvent(nativeEventHandle, pCookie2);
+                        }
                     }
                 }
             }
@@ -148,9 +146,10 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
 
                 disposedValue = true;
 
-                lock (instances)
+                if (gcHandle.IsAllocated)
                 {
-                    instances.Remove(id);
+                    gcHandle.Free();
+                    gcHandle = default;
                 }
             }
         }
@@ -171,21 +170,20 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
             internal delegate* unmanaged[Stdcall]<global::Windows.Win32.System.Threading.PTP_CALLBACK_INSTANCE, void*, global::Windows.Win32.System.Threading.PTP_WAIT, uint, void> Func;
         }
 
-        [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
         private static unsafe void GlobalOnDeviceLost(
             Windows.Win32.System.Threading.PTP_CALLBACK_INSTANCE Instance,
             void* Context,
             Windows.Win32.System.Threading.PTP_WAIT Wait,
             uint WaitResult)
         {
-            var id = (int)Context;
-            lock (instances)
+            var gcHandle = (GCHandle)(nint)Context;
+
+            if (gcHandle.IsAllocated && gcHandle.Target is Direct3DDeviceLostHelper helper)
             {
-                if (instances.TryGetValue(id, out var helper))
-                {
-                    helper.OnDeviceLost(Instance, Context, Wait, WaitResult);
-                }
+                helper.OnDeviceLost(Instance, Context, Wait, WaitResult);
             }
+
         }
     }
 }

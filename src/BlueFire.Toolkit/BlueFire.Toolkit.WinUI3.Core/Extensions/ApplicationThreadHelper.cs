@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WinRT;
 
-namespace BlueFire.Toolkit.WinUI3.Core.Extensions
+namespace BlueFire.Toolkit.WinUI3.Extensions
 {
     internal static class ApplicationThreadHelper
     {

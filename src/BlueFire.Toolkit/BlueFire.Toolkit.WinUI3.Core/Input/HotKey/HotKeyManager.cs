@@ -20,7 +20,7 @@ namespace BlueFire.Toolkit.WinUI3.Input
         private static HotKeyListener? listener;
         private static List<HotKeyModel> models = new List<HotKeyModel>();
         private static List<WeakReference<FrameworkElement>> inputBoxes = new List<WeakReference<FrameworkElement>>();
-        internal static object locker = new object();
+        internal static Lock locker = new Lock();
 
         private static bool isEnabledInternal = true;
         private static bool isEnabled = true;

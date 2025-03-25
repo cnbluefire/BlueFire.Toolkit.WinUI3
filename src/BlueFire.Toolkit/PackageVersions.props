@@ -1,7 +1,8 @@
-<Project>
+﻿<Project>
 	<PropertyGroup>
-		<Microsoft_Windows_CsWin32_Version>0.3.49-beta</Microsoft_Windows_CsWin32_Version>
-		<Microsoft_WindowsAppSDK_Version>1.4.231219000</Microsoft_WindowsAppSDK_Version>
-		<Microsoft_Graphics_Win2D_Version>1.1.0</Microsoft_Graphics_Win2D_Version>
+		<Microsoft_Windows_CsWin32_Version>0.3.106</Microsoft_Windows_CsWin32_Version>
+		<Microsoft_WindowsAppSDK_Version>1.6.241114003</Microsoft_WindowsAppSDK_Version>
+		<Microsoft_Graphics_Win2D_Version>1.3.0</Microsoft_Graphics_Win2D_Version>
+		<Microsoft_Windows_CsWinRT_Version>2.2.0</Microsoft_Windows_CsWinRT_Version>
 	</PropertyGroup>	
 </Project>

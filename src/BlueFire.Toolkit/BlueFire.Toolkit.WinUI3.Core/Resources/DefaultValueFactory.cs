@@ -14,7 +14,7 @@ namespace BlueFire.Toolkit.WinUI3.Resources
     internal static class DefaultValueFactory
     {
         private static Type? runtimeTypeType;
-        private static object locker = new object();
+        private static Lock locker = new Lock();
         private static ConcurrentDictionary<Type, object?> typeDefaultValues = new();
         private static ConcurrentDictionary<IPropertyAdapter, object?> propertyDefaultValues = new();
 

@@ -1,4 +1,4 @@
-﻿using BlueFire.Toolkit.WinUI3.Core.Extensions;
+﻿using BlueFire.Toolkit.WinUI3.Extensions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Markup;
 using Microsoft.Windows.ApplicationModel.Resources;
@@ -99,7 +99,7 @@ namespace BlueFire.Toolkit.WinUI3.Resources
             return false;
         }
 
-        private static object locker = new object();
+        private static Lock locker = new Lock();
         private static Localizer? instance;
 
         public static Localizer Default

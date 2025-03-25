@@ -6,22 +6,24 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlueFire.Toolkit.WinUI3
+namespace BlueFire.Toolkit.WindowBase
 {
+    public delegate void WindowMessageReceivedEventHandler(object sender, WindowMessageReceivedEventArgs e);
+
     public class WindowMessageReceivedEventArgs
     {
         public WindowMessageReceivedEventArgs() { }
 
         public WindowMessageReceivedEventArgs(WindowMessageReceivedEventArgs args) : this()
         {
-            WindowId = args.WindowId;
+            WindowHandle = args.WindowHandle;
             MessageId = args.MessageId;
             WParam = args.WParam;
             LParam = args.LParam;
             LResult = args.LResult;
         }
 
-        public WindowId WindowId { get; internal set; }
+        public nint WindowHandle { get; internal set; }
 
         public uint MessageId { get; internal set; }
 
@@ -43,7 +45,7 @@ namespace BlueFire.Toolkit.WinUI3
 #if DEBUG
 
         private static IReadOnlyDictionary<uint, string>? messageNameMap;
-        private static object messageMapLocker = new object();
+        private static Lock messageMapLocker = new Lock();
 
         internal static string GetMessageName(uint messageId)
         {
@@ -64,12 +66,6 @@ namespace BlueFire.Toolkit.WinUI3
 
             if (messageNameMap.TryGetValue(messageId, out var name)) return name;
 
-            return "UNKNOWN";
-        }
-
-#else
-        internal static string GetMessageName(uint messageId)
-        {
             return "UNKNOWN";
         }
 #endif

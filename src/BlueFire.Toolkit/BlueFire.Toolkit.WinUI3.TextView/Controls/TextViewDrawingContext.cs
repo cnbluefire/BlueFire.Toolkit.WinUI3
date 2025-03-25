@@ -638,7 +638,7 @@ namespace BlueFire.Toolkit.WinUI3.Controls
             private bool disposedValue;
             private readonly CompositionGraphicsDeviceHolder deviceHolder;
             private CanvasRenderTarget? renderTarget;
-            private object locker = new object();
+            private Lock locker = new Lock();
 
             internal D2DTexture(CompositionGraphicsDeviceHolder deviceHolder)
             {

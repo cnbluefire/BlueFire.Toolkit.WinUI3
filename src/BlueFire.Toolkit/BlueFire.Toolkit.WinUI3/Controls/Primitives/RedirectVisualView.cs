@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace BlueFire.Toolkit.WinUI3.Controls.Primitives
 {
     [ContentProperty(Name = nameof(Child))]
-    public class RedirectVisualView : Control
+    public partial class RedirectVisualView : Control
     {
         public RedirectVisualView()
         {

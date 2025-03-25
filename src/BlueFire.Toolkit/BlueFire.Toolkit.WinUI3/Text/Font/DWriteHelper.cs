@@ -1,4 +1,5 @@
-﻿using BlueFire.Toolkit.WinUI3.Extensions;
+﻿using BlueFire.Toolkit.Extensions;
+using BlueFire.Toolkit.WinUI3.Extensions;
 using BlueFire.Toolkit.WinUI3.Graphics;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.UI.Text;

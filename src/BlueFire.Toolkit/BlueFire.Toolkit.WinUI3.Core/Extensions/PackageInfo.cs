@@ -18,7 +18,7 @@ namespace BlueFire.Toolkit.WinUI3.Extensions
     public static class PackageInfo
     {
         private static bool initialized;
-        private static object staticLocker = new object();
+        private static Lock staticLocker = new Lock();
         private static string? applicationUserModelId;
         private static string? packageFamilyName;
         private static string? packageRelativeApplicationId;

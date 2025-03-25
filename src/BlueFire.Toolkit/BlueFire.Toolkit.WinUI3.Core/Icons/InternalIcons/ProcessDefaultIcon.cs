@@ -11,7 +11,7 @@ namespace BlueFire.Toolkit.WinUI3.Icons.InternalIcons
     internal class ProcessDefaultIcon : ComposedIcon
     {
         private static Win32Icon? win32Icon;
-        private static object staticLocker = new object();
+        private static Lock staticLocker = new Lock();
 
         protected internal override nint GetIconCore(SizeInt32 size)
         {

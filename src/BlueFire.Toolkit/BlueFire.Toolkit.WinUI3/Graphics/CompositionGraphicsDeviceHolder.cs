@@ -22,7 +22,7 @@ namespace BlueFire.Toolkit.WinUI3.Graphics
         #region Statics
 
         private static CompositionGraphicsDeviceHolder? globalDeviceHolder;
-        private static object globalDeviceHolderLocker = new object();
+        private static Lock globalDeviceHolderLocker = new Lock();
 
         internal static CompositionGraphicsDeviceHolder GlobalDeviceHolder
         {

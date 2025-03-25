@@ -1,4 +1,6 @@
-﻿using BlueFire.Toolkit.WinUI3.Compositions;
+﻿using BlueFire.Toolkit.Compositions;
+using BlueFire.Toolkit.Extensions;
+using BlueFire.Toolkit.WinUI3.Compositions;
 using BlueFire.Toolkit.WinUI3.Extensions;
 using BlueFire.Toolkit.WinUI3.Resources;
 using Microsoft.UI.Xaml;
@@ -14,7 +16,7 @@ using Windows.Storage.Streams;
 
 namespace BlueFire.Toolkit.WinUI3.Icons.InternalIcons
 {
-    internal class PackageDefaultIcon : ComposedIcon
+    internal partial class PackageDefaultIcon : ComposedIcon
     {
         private const uint defaultDpi = 288; // 300%
 
@@ -46,7 +48,7 @@ namespace BlueFire.Toolkit.WinUI3.Icons.InternalIcons
 
             string? logoFilePath = null;
 
-            var memoryStream = WindowsCompositionHelper.DispatcherQueue.RunSync(async () =>
+            var memoryStream = WindowsCompositionHelper.DispatcherQueue.RunSynchronously(async () =>
             {
                 logoFilePath = await ResourceLoader.GetAppLogoFilePathAsync(defaultDpi, requestedTheme, highContrast, default);
 

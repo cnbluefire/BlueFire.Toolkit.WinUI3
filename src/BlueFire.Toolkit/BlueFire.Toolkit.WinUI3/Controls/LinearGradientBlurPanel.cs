@@ -14,7 +14,7 @@ using Windows.UI;
 
 namespace BlueFire.Toolkit.WinUI3.Controls
 {
-    public class LinearGradientBlurPanel : Grid
+    public partial class LinearGradientBlurPanel : Grid
     {
         public LinearGradientBlurPanel()
         {
@@ -24,7 +24,7 @@ namespace BlueFire.Toolkit.WinUI3.Controls
             this.Loaded += OnLoaded;
         }
 
-        private object locker = new object();
+        private Lock locker = new Lock();
         private LinearGradientBlurHelperMUC? helper;
 
         private void OnLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)

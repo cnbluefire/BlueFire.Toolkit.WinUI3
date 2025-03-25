@@ -21,7 +21,7 @@
                                   SourceFiles="{x:Bind ToolModel.SourceFiles}"
                                   Margin="20,20,20,0"/>
 
-        <ScrollViewer Grid.Row="1" Margin="0,12,0,0">
+        <ScrollViewer x:Name="sv" Grid.Row="1" Margin="0,12,0,0">
             <StackPanel Spacing="16" Padding="20,0,20,20">
                 <!--内容可以自动滚动的容器-->
                 <TextBlock TextWrapping="Wrap" Text="{x:Bind ToolModel.Description}" />

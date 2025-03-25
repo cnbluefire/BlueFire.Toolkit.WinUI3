@@ -1,23 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BlueFire.Toolkit.Extensions;
+using BlueFire.Toolkit.Compositions;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Win32.Foundation;
-using PInvoke = Windows.Win32.PInvoke;
-using BlueFire.Toolkit.WinUI3.Compositions;
 using Windows.Foundation;
-using Windows.Graphics.DirectX.Direct3D11;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 using Windows.UI.Composition;
-using LoadedImageSourceLoadStatus = Microsoft.UI.Xaml.Media.LoadedImageSourceLoadStatus;
-using WinRT;
-using BlueFire.Toolkit.WinUI3.Extensions;
 using Windows.Win32.System.Com;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Storage;
+using PInvoke = Windows.Win32.PInvoke;
+using LoadedImageSourceLoadStatus = Microsoft.UI.Xaml.Media.LoadedImageSourceLoadStatus;
 
 namespace BlueFire.Toolkit.WinUI3.Media
 {
@@ -27,7 +19,7 @@ namespace BlueFire.Toolkit.WinUI3.Media
     /// see also <seealso cref="Microsoft.UI.Xaml.Media.LoadedImageSurface"/>
     /// </para>
     /// </summary>
-    public class CompositionSurfaceLoader : IDisposable
+    public partial class CompositionSurfaceLoader : IDisposable
     {
         private const int MaxTextureSizeFallback = 2045;
         private const int TileSize = 504;
@@ -120,7 +112,7 @@ namespace BlueFire.Toolkit.WinUI3.Media
                     if (candidate.Kind == Microsoft.Windows.ApplicationModel.Resources.ResourceCandidateKind.EmbeddedData)
                     {
                         var bytes = candidate.ValueAsBytes;
-                        var stream = new InMemoryRandomAccessStream();                        
+                        var stream = new InMemoryRandomAccessStream();
                         await stream.WriteAsync(bytes.AsBuffer());
                         await stream.FlushAsync();
                         stream.Seek(0);

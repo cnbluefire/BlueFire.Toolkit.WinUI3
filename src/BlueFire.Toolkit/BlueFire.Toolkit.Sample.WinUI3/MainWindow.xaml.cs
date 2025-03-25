@@ -62,23 +62,29 @@ namespace BlueFire.Toolkit.Sample.WinUI3
             }
         }
 
-        private void MainNavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+        private async void MainNavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
         {
             if (args.IsSettingsInvoked)
             {
-                if (LayoutRoot.ActualTheme == ElementTheme.Light)
+                //if (LayoutRoot.ActualTheme == ElementTheme.Light)
+                //{
+                //    LayoutRoot.RequestedTheme = ElementTheme.Dark;
+                //}
+                //else
+                //{
+                //    LayoutRoot.RequestedTheme = ElementTheme.Light;
+                //}
+
+                var result = await new ContentDialog()
                 {
-                    LayoutRoot.RequestedTheme = ElementTheme.Dark;
-                }
-                else
-                {
-                    LayoutRoot.RequestedTheme = ElementTheme.Light;
-                }
+                    Content = "Hello",
+                    PrimaryButtonText = "OK"
+                }.ShowModalWindowAsync(new ShowDialogOptions(this.AppWindow.Id, DialogWindowStartupLocation.CenterOwner));
             }
         }
     }
 
-    public class MainNavViewTemplateSelector : DataTemplateSelector
+    public partial class MainNavViewTemplateSelector : DataTemplateSelector
     {
         public DataTemplate ItemTemplate { get; set; }
 

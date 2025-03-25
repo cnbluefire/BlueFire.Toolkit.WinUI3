@@ -12,15 +12,15 @@ namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
     /// <summary>
     /// Create a background thread with a message loop.
     /// </summary>
-    public class WorkerQueueObject : IDisposable
+    public partial class WorkerQueueObject : IDisposable
     {
         private bool disposedValue;
         private readonly ApartmentState apartmentState;
 
-        private object locker = new object();
         private Thread? thread;
         private DispatcherQueueController? dispatcherQueueController;
         private DispatcherQueue? dispatcherQueue;
+        private Lock locker = new Lock();
 
         protected bool IsDisposed => disposedValue;
 
@@ -49,34 +49,34 @@ namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
                             var waitEvent = new object();
                             Exception? exception = null;
 
-                            thread = new Thread(() =>
-                            {
-                                try
-                                {
-                                    dispatcherQueueController = DispatcherQueueController.CreateOnCurrentThread();
-                                    dispatcherQueue = dispatcherQueueController.DispatcherQueue;
-                                    dispatcherQueue.EnsureSystemDispatcherQueue();
-                                }
-                                catch (Exception ex)
-                                {
-                                    exception = ex;
-                                }
-                                finally
-                                {
-                                    lock (waitEvent)
-                                    {
-                                        Monitor.Pulse(waitEvent);
-                                    }
-                                    dispatcherQueue?.RunEventLoop();
-                                }
-                            });
-                            thread.IsBackground = true;
-                            thread.Name = "Worker Queue Thread";
-                            thread.SetApartmentState(apartmentState);
-                            thread.Start();
-
                             lock (waitEvent)
                             {
+                                thread = new Thread(() =>
+                                {
+                                    try
+                                    {
+                                        dispatcherQueueController = DispatcherQueueController.CreateOnCurrentThread();
+                                        dispatcherQueue = dispatcherQueueController.DispatcherQueue;
+                                        dispatcherQueue.EnsureSystemDispatcherQueue();
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        exception = ex;
+                                    }
+                                    finally
+                                    {
+                                        lock (waitEvent)
+                                        {
+                                            Monitor.Pulse(waitEvent);
+                                        }
+                                        dispatcherQueue?.RunEventLoop();
+                                    }
+                                });
+                                thread.IsBackground = true;
+                                thread.Name = "Worker Queue Thread";
+                                thread.SetApartmentState(apartmentState);
+                                thread.Start();
+
                                 Monitor.Wait(waitEvent);
                             }
 
@@ -89,273 +89,6 @@ namespace BlueFire.Toolkit.WinUI3.Core.Dispatching
                 }
 
                 return dispatcherQueue!;
-            }
-        }
-
-        protected async Task RunOnDispatcherQueueAsync(Func<CancellationToken, Task> func, DispatcherQueuePriority priority = DispatcherQueuePriority.Normal, CancellationToken cancellationToken = default)
-        {
-            ThrowIfDisposed();
-            if (func == null) throw new ArgumentNullException(nameof(func));
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            if (DispatcherQueue.HasThreadAccess)
-            {
-                await func.Invoke(cancellationToken);
-            }
-            else
-            {
-                var tcs = new TaskCompletionSource();
-
-                DispatcherQueue.TryEnqueue(priority, async () =>
-                {
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        tcs.TrySetCanceled(cancellationToken);
-                        return;
-                    }
-
-                    try
-                    {
-                        await func.Invoke(cancellationToken);
-                        tcs.TrySetResult();
-                    }
-                    catch (Exception ex)
-                    {
-                        tcs.TrySetException(ex);
-                    }
-                });
-
-                await tcs.Task;
-            }
-        }
-
-        protected async Task<T?> RunOnDispatcherQueueAsync<T>(Func<CancellationToken, Task<T?>> func, DispatcherQueuePriority priority = DispatcherQueuePriority.Normal, CancellationToken cancellationToken = default)
-        {
-            ThrowIfDisposed();
-            if (func == null) throw new ArgumentNullException(nameof(func));
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            if (DispatcherQueue.HasThreadAccess)
-            {
-                return await func.Invoke(cancellationToken);
-            }
-            else
-            {
-                var tcs = new TaskCompletionSource<T?>();
-
-                DispatcherQueue.TryEnqueue(priority, async () =>
-                {
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        tcs.TrySetCanceled(cancellationToken);
-                        return;
-                    }
-
-                    try
-                    {
-                        var result = await func.Invoke(cancellationToken);
-                        tcs.TrySetResult(result);
-                    }
-                    catch (Exception ex)
-                    {
-                        tcs.TrySetException(ex);
-                    }
-                });
-
-                return await tcs.Task;
-            }
-        }
-
-
-        protected T? RunOnDispatcherQueueSynchronously<T>(Func<CancellationToken, Task<T?>> func, DispatcherQueuePriority priority = DispatcherQueuePriority.Normal, CancellationToken cancellationToken = default)
-        {
-            ThrowIfDisposed();
-            if (func == null) throw new ArgumentNullException(nameof(func));
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            bool hasThreadAccess = DispatcherQueue.HasThreadAccess;
-            ExceptionDispatchInfo? eInfo = null;
-            T? result = default;
-
-            DispatcherQueue.TryEnqueue(priority, async () =>
-            {
-                try
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    result = await func.Invoke(cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    eInfo = ExceptionDispatchInfo.Capture(ex);
-                }
-                finally
-                {
-                    if (hasThreadAccess)
-                    {
-                        DispatcherQueue.EnqueueEventLoopExit();
-                    }
-                    else
-                    {
-                        lock (locker)
-                        {
-                            Monitor.Pulse(locker);
-                        }
-                    }
-                }
-            });
-
-            if (hasThreadAccess)
-            {
-                DispatcherQueue.RunEventLoop(DispatcherRunOptions.QuitOnlyLocalLoop, null);
-            }
-            else
-            {
-                lock (locker)
-                {
-                    Monitor.Wait(locker);
-                }
-            }
-            eInfo?.Throw();
-
-            return result;
-        }
-
-        protected void RunOnDispatcherQueueSynchronously(Func<CancellationToken, Task> func, DispatcherQueuePriority priority = DispatcherQueuePriority.Normal, CancellationToken cancellationToken = default)
-        {
-            ThrowIfDisposed();
-            if (func == null) throw new ArgumentNullException(nameof(func));
-
-            cancellationToken.ThrowIfCancellationRequested();
-
-            bool hasThreadAccess = DispatcherQueue.HasThreadAccess;
-            ExceptionDispatchInfo? eInfo = null;
-
-            DispatcherQueue.TryEnqueue(priority, async () =>
-            {
-                try
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    await func.Invoke(cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    eInfo = ExceptionDispatchInfo.Capture(ex);
-                }
-                finally
-                {
-                    if (hasThreadAccess)
-                    {
-                        DispatcherQueue.EnqueueEventLoopExit();
-                    }
-                    else
-                    {
-                        lock (locker)
-                        {
-                            Monitor.Pulse(locker);
-                        }
-                    }
-                }
-            });
-
-            if (hasThreadAccess)
-            {
-                DispatcherQueue.RunEventLoop(DispatcherRunOptions.QuitOnlyLocalLoop, null);
-            }
-            else
-            {
-                lock (locker)
-                {
-                    Monitor.Wait(locker);
-                }
-            }
-            eInfo?.Throw();
-        }
-
-        protected void RunOnDispatcherQueueSynchronously(Action action, DispatcherQueuePriority priority = DispatcherQueuePriority.Normal)
-        {
-            ThrowIfDisposed();
-            if (action == null) throw new ArgumentNullException(nameof(action));
-
-            if (DispatcherQueue.HasThreadAccess)
-            {
-                action.Invoke();
-            }
-            else
-            {
-                ExceptionDispatchInfo? eInfo = null;
-
-                DispatcherQueue.TryEnqueue(priority, () =>
-                {
-                    try
-                    {
-                        action.Invoke();
-                    }
-                    catch (Exception ex)
-                    {
-                        eInfo = ExceptionDispatchInfo.Capture(ex);
-                    }
-                    finally
-                    {
-                        lock (locker)
-                        {
-                            Monitor.Pulse(locker);
-                        }
-                    }
-                });
-
-                lock (locker)
-                {
-                    Monitor.Wait(locker);
-                }
-
-                eInfo?.Throw();
-            }
-        }
-
-        protected T? RunOnDispatcherQueueSynchronously<T>(Func<T?> func, DispatcherQueuePriority priority = DispatcherQueuePriority.Normal)
-        {
-            ThrowIfDisposed();
-            if (func == null) throw new ArgumentNullException(nameof(func));
-
-            if (DispatcherQueue.HasThreadAccess)
-            {
-                return func.Invoke();
-            }
-            else
-            {
-                T? result = default;
-                ExceptionDispatchInfo? eInfo = null;
-
-                DispatcherQueue.TryEnqueue(priority, () =>
-                {
-                    try
-                    {
-                        result = func.Invoke();
-                    }
-                    catch (Exception ex)
-                    {
-                        eInfo = ExceptionDispatchInfo.Capture(ex);
-                    }
-                    finally
-                    {
-                        lock (locker)
-                        {
-                            Monitor.Pulse(locker);
-                        }
-                    }
-                });
-
-                lock (locker)
-                {
-                    Monitor.Wait(locker);
-                }
-
-                eInfo?.Throw();
-
-                return result;
             }
         }
 

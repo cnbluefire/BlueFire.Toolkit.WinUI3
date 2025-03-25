@@ -1,4 +1,6 @@
-﻿using BlueFire.Toolkit.WinUI3.Extensions;
+﻿using BlueFire.Toolkit.Compositions;
+using BlueFire.Toolkit.WindowBase;
+using BlueFire.Toolkit.WinUI3.Extensions;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.UI.Xaml;
 using System;
@@ -18,7 +20,7 @@ using WinRT;
 
 namespace BlueFire.Toolkit.WinUI3.Compositions
 {
-    internal sealed class MaterialCardVisualHelper : IDisposable
+    internal sealed partial class MaterialCardVisualHelper : IDisposable
     {
         private static readonly bool IsPixelSnappingEnabledSupported = Environment.OSVersion.Version >= new Version(10, 0, 20384, 0);
 
@@ -496,7 +498,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
             }
             else if (e.MessageId == PInvoke.WM_SHOWWINDOW)
             {
-                if (PInvoke.IsWindowVisible((HWND)Microsoft.UI.Win32Interop.GetWindowFromWindowId(e.WindowId)))
+                if (PInvoke.IsWindowVisible((HWND)e.WindowHandle))
                 {
                     compositor.DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Normal, UpdateRootVisualScale);
                 }

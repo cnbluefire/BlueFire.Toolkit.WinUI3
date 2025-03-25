@@ -7,7 +7,7 @@ using WinCompositor = Windows.UI.Composition.Compositor;
 
 namespace BlueFire.Toolkit.WinUI3.Compositions
 {
-    public class BackdropControllerCompositorAcquirer : Microsoft.UI.Composition.ICompositionSupportsSystemBackdrop, IDisposable
+    public partial class BackdropControllerCompositorAcquirer : Microsoft.UI.Composition.ICompositionSupportsSystemBackdrop, IDisposable
     {
         private Windows.UI.Composition.CompositionBrush? systemBackdrop;
         private TaskCompletionSource<WinCompositor?> taskSource = new TaskCompletionSource<WinCompositor?>();

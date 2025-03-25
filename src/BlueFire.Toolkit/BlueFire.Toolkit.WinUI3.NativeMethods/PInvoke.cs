@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
@@ -11,11 +12,21 @@ namespace Windows.Win32
 {
     internal static partial class PInvoke
     {
-        private static bool? isWindows10OrGreater;
+        private static bool? isWindows11OrGreater;
+        private static bool? isWindows10_18362OrGreater;
+        private static bool? isWindows10_17134OrGreater;
 
-        internal static bool IsWindows10OrGreater() =>
-            isWindows10OrGreater ??
-            (isWindows10OrGreater = Environment.OSVersion.Version >= new Version(10, 0, 22000, 0)).Value;
+        internal static bool IsWindows11OrGreater() =>
+            isWindows11OrGreater ??
+            (isWindows11OrGreater = Environment.OSVersion.Version >= new Version(10, 0, 22000, 0)).Value;
+
+        internal static bool IsWindows10_18362OrGreater() =>
+            isWindows10_18362OrGreater ??
+            (isWindows10_18362OrGreater = Environment.OSVersion.Version >= new Version(10, 0, 18362, 0)).Value;
+
+        internal static bool IsWindows10_17134OrGreater() =>
+            isWindows10_17134OrGreater ??
+            (isWindows10_17134OrGreater = Environment.OSVersion.Version >= new Version(10, 0, 17134, 0)).Value;
 
         internal static nint SetWindowLongAuto(HWND hWnd, UI.WindowsAndMessaging.WINDOW_LONG_PTR_INDEX nIndex, nint dwNewLong)
         {
@@ -41,22 +52,38 @@ namespace Windows.Win32
             }
         }
 
-        internal static HWND[]? EnumThreadWindows(Func<HWND, nint, bool> predicate, nint lParam)
+        internal static unsafe HWND[]? EnumThreadWindows(Func<HWND, nint, bool> predicate)
         {
             var list = new List<HWND>();
-            var handler = new WNDENUMPROC((_hWnd, _lParam) =>
+            var gcHandle = GCHandle.Alloc(new Tuple<Func<HWND, nint, bool>, List<HWND>>(predicate, list));
+
+            try
             {
-                try
+                EnumThreadWindows(PInvoke.GetCurrentThreadId(), &EnumThreadWindowsProc, new LPARAM((nint)gcHandle));
+                return list.Count != 0 ? list.Distinct().ToArray() : Array.Empty<HWND>();
+            }
+            finally
+            {
+                gcHandle.Free();
+            }
+
+            [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
+            static byte EnumThreadWindowsProc(nint _hWnd, nint _lParam)
+            {
+                var _gcHandle = (GCHandle)_lParam;
+                if (_gcHandle.IsAllocated && _gcHandle.Target is Tuple<Func<HWND, nint, bool>, List<HWND>> _tuple)
                 {
-                    if (predicate((HWND)_hWnd, _lParam)) list.Add((HWND)_hWnd);
+                    var _predicate = _tuple.Item1;
+                    var _list = _tuple.Item2;
+                    try
+                    {
+                        if (_predicate((HWND)_hWnd, _lParam)) _list.Add((HWND)_hWnd);
+                    }
+                    catch { }
+
                 }
-                catch { }
-
-                return true;
-            });
-
-            EnumThreadWindows(PInvoke.GetCurrentThreadId(), handler, new LPARAM(lParam));
-            return list.Count != 0 ? list.Distinct().ToArray() : Array.Empty<HWND>();
+                return 1;
+            }
         }
 
         internal static ushort LOWORD(uint value)
@@ -90,9 +117,23 @@ namespace Windows.Win32
         }
 
         [DllImport("USER32.dll", ExactSpelling = true, PreserveSig = false)]
-        internal static extern bool EnumThreadWindows([In] uint dwThreadId, [In] WNDENUMPROC lpfn, [In] nint lParam);
+        internal static extern unsafe bool EnumThreadWindows(
+            [In] uint dwThreadId,
+            [In] delegate* unmanaged[Stdcall]<nint, nint, byte> lpfn, [In] nint lParam);
 
-        [UnmanagedFunctionPointer(CallingConvention.Winapi)]
-        internal delegate bool WNDENUMPROC([In] nint param0, [In] nint param1);
+        /// <summary>
+        /// https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentprocesstoken
+        /// </summary>
+        public static HANDLE GetCurrentProcessToken() => new(-4);
+
+        /// <summary>
+        /// https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentthreadtoken
+        /// </summary>
+        public static HANDLE GetCurrentThreadToken() => new(-5);
+
+        /// <summary>
+        /// https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getcurrentthreadeffectivetoken
+        /// </summary>
+        public static HANDLE GetCurrentThreadEffectiveToken() => new(-6);
     }
 }

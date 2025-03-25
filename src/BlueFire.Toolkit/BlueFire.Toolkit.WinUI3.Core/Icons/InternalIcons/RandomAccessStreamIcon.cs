@@ -16,10 +16,12 @@ using System.Runtime.InteropServices;
 using BlueFire.Toolkit.WinUI3.Extensions;
 using Microsoft.UI.Dispatching;
 using BlueFire.Toolkit.WinUI3.Compositions;
+using BlueFire.Toolkit.Extensions;
+using BlueFire.Toolkit.Compositions;
 
 namespace BlueFire.Toolkit.WinUI3.Icons.InternalIcons
 {
-    internal class RandomAccessStreamIcon : ComposedIcon
+    internal partial class RandomAccessStreamIcon : ComposedIcon
     {
         private readonly Guid? decoderId;
         private IRandomAccessStream stream;
@@ -62,7 +64,7 @@ namespace BlueFire.Toolkit.WinUI3.Icons.InternalIcons
 
         private nint GetIconFromStream(int width, int height)
         {
-            var softwareBitmap = WindowsCompositionHelper.DispatcherQueue.RunSync(async () =>
+            var softwareBitmap = WindowsCompositionHelper.DispatcherQueue.RunSynchronously(async () =>
             {
                 if (decoder == null)
                 {

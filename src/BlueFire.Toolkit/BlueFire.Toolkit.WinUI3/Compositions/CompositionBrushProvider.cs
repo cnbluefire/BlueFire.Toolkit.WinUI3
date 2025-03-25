@@ -1,4 +1,5 @@
-﻿using Microsoft.Graphics.Canvas.Effects;
+﻿using BlueFire.Toolkit.Compositions;
+using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
@@ -212,7 +213,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
 
         protected void ThrowIfDisposed()
         {
-            if (disposedValue) throw new ObjectDisposedException(GetType().Name);
+            ObjectDisposedException.ThrowIf(disposedValue, GetType().Name);
         }
 
         protected virtual void DisposeCore(bool disposing) { }
@@ -252,6 +253,7 @@ namespace BlueFire.Toolkit.WinUI3.Compositions
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
             Dispose(true);
         }
 

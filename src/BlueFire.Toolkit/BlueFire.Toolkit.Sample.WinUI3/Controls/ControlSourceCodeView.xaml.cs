@@ -269,7 +269,8 @@ namespace BlueFire.Toolkit.Sample.WinUI3.Controls
             ((Button)sender).IsEnabled = true;
         }
 
-        private class CodeBlockModel
+        [WinRT.GeneratedBindableCustomProperty]
+        internal partial class CodeBlockModel
         {
             public string Type { get; set; }
 
@@ -278,7 +279,7 @@ namespace BlueFire.Toolkit.Sample.WinUI3.Controls
             public string Code { get; set; }
         }
 
-        private class CodeBlockTemplateSelector : DataTemplateSelector
+        private partial class CodeBlockTemplateSelector : DataTemplateSelector
         {
             public DataTemplate SeparatorTemplate { get; set; }
 

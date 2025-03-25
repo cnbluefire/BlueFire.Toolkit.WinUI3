@@ -9,7 +9,7 @@
 
   <Identity
     Name="b59b25ee-a3be-409e-ad8a-188ad2b14b21"
-    Publisher="CN=blue-fire"
+    Publisher="CN=148E23EA-3EA2-4733-8A82-49C463DC3722"
     Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="b59b25ee-a3be-409e-ad8a-188ad2b14b21" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>

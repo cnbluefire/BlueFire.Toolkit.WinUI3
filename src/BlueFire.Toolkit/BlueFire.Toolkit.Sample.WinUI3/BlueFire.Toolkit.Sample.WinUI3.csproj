@@ -1,18 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net6.0-windows10.0.22621.0</TargetFramework>
+		<TargetFramework>net9.0-windows10.0.22621.0</TargetFramework>
 		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
 		<RootNamespace>BlueFire.Toolkit.Sample.WinUI3</RootNamespace>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<Platforms>x86;x64;ARM64</Platforms>
-		<RuntimeIdentifiers>win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
-		<PublishProfile>win10-$(Platform).pubxml</PublishProfile>
+		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<PublishProfile>win-$(Platform).pubxml</PublishProfile>
 		<UseWinUI>true</UseWinUI>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<EnableMsixTooling>true</EnableMsixTooling>
 		<DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
 		<LocalBuildPackageVersion>*-*</LocalBuildPackageVersion>
+		<DynamicCodeSupport>false</DynamicCodeSupport>
 	</PropertyGroup>
 
 	<Import Project="$(MSBuildProjectDirectory)\..\build\LocalPackageVersion.props" />
@@ -21,12 +22,20 @@
 		<UseLocalNugetLibrary>false</UseLocalNugetLibrary>
 		<RestoreAdditionalProjectSources Condition="$(UseLocalNugetLibrary)">
 			$(RestoreAdditionalProjectSources);
-			$(MSBuildProjectDirectory)\..\build\nupkgs\BlueFire.Toolkit.WinUI3.Resources;
 			$(MSBuildProjectDirectory)\..\build\nupkgs\BlueFire.Toolkit.WinUI3.Core;
 			$(MSBuildProjectDirectory)\..\build\nupkgs\BlueFire.Toolkit.WinUI3;
 			$(MSBuildProjectDirectory)\..\build\nupkgs\BlueFire.Toolkit.WinUI3.TextView;
 		</RestoreAdditionalProjectSources>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+		<AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
+		<PackageCertificateThumbprint>219A4D75ED51256E1D809B24F74E837D610DEBDE</PackageCertificateThumbprint>
+		<AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+		<AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
+		<AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
+		<GenerateTestArtifacts>True</GenerateTestArtifacts>
+		<AppxBundle>Always</AppxBundle>
+		<HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
+		<AppxBundlePlatforms>x64</AppxBundlePlatforms>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -51,12 +60,12 @@
 	<ItemGroup>
 		<PackageReference Include="BlueFire.Toolkit.WinUI3" Version="$(LocalBuildPackageVersion)" Condition="'$(UseLocalNugetLibrary)' == 'true'" />
 		<!--<PackageReference Include="BlueFire.Toolkit.WinUI3.TextView" Version="$(LocalBuildPackageVersion)" Condition="'$(UseLocalNugetLibrary)' == 'true'" />-->
-		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
 		<PackageReference Include="ColorCode.WinUI" Version="2.0.15" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.1.1" Condition="'$(UseLocalNugetLibrary)' == 'true'" />
-		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.231219000" />
-		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.2428" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0-rc.2.24473.5" />
+		<PackageReference Include="Microsoft.Graphics.Win2D" Version="1.3.0" Condition="'$(UseLocalNugetLibrary)' == 'true'" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.241114003" />
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
 		<Manifest Include="$(ApplicationManifest)" />
 	</ItemGroup>
 

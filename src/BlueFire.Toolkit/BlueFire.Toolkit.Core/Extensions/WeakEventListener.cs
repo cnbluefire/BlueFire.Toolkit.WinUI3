@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BlueFire.Toolkit.WinUI3.Core.Extensions
+namespace BlueFire.Toolkit.Extensions
 {
     internal class WeakEventListener<TInstance, TSender, TEventArgs> where TInstance : class
     {

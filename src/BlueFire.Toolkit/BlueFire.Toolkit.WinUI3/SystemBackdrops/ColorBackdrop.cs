@@ -1,4 +1,5 @@
-﻿using BlueFire.Toolkit.WinUI3.SystemBackdrops;
+﻿using BlueFire.Toolkit.Compositions;
+using BlueFire.Toolkit.WinUI3.SystemBackdrops;
 using Microsoft.UI;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 {
-    public class ColorBackdrop : TransparentBackdrop
+    public partial class ColorBackdrop : TransparentBackdrop
     {
         /// <summary>
         /// Window background color. Can be a translucent color.
@@ -58,7 +59,7 @@ namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
             {
                 base.OnAttached(connectedTarget, windowId);
 
-                colorBrush = Compositions.WindowsCompositionHelper.Compositor.CreateColorBrush(Windows.UI.Color.FromArgb(0, 255, 255, 255));
+                colorBrush = WindowsCompositionHelper.Compositor.CreateColorBrush(Windows.UI.Color.FromArgb(0, 255, 255, 255));
                 connectedTarget.SystemBackdrop = colorBrush;
             }
 

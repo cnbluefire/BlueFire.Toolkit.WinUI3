@@ -1,4 +1,5 @@
-﻿using BlueFire.Toolkit.WinUI3.Icons;
+﻿using BlueFire.Toolkit.WindowBase;
+using BlueFire.Toolkit.WinUI3.Icons;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -17,16 +18,13 @@ namespace BlueFire.Toolkit.WinUI3
     public sealed partial class WindowManager
     {
         private bool destroyed;
-        private WindowBase.WindowMessageMonitor? messageMonitor;
+        private WindowMessageListener messageListener;
+        private WindowMaxMinSizeFeature maxMinSizeFeature;
         private AppWindow? appWindow;
         private WindowEx? windowExInternal;
         private WindowBase.WindowCompositionResources? compositionResources;
         private bool internalEnableWindowProc;
 
-        private double minWidth;
-        private double minHeight;
-        private double maxWidth;
-        private double maxHeight;
         private bool useDefaultIcon;
         private bool messageHandleInstalled;
         private uint dpi;
@@ -39,7 +37,13 @@ namespace BlueFire.Toolkit.WinUI3
             if (!PInvoke.IsWindow(HWND)) throw new ArgumentException(null, nameof(windowId));
 
             WindowId = windowId;
-            messageMonitor = new WindowBase.WindowMessageMonitor(this);
+
+            messageListener = WindowMessageListener.TryCreate(HWND);
+            ArgumentNullException.ThrowIfNull(messageListener);
+
+            maxMinSizeFeature = new WindowMaxMinSizeFeature();
+            messageListener.AddFeature(maxMinSizeFeature);
+            messageListener.MessageReceived += OverrideWindowProc;
         }
 
         internal HWND HWND { get; }
@@ -52,7 +56,6 @@ namespace BlueFire.Toolkit.WinUI3
                 if (windowExInternal != value)
                 {
                     windowExInternal = value;
-                    UpdateWindowProc();
                 }
             }
         }
@@ -65,7 +68,6 @@ namespace BlueFire.Toolkit.WinUI3
                 if (internalEnableWindowProc != value)
                 {
                     internalEnableWindowProc = value;
-                    UpdateWindowProc();
                 }
             }
         }
@@ -99,7 +101,6 @@ namespace BlueFire.Toolkit.WinUI3
                         {
                             RemoveIcon(WindowId);
                         }
-                        UpdateWindowProc();
                     }
                 }
             }
@@ -120,89 +121,80 @@ namespace BlueFire.Toolkit.WinUI3
             }
         }
 
-        internal WindowBase.WindowMessageMonitor GetMonitorInternal()
+        internal WindowMessageListener GetListenerInternal()
         {
             if (destroyed) throw new ObjectDisposedException(nameof(WindowManager));
-            return messageMonitor!;
+            ArgumentNullException.ThrowIfNull(messageListener);
+            return messageListener;
         }
 
-        public event WindowMessageReceivedEventHandler? WindowMessageReceived
-        {
-            add
-            {
-                messageMonitor!.WindowMessageReceived += value;
-                UpdateWindowProc();
-            }
-            remove
-            {
-                messageMonitor!.WindowMessageReceived -= value;
-                UpdateWindowProc();
-            }
-        }
+        public event WindowMessageReceivedEventHandler? WindowMessageReceived;
 
         public event EventHandler? ActivatedStateChanged
         {
             add
             {
                 activatedStateChanged += value;
-                UpdateWindowProc();
             }
             remove
             {
                 activatedStateChanged -= value;
-                UpdateWindowProc();
             }
         }
 
         public double MinWidth
         {
-            get => minWidth;
+            get
+            {
+                ArgumentNullException.ThrowIfNull(maxMinSizeFeature);
+                return maxMinSizeFeature.MinWidth * 96d / WindowDpi;
+            }
             set
             {
-                if (minWidth != value)
-                {
-                    minWidth = value;
-                    RefreshWindowSize();
-                }
+                ArgumentNullException.ThrowIfNull(maxMinSizeFeature);
+                maxMinSizeFeature.MinWidth = (int)(value * WindowDpi / 96);
             }
         }
 
         public double MinHeight
         {
-            get => minHeight;
+            get
+            {
+                ArgumentNullException.ThrowIfNull(maxMinSizeFeature);
+                return maxMinSizeFeature.MinHeight * 96d / WindowDpi;
+            }
             set
             {
-                if (minHeight != value)
-                {
-                    minHeight = value;
-                    RefreshWindowSize();
-                }
+                ArgumentNullException.ThrowIfNull(maxMinSizeFeature);
+                maxMinSizeFeature.MinHeight = (int)(value * WindowDpi / 96);
             }
         }
 
         public double MaxWidth
         {
-            get => maxWidth;
+            get
+            {
+                ArgumentNullException.ThrowIfNull(maxMinSizeFeature);
+                return maxMinSizeFeature.MaxWidth * 96d / WindowDpi;
+            }
             set
             {
-                if (maxWidth != value)
-                {
-                    maxWidth = value;
-                    RefreshWindowSize();
-                }
+                ArgumentNullException.ThrowIfNull(maxMinSizeFeature);
+                maxMinSizeFeature.MaxWidth = (int)(value * WindowDpi / 96);
             }
         }
 
         public double MaxHeight
         {
-            get => maxHeight;
+            get
+            {
+                ArgumentNullException.ThrowIfNull(maxMinSizeFeature);
+                return maxMinSizeFeature.MaxHeight * 96d / WindowDpi;
+            }
             set
             {
-                if (maxHeight != value)
-                {
-                    maxHeight = value;
-                    RefreshWindowSize();
-                }
+                ArgumentNullException.ThrowIfNull(maxMinSizeFeature);
+                maxMinSizeFeature.MaxHeight = (int)(value * WindowDpi / 96);
             }
         }
 
@@ -212,8 +204,6 @@ namespace BlueFire.Toolkit.WinUI3
             {
                 PInvoke.SetWindowPos(HWND, default, rect.X, rect.Y, rect.Width, rect.Height,
                     global::Windows.Win32.UI.WindowsAndMessaging.SET_WINDOW_POS_FLAGS.SWP_NOZORDER);
-
-                UpdateWindowProc();
             }
         }
 
@@ -233,68 +223,11 @@ namespace BlueFire.Toolkit.WinUI3
             return compositionResources;
         }
 
-        private void UpdateWindowProc()
+        private unsafe void OverrideWindowProc(object? sender, WindowMessageReceivedEventArgs e)
         {
             if (destroyed) return;
 
-            var flag = false;
-            if (useDefaultIcon) flag = true;
-
-            if (!flag) flag = InternalEnableWindowProc;
-
-            if (!flag) flag = WindowExInternal != null;
-
-            if (!flag)
-            {
-                if (minWidth != 0 || minHeight != 0 || maxWidth != 0 || maxHeight != 0)
-                {
-                    flag = true;
-                }
-            }
-
-            if (!flag) flag = GetMonitorInternal().MessageReceivedEventHandled;
-
-            if (!flag) flag = activatedStateChanged != null;
-
-            if (messageHandleInstalled != flag)
-            {
-                messageHandleInstalled = flag;
-                GetMonitorInternal().WindowMessageBeforeReceived -= OverrideWindowProc;
-                dpi = 0;
-
-                if (flag)
-                {
-                    GetMonitorInternal().WindowMessageBeforeReceived += OverrideWindowProc;
-                }
-            }
-        }
-
-        private unsafe void OverrideWindowProc(WindowManager sender, WindowMessageReceivedEventArgs e)
-        {
-            if (destroyed) return;
-
-            if (e.MessageId == PInvoke.WM_GETMINMAXINFO)
-            {
-                ref var info = ref Unsafe.AsRef<Windows.Win32.UI.WindowsAndMessaging.MINMAXINFO>((void*)e.LParam);
-
-                var dpi = WindowDpi;
-
-                var minWidthPixel = (int)(minWidth * dpi / 96);
-                var minHeightPixel = (int)(minHeight * dpi / 96);
-
-                var maxWidthPixel = (int)(maxWidth * dpi / 96);
-                var maxHeightPixel = (int)(maxHeight * dpi / 96);
-
-                if (maxWidthPixel == 0) maxWidthPixel = PInvoke.GetSystemMetrics(Windows.Win32.UI.WindowsAndMessaging.SYSTEM_METRICS_INDEX.SM_CXMAXTRACK);
-                if (maxHeightPixel == 0) maxHeightPixel = PInvoke.GetSystemMetrics(Windows.Win32.UI.WindowsAndMessaging.SYSTEM_METRICS_INDEX.SM_CYMAXTRACK);
-
-                info.ptMinTrackSize = new System.Drawing.Point(minWidthPixel, minHeightPixel);
-                info.ptMaxTrackSize = new System.Drawing.Point(maxWidthPixel, maxHeightPixel);
-
-                e.Handled = true;
-                e.LResult = 0;
-            }
-            else if (e.MessageId == PInvoke.WM_DPICHANGED)
+            if (e.MessageId == PInvoke.WM_DPICHANGED)
             {
                 dpi = 0;
                 SetDefaultIcon(WindowId, false, WindowDpi);
@@ -312,6 +245,8 @@ namespace BlueFire.Toolkit.WinUI3
             {
                 OnDestroy();
             }
+
+            this.WindowMessageReceived?.Invoke(this, e);
         }
 
         private void OnDestroy()
@@ -321,11 +256,11 @@ namespace BlueFire.Toolkit.WinUI3
                 destroyed = true;
 
                 OnWindowDestroy(WindowId);
-                if (messageMonitor != null)
+                if (messageListener != null)
                 {
-                    messageMonitor.WindowMessageBeforeReceived -= OverrideWindowProc;
-                    messageMonitor.Dispose();
-                    messageMonitor = null!;
+                    messageListener.MessageReceived -= OverrideWindowProc;
+                    messageListener.Dispose();
+                    messageListener = null!;
                 }
 
                 if (compositionResources != null)

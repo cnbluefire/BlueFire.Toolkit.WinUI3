@@ -15,7 +15,7 @@ namespace BlueFire.Toolkit.WinUI3.Icons
     public sealed class DefaultIconProvider : IconProvider
     {
         private static ProcessDefaultIcon? processDefaultIcon;
-        private static object locker = new object();
+        private static Lock locker = new Lock();
         private static DefaultIconProvider? instance;
 
         public DefaultIconProvider()

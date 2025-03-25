@@ -1,4 +1,5 @@
-﻿using BlueFire.Toolkit.WinUI3.Compositions;
+﻿using BlueFire.Toolkit.Compositions;
+using BlueFire.Toolkit.WinUI3.Compositions;
 using BlueFire.Toolkit.WinUI3.Compositions.LinearGradientBlur;
 using BlueFire.Toolkit.WinUI3.Controls;
 using Microsoft.UI;
@@ -16,7 +17,7 @@ using Color = Windows.UI.Color;
 
 namespace BlueFire.Toolkit.WinUI3.SystemBackdrops
 {
-    public class LinearGradientBlurBackdrop : TransparentBackdrop
+    public partial class LinearGradientBlurBackdrop : TransparentBackdrop
     {
         private static void OnDependencyPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
